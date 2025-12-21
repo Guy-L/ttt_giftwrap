@@ -2,26 +2,17 @@ include("sh_giftwrap_utils.lua")
 local utils = GW_Utils
 local dbg   = GW_DBG
 
--- if there's a way to not have to do this pls tell me
--- TODO assess removing this i was being dumb
---if not dbg or not utils then
---    timer.Simple(10, function()
---        local utils = GW_Utils
---        local dbg   = GW_DBG
---    end)
---end
-
-local PROP_WEIGHT_MULT    = CreateConVar("ttt2_giftwrap_prop_weight", "1.25", CVAR_FLAGS, "Weight multiplier for props when picking random gift.", 0, 10)
-local SHOP_WEIGHT_MULT    = CreateConVar("ttt2_giftwrap_shop_weight", "0.5", CVAR_FLAGS, "Weight multiplier for shop items when picking random gift.", 0, 10)
-local FLOOR_WEIGHT_MULT   = CreateConVar("ttt2_giftwrap_floor_weight", "1", CVAR_FLAGS, "Weight multiplier for floor items when picking random gift.", 0, 10)
-local SPECIAL_WEIGHT_MULT = CreateConVar("ttt2_giftwrap_special_weight", "1", CVAR_FLAGS, "Weight multiplier for special entities (SENTs & NPCs) when picking random gift.", 0, 10)
+local PROP_WEIGHT_MULT    = CreateConVar("ttt2_giftwrap_prop_weight", "1.25", GW_CVAR_FLAGS, "Weight multiplier for props when picking random gift.", 0, 5)
+local FLOOR_WEIGHT_MULT   = CreateConVar("ttt2_giftwrap_floor_weight", "1",   GW_CVAR_FLAGS, "Weight multiplier for floor items when picking random gift.", 0, 5)
+local SHOP_WEIGHT_MULT    = CreateConVar("ttt2_giftwrap_shop_weight", "0.5",  GW_CVAR_FLAGS, "Weight multiplier for shop items when picking random gift.", 0, 5)
+local SPECIAL_WEIGHT_MULT = CreateConVar("ttt2_giftwrap_special_weight", "1", GW_CVAR_FLAGS, "Weight multiplier for special entities (SENTs & NPCs) when picking random gift.", 0, 5)
 
 local PLACEHOLDER_DATA_REMOVE    = "GiftWrap_RemoveGiftData"
 local CLUTTERBOMB_LIGHT_FIX_HOOK = "GiftWrap_ClutterbombLightFix"
 local INIT_FIXES_HOOK            = "GiftWrap_InitialFixesSetup"
 
 -- cf. excel sheet in addon resources (GitHub)
-local QUALITY_MAX = 10
+local QUALITY_MAX  = 10
 local XMAS_START   = 1.1
 local XMAS_DIVISOR = 40
 local XMAS_EXP     = 1.5
@@ -30,7 +21,7 @@ local SCORE_PARA_MAX  = 30
 local SCORE_INTERCEPT = -5
 
 GiftCategory = {
-    PhysProp      = "physProp",
+    PhysProp      = "PhysProp",
     SENT          = "SENT",
     NPC           = "NPC",
     FloorSWEP     = "FloorSWEP",
@@ -161,20 +152,18 @@ end
 
 --- zzzzzzzz
 -------------------------------------
-local DEBUG_TEST_GIFT  = "soccer_ball"
-local DEBUG_TEST_MODEL = "models/maxofs2d/companion_doll_big.mdl"
+local DEBUG_TEST_GIFT  = nil
+local DEBUG_TEST_MODEL = nil
 -------------------------------------
 
 local giftDataCatalog = {
-    TEST = GiftData.New {
-        name     = "TEST PROP",           desc       = "a test prop (if you see this, I messed up)",
-        category = GiftCategory.PhysProp, identifier = DEBUG_TEST_MODEL,
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.None,        attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Nondescript, attrib_feel = GiftFeel.Indescribable,
-    },
-    
-
+    --TEST = GiftData.New {
+    --    name     = "TEST PROP",           desc       = "a test prop (if you see this, I messed up)",
+    --    category = GiftCategory.PhysProp, identifier = DEBUG_TEST_MODEL,
+    --    can_be_random_gift = false,
+    --    attrib_sound = GiftSound.None,        attrib_size = GiftSize.Normal,
+    --    attrib_smell = GiftSmell.Nondescript, attrib_feel = GiftFeel.Indescribable,
+    --},
 
     -- PhysProps
     companion_doll = GiftData.New {

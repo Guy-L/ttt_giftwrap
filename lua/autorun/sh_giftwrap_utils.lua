@@ -256,3 +256,5 @@ SNUFFLE_TREE_MODEL = "models/props_snowville/tree_pine_small.mdl"
 
 ERROR_ALREADY_OPENED = "You already opened a random gift this round!"
 XMAS_DAY = 359
+
+GW_CVAR_FLAGS = {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}

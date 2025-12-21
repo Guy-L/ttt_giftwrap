@@ -9,11 +9,11 @@ local TREE_FOUND_MSG            = "TTT_GiftWrap_TreeFoundMsg"
 local dbg   = GW_DBG
 local utils = GW_Utils
 
-local CVAR_FLAGS = {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}
-local REPLACE_SNUFFLES_GIFT  = CreateConVar("ttt2_giftwrap_replace_snuffles_gift", "1", CVAR_FLAGS, "Whether random gifts from Gift Wrap replace (instead of add to) naturally spawning gifts from Snuffles' YoWaddup General Fixes addon.", 0, 1)
-local ADDED_GIFT_CHANCE      = CreateConVar("ttt2_giftwrap_extra_gift_chance", "0.4", CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced.", 0, 1)
-local ADDED_GIFT_CHANCE_XMAS = CreateConVar("ttt2_giftwrap_extra_gift_chance_xmas", "0.8", CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced on Christmas specifically.", 0, 1)
-local TIMEZONE_OFFSET_HOURS  = CreateConVar("ttt2_giftwrap_timezone_offset", "0", CVAR_FLAGS, "Adjusts the timezone used for determining whether it's Christmas (offset in hours).", -24, 24)
+local ENABLE_RANDOM          = CreateConVar("ttt2_giftwrap_enable_random_gifts", "1",      GW_CVAR_FLAGS, "Whether to spawn random gifts when Snuffles' YoWaddup Fixes presents are found.", 0, 1)
+local REPLACE_SNUFFLES_GIFT  = CreateConVar("ttt2_giftwrap_replace_snuffles_gift", "1",    GW_CVAR_FLAGS, "Whether random gifts from Gift Wrap replace (rather than add to) naturally spawning gifts from Snuffles' YoWaddup General Fixes addon.", 0, 1)
+local ADDED_GIFT_CHANCE      = CreateConVar("ttt2_giftwrap_extra_gift_chance", "0.4",      GW_CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced.", 0, 1)
+local ADDED_GIFT_CHANCE_XMAS = CreateConVar("ttt2_giftwrap_extra_gift_chance_xmas", "0.8", GW_CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced on Christmas specifically.", 0, 1)
+local TIMEZONE_OFFSET_HOURS  = CreateConVar("ttt2_giftwrap_timezone_offset", "0",          GW_CVAR_FLAGS, "Adjusts the timezone used for determining whether it's Christmas (offset in hours).", -24, 24)
 
 ENT.Type = "anim"
 ENT.PrintName = "Gift"
@@ -70,7 +70,7 @@ function ENT:OnTakeDamage(dmgInfo)
         local attacker = dmgInfo:GetAttacker()
         local inflictor = dmgInfo:GetInflictor()
 
-        if attacker.OpenedRandomGift then
+        if attacker.OpenedRandomGift and not dbg.Cvar:GetBool() then
             utils.NonSpamMessage(attacker, "OpenAttempt", ERROR_ALREADY_OPENED)
             return
         end
@@ -210,7 +210,7 @@ if SERVER then
 
     -- spawn random gifts next to / instead of Snuffles gifts
     hook.Add("OnEntityCreated", HOOK_GIFTWRAP_ENT_SPAWN, function(ent)
-        if IsValid(ent) then
+        if IsValid(ent) and ENABLE_RANDOM:GetBool() then
             -- replace/spawn near present
             if ent:GetClass() == SNUFFLE_PRESENT_CLASS then
                 if utils.RoundStartTime and CurTime() > utils.RoundStartTime + 10 then
@@ -228,8 +228,6 @@ if SERVER then
                         "; bonus gift chance:", bonusGiftChance)
 
                 timer.Simple(0.1, function()
-                    local roll = math.random()
-                    print(roll, bonusGiftChance, math.random() <= bonusGiftChance)
                     local giftCnt = (math.random() <= bonusGiftChance) and 2 or 1
 
                     for i = 1, giftCnt do
@@ -253,7 +251,7 @@ if SERVER then
                         christmasTree = ent
 
                         -- adjust bbox to not be IMMENSE
-                        ent:SetCollisionBounds(
+                        christmasTree:SetCollisionBounds(
                             Vector(-50, -50, 0),
                             Vector(50,   50, 125)
                         )

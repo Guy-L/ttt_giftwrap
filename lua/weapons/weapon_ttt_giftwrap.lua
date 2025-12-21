@@ -17,62 +17,8 @@ local HOOK_RELOAD_SOUNDS     = "TTT_GiftWrap_ReloadSounds"
 local WRAPPED_GIFT_REMOVE    = "TTT_GiftWrap_WrappedGiftRemove"
 local GIFTWRAP_REMOVE        = "TTT_GiftWrap_XMasBeaconRemove"
 
-local CVAR_FLAGS = {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}
 local GW_REGMETASWEP = GW_REGMETASWEP or SWEP
 local GW_METASWEP    = SWEP
-
--- Todo list
-    -- Add more gift data!
-        -- Coal prop
-    -- Add cvar to limit the # of random gifts a player can open (currently a binary check)
-    
-    -- Run a checksum accross Smell/Sound/Size/Feel to make sure no typos are left in
-    -- Visualize distributions of each attribute in excel (script it)
-    -- Assess how many times the nice list message is not visible due to high rarity
-
-    -- Add material shaking sounds
-    -- Add reasonable limits on what's allowed to do Undo Wrap with (i.e. not molotov or other explosives/SENTs)
-    -- Add reasonable limits on being able to wrap away certain entities
-    -- Bug fix: broken fart grenade & ice grenade wraps
-    -- Improvement: Prevent gift from opening instead of opening + saying it can't be spawned
-    -- Bug fix: can drop gift while it's opening (deletes it)
-    -- Backwards compat: Make floor guns spawn with their ammo type
-    -- Star burster support
-
-    -- Gift option 1: Color (+ random starting color matched with giftwrap color)
-    -- Gift option 2: Note
-    -- Gift option 3: Intended recipient
-    -- Gift option 4: Button to buy equipment (shopping roles only) 
-        -- Notes: 
-            -- Stuff like beacon doesn't start with full ammo like it normally would when you buy it?
-            -- Remember to add data for Amaterasu, Cannibalism, Dance Gun, Coffee, Impact Grenade, Juggernaut Suit, Life Trade Knife
-    -- Gift option 5: Button to wrap a gift from the random pool
-    -- Gift option 6: Checkbox to disable the hint to place near a tree?
-    -- Improvement: Make scale consistent & based on contents
-    -- Improvement: some thrown/deployed entities can't be properly wrapped yet: Barnacle
-    -- Improvement: better icon for tree markervision & increase tree place range
-    -- Improvement: Make certain SENT+SWEP data pairs use the system for that
-    -- Improvement: DOOMDWANGO support
-    -- Improvement: roller mine
-    -- Improvement: Prevent wrapping entities being fultoned/poltergeisted?
-    -- Improvement: Angle adjustement for SWEP thrown gifts
-    -- Improvement: ammo box wrap data
-    -- Improvement: harmless (non explosive) RCXD drop
-    -- Bug: Fart grenade (add meta and make the wrap work properly on the generic grenade ent)
-    -- Bug: ragdolls are not teleported when unwrapped (e.g. dead seekgull)
-    -- Bug: random gifts sometimes not making flourish noise?
-    -- Bug: snuffles tree not packaging a reflection thingy
-    -- Bug: raw classname showing in chat when unwrapping unknown weapons
-    -- Bug: model remaining gift in the "gift disappeared" edge cases
-    -- Bug: wrapping C4s attached to walls
-    -- Bug: wrapping a sent groovitron (effect continues)
-    -- Bug: PAPs not supported correctly (cf. jammifier)
-    -- Bug: throwing a gift straight down into the ground (probably also through walls) - stick to ground?
-    -- Minor bug: can't wrap thrown maclunkey, also can't pick it up (i think something else also had this bug idk)
-    -- Minor bug: bungers spawned from gift leave a second prop on death
-    -- Double check chicken ownership makes sense, consider single explosive banana ent
-    -- Test prop disguiser wrapping interaction?
-    -- Double check nothing that can be spawned by a gift persists between rounds
 
 GW_sound = {
     swing           = Sound("Weapon_Crowbar.Single"),
@@ -267,7 +213,7 @@ elseif CLIENT then
 • Gift: Left click to toss it out!
             Reload to undo the wrap.
 
-While holding your Gift, you can place it neatly around a Christmas Tree with E.
+While holding your Gift, you can place it neatly under a Christmas Tree with E.
 
 Gifts made by others can be opened with LMB (while holding them or via crowbar), and shaken with RMB to get some hints as to what might be inside!]]}
     GW_METASWEP.Slot = 6
@@ -628,10 +574,11 @@ if SERVER then
         "L U C K Y!",
     }
     local niceList = {
-        "You've been such a good terrorist this year!",
+        "For being such a good terrorist this year!",
         "For being such a nice terrorist...",
         "Seems you're on the nice list!",
-        "For all your hard work...",
+        "It's what you've always wanted!",
+        --"For all your hard work...",
     }
     local naughtyList = {
         --"You've been such a bad terrorist this year...",
@@ -890,10 +837,55 @@ elseif CLIENT then
     end
 
     function SWEP:AddToSettingsMenu(parent)
-        local formMain = vgui.CreateTTT2Form(parent, "label_giftwrap_main_form")
-        formMain:MakeCheckBox({
+        local formRNGift = vgui.CreateTTT2Form(parent, "label_giftwrap_random_gifts_form")
+        formRNGift:MakeHelp({
+            label = "label_giftwrap_random_gifts_desc"
+        })
+        formRNGift:MakeCheckBox({
+            serverConvar = "ttt2_giftwrap_enable_random_gifts",
+            label = "label_giftwrap_enable_random_gifts"
+        })
+        formRNGift:MakeCheckBox({
             serverConvar = "ttt2_giftwrap_replace_snuffles_gift",
             label = "label_giftwrap_replace_snuffles_gift"
+        })
+        formRNGift:MakeSlider({
+            serverConvar = "ttt2_giftwrap_extra_gift_chance",
+            label = "label_giftwrap_extra_gift_chance",
+            min = 0, max = 1, decimal = 2
+        })
+        formRNGift:MakeSlider({
+            serverConvar = "ttt2_giftwrap_extra_gift_chance_xmas",
+            label = "label_giftwrap_extra_gift_chance_xmas",
+            min = 0, max = 1, decimal = 2
+        })
+        formRNGift:MakeSlider({
+            serverConvar = "ttt2_giftwrap_timezone_offset",
+            label = "label_giftwrap_timezone_offset",
+            min = -24, max = 24, decimal = 0
+        })
+        formRNGift:MakeHelp({
+            label = "label_giftwrap_weights_desc"
+        })
+        formRNGift:MakeSlider({
+            serverConvar = "ttt2_giftwrap_prop_weight",
+            label = "label_giftwrap_prop_weight",
+            min = 0, max = 5, decimal = 2
+        })
+        formRNGift:MakeSlider({
+            serverConvar = "ttt2_giftwrap_floor_weight",
+            label = "label_giftwrap_floor_weight",
+            min = 0, max = 5, decimal = 2
+        })
+        formRNGift:MakeSlider({
+            serverConvar = "ttt2_giftwrap_special_weight",
+            label = "label_giftwrap_special_weight",
+            min = 0, max = 5, decimal = 2
+        })
+        formRNGift:MakeSlider({
+            serverConvar = "ttt2_giftwrap_shop_weight",
+            label = "label_giftwrap_shop_weight",
+            min = 0, max = 5, decimal = 2
         })
 
         local formMisc = vgui.CreateTTT2Form(parent, "label_giftwrap_misc_form")

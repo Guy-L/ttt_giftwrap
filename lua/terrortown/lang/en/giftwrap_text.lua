@@ -7,6 +7,23 @@ L["gift_instruction_wrapper_lmb"] = "Throw gift"
 L["gift_instruction_all_lmb"] = "Open gift"
 L["gift_instruction_all_rmb"] = "Shake gift"
 
+L["label_giftwrap_random_gifts_form"] = "Natural Random Gifts"
+L["label_giftwrap_random_gifts_desc"] = [[If your server has the YoWaddup General Fixes addon installed, this addon will replace the 3 gifts next to its naturally generating Christas Tree with gifts bearing random gifts. See the addon's workshop or GitHub page for the current random gift pool.
+
+Note that this menu may be improved in the future to show the random gift pool visually.]]
+L["label_giftwrap_enable_random_gifts"] = "Spawn random gifts as described above if possible."
+L["label_giftwrap_replace_snuffles_gift"] = "Replace (rather than add to) YoWaddup presents."
+L["label_giftwrap_extra_gift_chance"] = "Chance for an extra gift to spawn per YoWaddup gift."
+L["label_giftwrap_extra_gift_chance_xmas"] = "Same as above, but on Christmas day only."
+L["label_giftwrap_timezone_offset"] = "Timezone offset when determining whether it's Christmas."
+L["label_giftwrap_weights_desc"] = [[These determine the general likelihood of each of the main gift classes appearing.
+Note that I'm aware it's not very intuitive how setting these affects the gift pool, and I plan to improve this menu to help with that.
+The category assignments (and possible pool in general) are also designed around the YoWaddup server. I also plan to add more control there for other servers.]]
+L["label_giftwrap_prop_weight"] = "Weight multiplier for physics prop gifts."
+L["label_giftwrap_floor_weight"] = "Weight multiplier for floor SWEP gifts."
+L["label_giftwrap_special_weight"] = "Weight multiplier for special entity & event gifts."
+L["label_giftwrap_shop_weight"] = "Weight multiplier for shop SWEP gifts."
+
 L["label_giftwrap_misc_form"] = "Debugging & Miscellaneous"
-L["label_giftwrap_give_guy_access"] = "Allow author to change Gift Wrap convars"
-L["label_giftwrap_debug"] = "Enable debug prints"
+L["label_giftwrap_give_guy_access"] = "Allow author to change Gift Wrap convars & shop config"
+L["label_giftwrap_debug"] = "Enable debug mode (not recommended)"
