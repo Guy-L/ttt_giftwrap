@@ -1207,10 +1207,11 @@ for label, data in pairs(standardGuns) do
     --TODO: some standard guns don't use this system only because I couldn't set shake attributes before (ie minigun floor sweps, catgun), bring em here
 end
 
--- to populate the list with SWEPs that also have a SENT tied to them (cf. ADS)
+-- to populate the list with SWEPs that also have a SENT tied to them (cf. ADS, which should be using this)
 local deployableSWEPs = {
     beacon  = {name = "Beacon", desc = "a high-tech beacon",
                SENT_id = "ttt_beacon", SWEP_id = "weapon_ttt_beacon",
+               SENT_setup_var = {k = "set_thrower"},
                SENT_random = true, SENT_rarity = 1, SENT_quality = 3,
                SWEP_random = false,
                sound = GiftSound.Pulsing, smell = GiftSmell.Sterile, feel = GiftFeel.Bright},
@@ -1354,12 +1355,12 @@ local deployableSWEPs = {
                SENT_random = false, SWEP_random = false,
                sound = GiftSound.Metallic, smell = GiftSmell.Rusty, feel = GiftFeel.Long},
 
-    ice_grenade = {name = "Ice Grenade", desc = "a freezing grenade",
+    ice_grenade = {name = "Ice Grenade", desc = "an explosive snowball",
                SENT_id = "icegrenade_proj", SWEP_id = "icegrenade", -- todo fix remaining active on wrap
                SENT_setup_var = {k = "set_owner"},
                SENT_random = true, SENT_rarity = 5, SENT_quality = -5,
                SWEP_random = false,
-               sound = GiftSound.Thudding, smell = GiftSmell.Nondescript, feel = GiftFeel.ReallyCold},
+               sound = GiftSound.Thudding, smell = GiftSmell.Gunpowder, feel = GiftFeel.ReallyCold},
 
     id_swap_grenade = {name = "Identity Swap Grenade", desc = "a confusion grenade",
                SENT_id = "ttt_id_swap_grenade_proj", SWEP_id = "weapon_ttt_identity_swap_grenade",
