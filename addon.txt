@@ -1,0 +1,7 @@
+"AddonInfo"
+{
+    "name"        "[TTT2] Gift Wrap"
+    "version"     "1.0"
+    "author"      "Guy"
+    "description" "Merry Christmas!"
+}

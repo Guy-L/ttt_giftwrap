@@ -1,0 +1,8 @@
+VertexLitGeneric
+{
+    "$color2" "[0.906 0.420 0.372]"
+    "$model" "1"
+    "$phong" "1"
+    "$phongboost" "1"
+    "$phongexponent" "20"
+}
