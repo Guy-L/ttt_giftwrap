@@ -9,11 +9,13 @@ local TREE_FOUND_MSG            = "TTT_GiftWrap_TreeFoundMsg"
 local dbg   = GW_DBG
 local utils = GW_Utils
 
-local ENABLE_RANDOM          = CreateConVar("ttt2_giftwrap_enable_random_gifts", "1",      GW_CVAR_FLAGS, "Whether to spawn random gifts when Snuffles' YoWaddup Fixes presents are found.", 0, 1)
-local REPLACE_SNUFFLES_GIFT  = CreateConVar("ttt2_giftwrap_replace_snuffles_gift", "1",    GW_CVAR_FLAGS, "Whether random gifts from Gift Wrap replace (rather than add to) naturally spawning gifts from Snuffles' YoWaddup General Fixes addon.", 0, 1)
-local ADDED_GIFT_CHANCE      = CreateConVar("ttt2_giftwrap_extra_gift_chance", "0.4",      GW_CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced.", 0, 1)
-local ADDED_GIFT_CHANCE_XMAS = CreateConVar("ttt2_giftwrap_extra_gift_chance_xmas", "0.8", GW_CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced on Christmas specifically.", 0, 1)
-local TIMEZONE_OFFSET_HOURS  = CreateConVar("ttt2_giftwrap_timezone_offset", "0",          GW_CVAR_FLAGS, "Adjusts the timezone used for determining whether it's Christmas (offset in hours).", -24, 24)
+local ENABLE_RANDOM           = CreateConVar("ttt2_giftwrap_enable_random_gifts", "1",       GW_CVAR_FLAGS, "Whether to spawn random gifts when Snuffles' YoWaddup Fixes presents are found.", 0, 1)
+local REPLACE_SNUFFLES_GIFT   = CreateConVar("ttt2_giftwrap_replace_snuffles_gift", "1",     GW_CVAR_FLAGS, "Whether random gifts from Gift Wrap replace (rather than add to) naturally spawning gifts from Snuffles' YoWaddup General Fixes addon.", 0, 1)
+local SECOND_GIFT_CHANCE      = CreateConVar("ttt2_giftwrap_second_gift_chance", "0.5",      GW_CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced.", 0, 1)
+local THIRD_GIFT_CHANCE       = CreateConVar("ttt2_giftwrap_third_gift_chance", "0.4",       GW_CVAR_FLAGS, "Chance for a third random gift spawn if a second one spawned.", 0, 1)
+local SECOND_GIFT_CHANCE_XMAS = CreateConVar("ttt2_giftwrap_second_gift_chance_xmas", "0.9", GW_CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced, on Christmas specifically.", 0, 1)
+local THIRD_GIFT_CHANCE_XMAS  = CreateConVar("ttt2_giftwrap_third_gift_chance_xmas", "0.6",  GW_CVAR_FLAGS, "Chance for a third random gift spawn if a second one spawned, on Christmas specifically.", 0, 1)
+local TIMEZONE_OFFSET_HOURS   = CreateConVar("ttt2_giftwrap_timezone_offset", "0",           GW_CVAR_FLAGS, "Adjusts the timezone used for determining whether it's Christmas (offset in hours).", -24, 24)
 
 ENT.Type = "anim"
 ENT.PrintName = "Gift"
@@ -233,14 +235,23 @@ if SERVER then
                 local dayOfYear = tonumber(os.date("!%j", adjTime))
 
                 local isChristmas = (dayOfYear == XMAS_DAY)
-                local bonusGiftChance = (isChristmas and ADDED_GIFT_CHANCE_XMAS or ADDED_GIFT_CHANCE):GetFloat()
-                dbg.Log("Day of Year:", dayOfYear, 
-                        "; Hour", os.date("!%H", adjTime),
-                        "; Christmas:", isChristmas, 
-                        "; bonus gift chance:", bonusGiftChance)
+                local secondGiftChance = (isChristmas and SECOND_GIFT_CHANCE_XMAS or SECOND_GIFT_CHANCE):GetFloat()
+                local thirdGiftChance = (isChristmas and THIRD_GIFT_CHANCE_XMAS or THIRD_GIFT_CHANCE):GetFloat()
+
+                dbg.Log("Day of Year:", dayOfYear, "; Hour", os.date("!%H", adjTime), "; Christmas:", isChristmas,
+                        "; second gift chance:", secondGiftChance, "; third gift chance:", thirdGiftChance)
 
                 timer.Simple(0.1, function()
-                    local giftCnt = (math.random() <= bonusGiftChance) and 2 or 1
+                    local giftCnt = 1
+
+                    if math.random() <= secondGiftChance then
+                        if math.random() <= thirdGiftChance then
+                            giftCnt = giftCnt + 1
+                        end
+
+                        giftCnt = giftCnt + 1
+                    end
+                    dbg.Log("Spawning "..tostring(giftCnt).." gifts.")
 
                     for i = 1, giftCnt do
                         newGift = ents.Create(PROP_CLASS_NAME)

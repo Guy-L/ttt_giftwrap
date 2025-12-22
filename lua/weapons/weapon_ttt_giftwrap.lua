@@ -862,14 +862,27 @@ elseif CLIENT then
             serverConvar = "ttt2_giftwrap_replace_snuffles_gift",
             label = "label_giftwrap_replace_snuffles_gift"
         })
+        formRNGift:MakeHelp({
+            label = "label_giftwrap_bonus_gifts_desc"
+        })
         formRNGift:MakeSlider({
-            serverConvar = "ttt2_giftwrap_extra_gift_chance",
-            label = "label_giftwrap_extra_gift_chance",
+            serverConvar = "ttt2_giftwrap_second_gift_chance",
+            label = "label_giftwrap_second_gift_chance",
             min = 0, max = 1, decimal = 2
         })
         formRNGift:MakeSlider({
-            serverConvar = "ttt2_giftwrap_extra_gift_chance_xmas",
-            label = "label_giftwrap_extra_gift_chance_xmas",
+            serverConvar = "ttt2_giftwrap_third_gift_chance",
+            label = "label_giftwrap_third_gift_chance",
+            min = 0, max = 1, decimal = 2
+        })
+        formRNGift:MakeSlider({
+            serverConvar = "ttt2_giftwrap_second_gift_chance_xmas",
+            label = "label_giftwrap_second_gift_chance_xmas",
+            min = 0, max = 1, decimal = 2
+        })
+        formRNGift:MakeSlider({
+            serverConvar = "ttt2_giftwrap_third_gift_chance_xmas",
+            label = "label_giftwrap_third_gift_chance_xmas",
             min = 0, max = 1, decimal = 2
         })
         formRNGift:MakeSlider({
