@@ -204,7 +204,9 @@ function GW_Utils.GetEntSurfaceProp(ent, phys)
     return nil
 end
 
-function GW_Utils.NonSpamMessage(ply, id, msg)
+function GW_Utils.NonSpamMessage(ply, id, msg, acceptClient)
+    if CLIENT and not acceptClient then return end
+
     if not ply["Last"..id] or CurTime() > ply["Last"..id] + 1 then
         ply:ChatPrint(msg)
         ply["Last"..id] = CurTime()

@@ -23,13 +23,23 @@ ENT.Category = "Utility"
 ENT.Spawnable = true -- for sandbox ig
 ENT.Author = "Guy"
 
-local descriptionLines = {
+local normalDescriptionLines = {
     "Have you been a good terrorist this year?",
     "Hope you aren't on the naughty list.",
     "It's what you've always wanted!",
     "What could it be?",
     "Wonder what's inside...",
     "Merry Christmas!",
+}
+
+-- note: due to lazy design, this array must match the length of the above one
+local selfDescriptionLines = {
+    "Let's hope they like it!",
+    "Do you think they'll like it?",
+    "You can't open it, but maybe someone else will.",
+    "You can't open it, but hopefully someone else will!",
+    "Can be opened by any other terrorist.",
+    "Can be opened by anyone else.",
 }
 
 function ENT:Initialize()
@@ -56,7 +66,7 @@ function ENT:Initialize()
         self.UprightCheckFreq = 2
         self:SetGiftScale(scale)
         self:UpdateScale(scale)
-        self:SetDescriptionLine(math.random(#descriptionLines))
+        self:SetDescriptionLine(math.random(#normalDescriptionLines))
 
     elseif CLIENT then
         self:UpdateScale(self:GetGiftScale())
@@ -68,21 +78,28 @@ function ENT:OnTakeDamage(dmgInfo)
 
     if SERVER then
         local attacker = dmgInfo:GetAttacker()
+        local attackerOpenedRandomGift = attacker:GetNWBool("OpenedRandomGift")
         local inflictor = dmgInfo:GetInflictor()
 
-        if attacker.OpenedRandomGift and not dbg.Cvar:GetBool() then
-            utils.NonSpamMessage(attacker, "OpenAttempt", ERROR_ALREADY_OPENED)
-            return
-        end
+        if utils.IsLivingPlayer(attacker) and inflictor and inflictor:GetClass() == "weapon_zm_improvised" then
+            if attacker:SteamID64() == self:GetWrapperSID() then
+                utils.NonSpamMessage(attacker, "OpenAttempt", "You can't open your own gift.")
 
-        if utils.IsLivingPlayer(attacker) and attacker:SteamID64() ~= self:GetWrapperSID()
-          and inflictor and inflictor:GetClass() == "weapon_zm_improvised" then
-            -- TODO: Proper gibbing
-            --self:GibBreakClient(Vector(0,0,10))
-            --self:GibBreakServer(Vector(0,0,10))
-            SpawnGiftEnt(attacker, self, self:GetPos())
-            attacker.OpenedRandomGift = true
-            self:Remove()
+            elseif attackerOpenedRandomGift and self:GetIsRandomGift() and not dbg.Cvar:GetBool() then
+                utils.NonSpamMessage(attacker, "OpenAttempt", ERROR_ALREADY_OPENED)
+
+            else
+                -- TODO: Proper gibbing?
+                --self:GibBreakClient(Vector(0,0,10))
+                --self:GibBreakServer(Vector(0,0,10))
+                SpawnGiftEnt(attacker, self, self:GetPos())
+                self:Remove()
+
+                if self:GetIsRandomGift() and not attackerOpenedRandomGift then
+                    dbg.Log(attacker:Nick() .. " opened a random gift!")
+                    attacker:SetNWBool("OpenedRandomGift", true)
+                end
+            end
         end
     end
 end
@@ -184,11 +201,6 @@ if SERVER then
                 utils.NonSpamMessage(activator, "GiftPickupAttempt", "You can't hold both gift and wrap at the same time.")
             end
 
-            return
-        end
-
-        if activator.OpenedRandomGift then
-            utils.NonSpamMessage(activator, "OpenAttempt", ERROR_ALREADY_OPENED)
             return
         end
 
@@ -318,8 +330,20 @@ elseif CLIENT then
                 tData:SetSubtitle(LANG.GetParamTranslation("target_pickup", {
                     usekey = Key("+use", "USE")
                 }))
-                tData:AddDescriptionLine("Can also open with crowbar.")
-                tData:AddDescriptionLine(descriptionLines[ent:GetDescriptionLine()])
+
+                if client:SteamID64() == ent:GetWrapperSID() then
+                    tData:AddDescriptionLine("You wrapped this gift.")
+                    tData:AddDescriptionLine(selfDescriptionLines[ent:GetDescriptionLine()])
+
+                -- works, but allows some innos to tell whether a gift is random free of risk which kinda blows
+                --elseif client:GetNWBool("OpenedRandomGift") and ent:GetIsRandomGift() and not dbg.Cvar:GetBool() then
+                --    tData:AddDescriptionLine("You already opened a random gift.")
+                --    tData:AddDescriptionLine("You can unwrap another one next round!")
+
+                else
+                    tData:AddDescriptionLine("Can also open with crowbar.")
+                    tData:AddDescriptionLine(normalDescriptionLines[ent:GetDescriptionLine()])
+                end
             end
 
         -- placing down gift at tree

@@ -54,7 +54,7 @@ if SERVER then
 
     hook.Add("TTTBeginRound", HOOK_ROUND_RESET_OPENS, function()
         for _, ply in ipairs(player.GetAll()) do
-            ply.OpenedRandomGift = false
+            ply:SetNWBool("OpenedRandomGift", false)
         end
     end)
 
@@ -391,42 +391,33 @@ function SWEP:PrimaryAttack()
 
     else
         if self:OwnedByWrapper(owner) then -- Throw gift prop
-            if SERVER then
-                local giftProp = self:MakePropCopy(false)
-                giftProp:SetPos(owner:GetShootPos())
-                giftProp:Spawn()
+            if SERVER then self:Throw(owner) end
 
-                local phys = giftProp:GetPhysicsObject()
-                if IsValid(phys) then
-                    local throwVel = owner:GetAimVector()
-                    --throwVel.z = 0.3 -- hardlock trajectory vertically
-                    throwVel = throwVel * 800
+        else -- Try to open gift
+            local ownerOpenedRandomGift = owner:GetNWBool("OpenedRandomGift")
 
-                    phys:SetVelocity(throwVel)
-                    phys:AddAngleVelocity(Vector(500, 0, 0))
+            -- Throw if not allowed due to opening a second random gift
+            if ownerOpenedRandomGift and self:GetIsRandomGift() and not dbg.Cvar:GetBool() then
+                utils.NonSpamMessage(owner, "OpenAttempt", ERROR_ALREADY_OPENED)
+                if SERVER then self:Throw(owner) end
+
+            else -- Open gift
+                if SERVER then
+                    self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
+                    self:SetIsOpening(true)
+
+                    timer.Simple(0.9, function()
+                        self:DropContents()
+                        self:Remove()
+
+                        if self:GetIsRandomGift() and not ownerOpenedRandomGift then
+                            dbg.Log(owner:Nick() .. " opened a random gift!")
+                            owner:SetNWBool("OpenedRandomGift", true)
+                        end
+                    end)
+                else
+                    self:EmitSound(sounds["unwrap"], 100, math.random(90, 110))
                 end
-
-                self:Remove()
-                owner:EmitSound(sounds["throw"], 75, math.random(90, 120))
-            end
-
-        else -- Open gift
-            if SERVER then
-                if owner.OpenedRandomGift then
-                    utils.NonSpamMessage(owner, "OpenAttempt", ERROR_ALREADY_OPENED)
-                    return
-                end
-
-                self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
-                self:SetIsOpening(true)
-
-                timer.Simple(0.9, function()
-                    self:DropContents()
-                    self:Remove()
-                    owner.OpenedRandomGift = true
-                end)
-            else
-                self:EmitSound(sounds["unwrap"], 100, math.random(90, 110))
             end
         end
     end
@@ -725,6 +716,28 @@ if SERVER then
         giftProp:SetNotRetrievable(notRetrievable)
 
         return giftProp
+    end
+
+    function SWEP:Throw(owner)
+        if not owner then owner = self:GetOwner() end
+        if not IsValid(owner) then return end
+
+        local giftProp = self:MakePropCopy(false)
+        giftProp:SetPos(owner:GetShootPos())
+        giftProp:Spawn()
+
+        local phys = giftProp:GetPhysicsObject()
+        if IsValid(phys) then
+            local throwVel = owner:GetAimVector()
+            --throwVel.z = 0.3 -- hardlock trajectory vertically
+            throwVel = throwVel * 800
+
+            phys:SetVelocity(throwVel)
+            phys:AddAngleVelocity(Vector(500, 0, 0))
+        end
+
+        self:Remove()
+        owner:EmitSound(sounds["throw"], 75, math.random(90, 120))
     end
 
     function SWEP:Reload()
