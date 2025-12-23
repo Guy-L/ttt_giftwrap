@@ -198,7 +198,8 @@ if SERVER then
             local wep = ply:GetActiveWeapon()
 
             if utils.IsGiftWrap(wep) and wep:HeldByWrapper(ply) then
-                local giftProp = wep:MakePropCopy(true)
+                 -- not really sure why I wanted these not to be retrievable, odd
+                local giftProp = wep:MakePropCopy(false)
 
                 -- get pos similar like how snuffles does it
                 local angle = math.rad(math.random(360))
@@ -529,6 +530,10 @@ if SERVER then
 
     function SWEP:PreDrop()
         self.fingerprints = {}
+
+        if self:HasGift() then
+            self:Throw(nil, 300)
+        end
     end
 
     -- non-SWEP; for use by both SWEP and prop gift
@@ -709,6 +714,8 @@ if SERVER then
     end
 
     function SWEP:MakePropCopy(notRetrievable)
+        if not self:HasGift(storedGift) then return nil end
+
         -- note: yeah, you could technically save from having to do that
         --       by having the prop hold a reference to the SWEP and not deleting it
         --       but it's messy either way and this works!
@@ -722,19 +729,21 @@ if SERVER then
         return giftProp
     end
 
-    function SWEP:Throw(owner)
+    function SWEP:Throw(owner, force)
         if not owner then owner = self:GetOwner() end
         if not IsValid(owner) then return end
 
         local giftProp = self:MakePropCopy(false)
+        if not IsValid(giftProp) then return end
         giftProp:SetPos(owner:GetShootPos())
         giftProp:Spawn()
 
         local phys = giftProp:GetPhysicsObject()
         if IsValid(phys) then
+            if not force then force = 800 end
             local throwVel = owner:GetAimVector()
             --throwVel.z = 0.3 -- hardlock trajectory vertically
-            throwVel = throwVel * 800
+            throwVel = throwVel * force
 
             phys:SetVelocity(throwVel)
             phys:AddAngleVelocity(Vector(500, 0, 0))

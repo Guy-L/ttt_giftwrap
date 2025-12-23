@@ -194,8 +194,12 @@ if SERVER then
 
     function ENT:Use(activator)
         if self:GetCollisionGroup() ~= COLLISION_GROUP_NONE then return end
-        if self:GetNotRetrievable() then return end
         local ownedGiftwrap = utils.GetInventoryGiftwrap(activator)
+
+        if self:GetNotRetrievable() and activator:SteamID64() == self:GetWrapperSID() then
+            utils.NonSpamMessage(activator, "GiftPickupAttempt", "Let's keep it neat and tidy here.")
+            return
+        end
 
         if ownedGiftwrap then
             if ownedGiftwrap:HasGift() then
