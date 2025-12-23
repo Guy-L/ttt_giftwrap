@@ -359,10 +359,8 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Bool", 1, "IsShaking")
     self:NetworkVar("Bool", 2, "IsRandomGift")
     self:NetworkVar("String", 0, "WrapperSID")
-    self:NetworkVar("Entity", 0, "StoredGift")
-
     self:NetworkVar("String", 1, "CachedDataLabel")
-    self:NetworkVar("String", 2, "CachedDataSID")
+    self:NetworkVar("Entity", 0, "StoredGift")
 
     if CLIENT then
         self:NetworkVarNotify("StoredGift", function(name, old, new)
@@ -537,45 +535,33 @@ if SERVER then
     -- can be called without giftee for non-random gifts
     function GetCachedGiftData(giftObj, giftee)
         local cachedDataLabel = giftObj:GetCachedDataLabel()
-
-        -- if non-random, cached data does not depend on giftee but may not have been initialized yet
-        -- if random, cached data may not be initialized AND may not be valid for current player
+        local cachedData = GetGiftDataFromLabel(cachedDataLabel)
 
         if not giftObj:GetIsRandomGift() then -- preset gift
-            if cachedDataLabel ~= "" then -- use cache
-                dbg.Log("Requesting preset gift info; using cached", cachedDataLabel)
-                return GetGiftDataFromLabel(cachedDataLabel)
-
-            else -- cache it
+            if not cachedData then -- cache it from stored gift
                 local newLabel, newData = GetEntGiftData(giftObj:GetStoredGift())
                 giftObj:SetCachedDataLabel(newLabel)
 
-                dbg.Log("Requesting preset gift info; cached", newLabel)
+                dbg.Log("Requesting preset gift data; cached", newLabel)
                 return newData
+
+            else -- use cache
+                dbg.Log("Requesting preset gift data; using cached", cachedDataLabel)
+                return cachedData
             end
 
         else -- random gift
-            local cachedData = nil
-            local cachedDataSID = giftObj:GetCachedDataSID()
-            local gifteeSID = giftee:SteamID64() -- giftee assumed valid
+            if not (cachedData and cachedData:IsSpawnable(giftee)) then  -- cache random gift data
+                local newLabel, newData = GetRandomGiftData(giftee)
+                giftObj:SetCachedDataLabel(newLabel)
 
-            -- valid cache if initialized and cached by player
-            if cachedDataLabel ~= "" and gifteeSID == cachedDataSID then 
-                cachedData = GetGiftDataFromLabel(cachedDataLabel)
+                dbg.Log("Requesting random gift data; cached new", newLabel)
+                return newData
+
+            else -- use cache
+                dbg.Log("Requesting random gift data; using cached", cachedDataLabel)
+                return cachedData
             end
-
-             -- make new cached data (or reuse)
-            if not (cachedData and cachedData:IsSpawnable(giftee)) then
-                cachedDataLabel, cachedData = GetRandomGiftData(giftee)
-                giftObj:SetCachedDataLabel(cachedDataLabel)
-                giftObj:SetCachedDataSID(gifteeSID)
-
-                dbg.Log("Requesting random gift info; cached new", cachedDataLabel)
-            else
-                dbg.Log("Requesting random gift info; using cached", cachedDataLabel)
-            end
-
-            return cachedData
         end
     end
 
@@ -720,7 +706,6 @@ if SERVER then
             self:SetWrapperSID("")
             self:SetStoredGift(nil)
             self:SetCachedDataLabel("")
-            self:SetCachedDataSID("")
             self:UpdateModel("dropped gift")
         end
     end
@@ -734,7 +719,6 @@ if SERVER then
         giftProp:SetWrapperSID(self:GetWrapperSID())
         giftProp:SetStoredGift(self:GetStoredGift())
         giftProp:SetCachedDataLabel(self:GetCachedDataLabel())
-        giftProp:SetCachedDataSID(self:GetCachedDataSID())
         giftProp:SetNotRetrievable(notRetrievable)
 
         return giftProp

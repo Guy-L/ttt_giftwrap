@@ -134,9 +134,8 @@ function ENT:SetupDataTables()
 
     self:NetworkVar("Bool", 1, "IsRandomGift")
     self:NetworkVar("String", 0, "WrapperSID")
-    self:NetworkVar("Entity", 0, "StoredGift")
     self:NetworkVar("String", 1, "CachedDataLabel")
-    self:NetworkVar("String", 2, "CachedDataSID")
+    self:NetworkVar("Entity", 0, "StoredGift")
 
     self:NetworkVarNotify("GroundPitch", function(ent, name, old, new)
         local giftAngles = self:GetAngles()
@@ -216,7 +215,6 @@ if SERVER then
             newGift:SetWrapperSID(self:GetWrapperSID())
             newGift:SetStoredGift(self:GetStoredGift())
             newGift:SetCachedDataLabel(self:GetCachedDataLabel())
-            newGift:SetCachedDataSID(self:GetCachedDataSID())
 
             activator:PickupWeapon(newGift)
             activator:SelectWeapon(SWEP_CLASS_NAME)
