@@ -306,7 +306,10 @@ if SERVER then
 
                         -- play chime from tree if full xmas (everyone can get a gift)
                         timer.Simple(1, function()
-                            if IsValid(christmasTree) and GetWorldGiftPropCount() >= #GetLivingPlayerPool() then
+                            local livingPlayerCount = #GetLivingPlayerPool()
+
+                            if IsValid(christmasTree) and livingPlayerCount >= 5
+                              and GetWorldGiftPropCount() >= livingPlayerCount then
                                 local bellSFX = math.random() < 0.33 and "bells1" or "bells2"
                                 christmasTree:BroadcastSound(sounds[bellSFX], 0, math.random(95, 105), FULL_XMAS_CHIME_VOL:GetFloat()/100) -- everyone hears
 
