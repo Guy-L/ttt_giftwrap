@@ -8,15 +8,19 @@ local cvartypes = {
     [1]  = {name = "ttt2_giftwrap_debug", type = "bool"},
     [2]  = {name = "ttt2_giftwrap_enable_random_gifts", type = "bool"},
     [3]  = {name = "ttt2_giftwrap_replace_snuffles_gift", type = "bool"},
-    [4]  = {name = "ttt2_giftwrap_second_gift_chance", type = "float"},
-    [5]  = {name = "ttt2_giftwrap_second_gift_chance_xmas", type = "float"},
-    [6]  = {name = "ttt2_giftwrap_third_gift_chance", type = "float"},
-    [7]  = {name = "ttt2_giftwrap_third_gift_chance_xmas", type = "float"},
-    [8]  = {name = "ttt2_giftwrap_timezone_offset", type = "float"},
-    [9]  = {name = "ttt2_giftwrap_prop_weight", type = "float"},
-    [10] = {name = "ttt2_giftwrap_floor_weight", type = "float"},
-    [11] = {name = "ttt2_giftwrap_special_weight", type = "float"},
-    [12] = {name = "ttt2_giftwrap_shop_weight", type = "float"},
+    [4]  = {name = "ttt2_giftwrap_timezone_offset", type = "float"},
+    [5]  = {name = "ttt2_giftwrap_all_served_chime_vol", type = "float"},
+    [6]  = {name = "ttt2_giftwrap_second_gift_chance", type = "float"},
+    [7]  = {name = "ttt2_giftwrap_second_gift_chance_xmas", type = "float"},
+    [8]  = {name = "ttt2_giftwrap_third_gift_chance", type = "float"},
+    [9]  = {name = "ttt2_giftwrap_third_gift_chance_xmas", type = "float"},
+    [10] = {name = "ttt2_giftwrap_match_playercount", type = "float"},
+    [11] = {name = "ttt2_giftwrap_match_playercount_xmas", type = "float"},
+
+    [12] = {name = "ttt2_giftwrap_prop_weight", type = "float"},
+    [13] = {name = "ttt2_giftwrap_floor_weight", type = "float"},
+    [14] = {name = "ttt2_giftwrap_special_weight", type = "float"},
+    [15] = {name = "ttt2_giftwrap_shop_weight", type = "float"},
 }
 
 local function AddRemovePrereq(args)

@@ -17,10 +17,18 @@ local HOOK_RELOAD_SOUNDS     = "TTT_GiftWrap_ReloadSounds"
 local WRAPPED_GIFT_REMOVE    = "TTT_GiftWrap_WrappedGiftRemove"
 local GIFTWRAP_REMOVE        = "TTT_GiftWrap_XMasBeaconRemove"
 
+local TIMEZONE_OFFSET_HOURS       = CreateConVar("ttt2_giftwrap_timezone_offset", "0",           GW_CVAR_FLAGS, "Adjusts the timezone used for determining whether it's Christmas (offset in hours).", -24, 24)
+local SECOND_GIFT_CHANCE          = CreateConVar("ttt2_giftwrap_second_gift_chance", "0.5",      GW_CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced.", 0, 1)
+local THIRD_GIFT_CHANCE           = CreateConVar("ttt2_giftwrap_third_gift_chance", "0.4",       GW_CVAR_FLAGS, "Chance for a third random gift spawn if a second one spawned.", 0, 1)
+local SECOND_GIFT_CHANCE_XMAS     = CreateConVar("ttt2_giftwrap_second_gift_chance_xmas", "0.9", GW_CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced, on Christmas specifically.", 0, 1)
+local THIRD_GIFT_CHANCE_XMAS      = CreateConVar("ttt2_giftwrap_third_gift_chance_xmas", "0.6",  GW_CVAR_FLAGS, "Chance for a third random gift spawn if a second one spawned, on Christmas specifically.", 0, 1)
+local GIFT_MATCH_PLAYERCOUNT      = CreateConVar("ttt2_giftwrap_match_playercount", "0.15",      GW_CVAR_FLAGS, "Chance for as many gifts to spawn as there are players (overriding other chance logic).", 0, 1)
+local GIFT_MATCH_PLAYERCOUNT_XMAS = CreateConVar("ttt2_giftwrap_match_playercount_xmas", "0.66", GW_CVAR_FLAGS, "Chance for as many gifts to spawn as there are players (overriding other chance logic), on Christmas specifically.", 0, 1)
+
 local GW_REGMETASWEP = GW_REGMETASWEP or SWEP
 local GW_METASWEP    = SWEP
 
-GW_sound = {
+local sounds = {
     swing           = Sound("Weapon_Crowbar.Single"),
     wrapping        = Sound("giftwrap/wrapping.mp3"),
     unwrap          = Sound("giftwrap/opening.mp3"),
@@ -34,7 +42,6 @@ GW_sound = {
     throw           = Sound("giftwrap/throw.mp3"),
     pop             = Sound("garrysmod/balloon_pop_cute.wav"),
 }
-local sounds = GW_sound
 
 ----------------------------------
 --- SERVER REALM SETUP / HOOKS ---
@@ -52,10 +59,25 @@ if SERVER then
     util.PrecacheModel(GIFT_VIEWMODEL)
     util.PrecacheModel(GIFT_WORLDMODEL)
 
+    -- reset "opened gift" states & determine random gift spawn parameters
     hook.Add("TTTBeginRound", HOOK_ROUND_RESET_OPENS, function()
         for _, ply in ipairs(player.GetAll()) do
             ply:SetNWBool("OpenedRandomGift", false)
         end
+
+        local adjTime = os.time(os.date("!*t")) + (TIMEZONE_OFFSET_HOURS:GetFloat() * 3600)
+        local dayOfYear = tonumber(os.date("!%j", adjTime))
+
+        isChristmas = (dayOfYear == XMAS_DAY)
+        GW_secondGiftChance = (isChristmas and SECOND_GIFT_CHANCE_XMAS or SECOND_GIFT_CHANCE):GetFloat()
+        GW_thirdGiftChance  = (isChristmas and THIRD_GIFT_CHANCE_XMAS or THIRD_GIFT_CHANCE):GetFloat()
+
+        local mpcrChance = (isChristmas and GIFT_MATCH_PLAYERCOUNT_XMAS or GIFT_MATCH_PLAYERCOUNT):GetFloat()
+        GW_matchPlayerCountRound = (math.random() <= mpcrChance)
+
+        dbg.Log("Day of Year:", dayOfYear, "; Hour", os.date("!%H", adjTime),
+            "; Christmas:", isChristmas, "; matched playercount round:", GW_matchPlayerCountRound,
+            "; second gift chance:", GW_secondGiftChance, "; third gift chance:", GW_thirdGiftChance)
     end)
 
     function GetWrapConstraint(ent)
@@ -862,6 +884,19 @@ elseif CLIENT then
             serverConvar = "ttt2_giftwrap_replace_snuffles_gift",
             label = "label_giftwrap_replace_snuffles_gift"
         })
+        formRNGift:MakeSlider({
+            serverConvar = "ttt2_giftwrap_timezone_offset",
+            label = "label_giftwrap_timezone_offset",
+            min = -24, max = 24, decimal = 0
+        })
+        formRNGift:MakeHelp({
+            label = "label_giftwrap_all_served_chime_vol_desc"
+        })
+        formRNGift:MakeSlider({
+            serverConvar = "ttt2_giftwrap_all_served_chime_vol",
+            label = "label_giftwrap_all_served_chime_vol",
+            min = 0, max = 100, decimal = 0
+        })
         formRNGift:MakeHelp({
             label = "label_giftwrap_bonus_gifts_desc"
         })
@@ -885,10 +920,18 @@ elseif CLIENT then
             label = "label_giftwrap_third_gift_chance_xmas",
             min = 0, max = 1, decimal = 2
         })
+        formRNGift:MakeHelp({
+            label = "label_giftwrap_match_playercount_desc"
+        })
         formRNGift:MakeSlider({
-            serverConvar = "ttt2_giftwrap_timezone_offset",
-            label = "label_giftwrap_timezone_offset",
-            min = -24, max = 24, decimal = 0
+            serverConvar = "ttt2_giftwrap_match_playercount",
+            label = "label_giftwrap_match_playercount",
+            min = 0, max = 1, decimal = 2
+        })
+        formRNGift:MakeSlider({
+            serverConvar = "ttt2_giftwrap_match_playercount_xmas",
+            label = "label_giftwrap_match_playercount_xmas",
+            min = 0, max = 1, decimal = 2
         })
         formRNGift:MakeHelp({
             label = "label_giftwrap_weights_desc"

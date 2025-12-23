@@ -9,13 +9,9 @@ local TREE_FOUND_MSG            = "TTT_GiftWrap_TreeFoundMsg"
 local dbg   = GW_DBG
 local utils = GW_Utils
 
-local ENABLE_RANDOM           = CreateConVar("ttt2_giftwrap_enable_random_gifts", "1",       GW_CVAR_FLAGS, "Whether to spawn random gifts when Snuffles' YoWaddup Fixes presents are found.", 0, 1)
-local REPLACE_SNUFFLES_GIFT   = CreateConVar("ttt2_giftwrap_replace_snuffles_gift", "1",     GW_CVAR_FLAGS, "Whether random gifts from Gift Wrap replace (rather than add to) naturally spawning gifts from Snuffles' YoWaddup General Fixes addon.", 0, 1)
-local SECOND_GIFT_CHANCE      = CreateConVar("ttt2_giftwrap_second_gift_chance", "0.5",      GW_CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced.", 0, 1)
-local THIRD_GIFT_CHANCE       = CreateConVar("ttt2_giftwrap_third_gift_chance", "0.4",       GW_CVAR_FLAGS, "Chance for a third random gift spawn if a second one spawned.", 0, 1)
-local SECOND_GIFT_CHANCE_XMAS = CreateConVar("ttt2_giftwrap_second_gift_chance_xmas", "0.9", GW_CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced, on Christmas specifically.", 0, 1)
-local THIRD_GIFT_CHANCE_XMAS  = CreateConVar("ttt2_giftwrap_third_gift_chance_xmas", "0.6",  GW_CVAR_FLAGS, "Chance for a third random gift spawn if a second one spawned, on Christmas specifically.", 0, 1)
-local TIMEZONE_OFFSET_HOURS   = CreateConVar("ttt2_giftwrap_timezone_offset", "0",           GW_CVAR_FLAGS, "Adjusts the timezone used for determining whether it's Christmas (offset in hours).", -24, 24)
+local ENABLE_RANDOM         = CreateConVar("ttt2_giftwrap_enable_random_gifts", "1",    GW_CVAR_FLAGS, "Whether to spawn random gifts when Snuffles' YoWaddup Fixes presents are found.", 0, 1)
+local REPLACE_SNUFFLES_GIFT = CreateConVar("ttt2_giftwrap_replace_snuffles_gift", "1",  GW_CVAR_FLAGS, "Whether random gifts from Gift Wrap replace (rather than add to) naturally spawning gifts from Snuffles' YoWaddup General Fixes addon.", 0, 1)
+local FULL_XMAS_CHIME_VOL   = CreateConVar("ttt2_giftwrap_all_served_chime_vol", "80", GW_CVAR_FLAGS, "Volume of the chime sound effect that plays from YoWaddup Christmas trees when as many gifts spawn as there are players at round start.", 0, 100)
 
 ENT.Type = "anim"
 ENT.PrintName = "Gift"
@@ -24,6 +20,11 @@ ENT.Purpose = "Gift from TTT2 Gift Wrap. Holds a random trinket!"
 ENT.Category = "Utility"
 ENT.Spawnable = true -- for sandbox ig
 ENT.Author = "Guy"
+
+local sounds = {
+    bells1 = Sound("giftwrap/tf2_nm_bells1.wav"),
+    bells2 = Sound("giftwrap/tf2_nm_bells2.wav"),
+}
 
 local normalDescriptionLines = {
     "Have you been a good terrorist this year?",
@@ -83,7 +84,8 @@ function ENT:OnTakeDamage(dmgInfo)
         local attackerOpenedRandomGift = attacker:GetNWBool("OpenedRandomGift")
         local inflictor = dmgInfo:GetInflictor()
 
-        if utils.IsLivingPlayer(attacker) and inflictor and inflictor:GetClass() == "weapon_zm_improvised" then
+        if utils.IsLivingPlayer(attacker) and inflictor
+          and (inflictor:GetClass() == "weapon_zm_improvised" or inflictor:GetClass() == "weapon_ttt_inf_fists") then
             if attacker:SteamID64() == self:GetWrapperSID() then
                 utils.NonSpamMessage(attacker, "OpenAttempt", "You can't open your own gift.")
 
@@ -222,6 +224,31 @@ if SERVER then
         end
     end
 
+    local function GetWorldGiftPropCount()
+        local count = 0
+
+        for _, ent in ipairs(ents.GetAll()) do
+            if IsValid(ent) and ent:GetClass() == PROP_CLASS_NAME then
+                count = count + 1
+            end
+        end
+
+        return count
+    end
+
+    -- filters out spectators (including sourceTV hopefully)
+    function GetLivingPlayerPool()
+        local livingPlayers = {}
+
+        for _, ply in ipairs(player.GetAll()) do
+            if ply:GetRole() ~= ROLE_NONE and utils.IsLivingPlayer(ply) then
+                table.insert(livingPlayers, ply)
+            end
+        end
+
+        return livingPlayers
+    end
+
     -- spawn random gifts next to / instead of Snuffles gifts
     hook.Add("OnEntityCreated", HOOK_GIFTWRAP_ENT_SPAWN, function(ent)
         if IsValid(ent) and ENABLE_RANDOM:GetBool() then
@@ -231,34 +258,30 @@ if SERVER then
                     return
                 end
 
-                local adjTime = os.time(os.date("!*t")) + (TIMEZONE_OFFSET_HOURS:GetFloat() * 3600)
-                local dayOfYear = tonumber(os.date("!%j", adjTime))
-
-                local isChristmas = (dayOfYear == XMAS_DAY)
-                local secondGiftChance = (isChristmas and SECOND_GIFT_CHANCE_XMAS or SECOND_GIFT_CHANCE):GetFloat()
-                local thirdGiftChance = (isChristmas and THIRD_GIFT_CHANCE_XMAS or THIRD_GIFT_CHANCE):GetFloat()
-
-                dbg.Log("Day of Year:", dayOfYear, "; Hour", os.date("!%H", adjTime), "; Christmas:", isChristmas,
-                        "; second gift chance:", secondGiftChance, "; third gift chance:", thirdGiftChance)
-
                 timer.Simple(0.1, function()
-                    local giftCnt = 1
+                    local worldGiftCnt = GetWorldGiftPropCount()
+                    local realPlayerCnt = #GetLivingPlayerPool()
 
-                    if math.random() <= secondGiftChance then
-                        if math.random() <= thirdGiftChance then
+                    if not GW_matchPlayerCountRound and worldGiftCnt < realPlayerCnt then
+                        local giftCnt = 1
+
+                        if math.random() <= GW_secondGiftChance then
+                            if math.random() <= GW_thirdGiftChance then
+                                giftCnt = giftCnt + 1
+                            end
+
                             giftCnt = giftCnt + 1
                         end
+                        giftCnt = math.min(giftCnt, realPlayerCnt - worldGiftCnt)
+                        dbg.Log("Spawning "..tostring(giftCnt).." gifts.")
 
-                        giftCnt = giftCnt + 1
-                    end
-                    dbg.Log("Spawning "..tostring(giftCnt).." gifts.")
-
-                    for i = 1, giftCnt do
-                        newGift = ents.Create(PROP_CLASS_NAME)
-                        newGift:SetPos(ent:GetPos() + Vector(0, 0, 100))
-                        newGift:SetIsRandomGift(true)
-                        newGift:SetWrapperSID("WORLD")
-                        newGift:Spawn()
+                        for i = 1, giftCnt do
+                            local newGift = ents.Create(PROP_CLASS_NAME)
+                            newGift:SetPos(ent:GetPos() + Vector(0, 0, 100))
+                            newGift:SetIsRandomGift(true)
+                            newGift:SetWrapperSID("WORLD")
+                            newGift:Spawn()
+                        end
                     end
 
                     if REPLACE_SNUFFLES_GIFT:GetBool() then
@@ -266,7 +289,7 @@ if SERVER then
                     end
                 end)
 
-            -- setup UI indicator for placing gift near tree
+            -- setup UI indicator for placing gift near tree & do matched player count rounds
             elseif ent:GetClass() == "prop_dynamic" then
                 timer.Simple(0.1, function()
                     if ent:GetModel() == SNUFFLE_TREE_MODEL then
@@ -278,6 +301,46 @@ if SERVER then
                             Vector(-50, -50, 0),
                             Vector(50,   50, 125)
                         )
+
+                        -- play chime from tree if full xmas (everyone can get a gift)
+                        timer.Simple(1, function()
+                            if IsValid(christmasTree) and GetWorldGiftPropCount() >= #GetLivingPlayerPool() then
+                                local bellSFX = math.random() < 0.33 and "bells1" or "bells2"
+                                christmasTree:BroadcastSound(sounds[bellSFX], 0, math.random(95, 105), FULL_XMAS_CHIME_VOL:GetFloat()/100) -- everyone hears
+
+                                dbg.Log("Full Christmas round - Played SFX: "..bellSFX..".")
+                            end
+                        end)
+
+                        -- spawn as many gifts as there are players if special round procced
+                        if GW_matchPlayerCountRound then
+                            local treePos = christmasTree:GetPos()
+                            local realPlayers = GetLivingPlayerPool()
+                            dbg.Log("Special round - Placing "..#realPlayers.." gifts.")
+
+                            -- TODO label each gift as being meant for their associated player
+                            for i, ply in ipairs(realPlayers) do
+                                local overPrevious = (math.random() < 0.2 and -1 or 0)
+                                local angle = math.rad(((i + overPrevious) / #realPlayers) * 360)
+                                local distance = math.random(55, 60)
+                                local presentPos = treePos + Vector(math.cos(angle) * distance, math.sin(angle) * distance, 0)
+
+                                -- Trace down to find ground for gift
+                                local tr = util.TraceLine({
+                                    start = presentPos + Vector(0, 0, 50),
+                                    endpos = presentPos - Vector(0, 0, 100),
+                                    --mask = MASK_SOLID
+                                })
+
+                                local newGift = ents.Create(PROP_CLASS_NAME)
+                                newGift:SetIsRandomGift(true)
+                                newGift:SetWrapperSID("WORLD")
+                                newGift:SetPos(tr.HitPos + Vector(0, 0, overPrevious and 150 or 75))
+                                newGift:SetAngles(Angle(0, angle, 0))
+                                newGift:Spawn()
+                                dbg.Log("Spawned gift for "..ply:Nick().."! (angle "..tostring(angle)..")")
+                            end
+                        end
 
                         net.Start(TREE_FOUND_MSG)
                         net.WriteEntity(christmasTree)
@@ -352,7 +415,7 @@ elseif CLIENT then
                 --    tData:AddDescriptionLine("You can unwrap another one next round!")
 
                 else
-                    tData:AddDescriptionLine("Can also open with crowbar.")
+                    tData:AddDescriptionLine("Can also open with melee attack.")
                     tData:AddDescriptionLine(normalDescriptionLines[ent:GetDescriptionLine()])
                 end
             end

@@ -1729,15 +1729,20 @@ function GiftData:IsSpawnable(giftee)
             return false
 
         elseif self.special_setup == "pap_setup" then
+            local foundCrowbar = false
+
             for _, wep in ipairs(giftee:GetWeapons()) do
                 if IsValid(wep) and wep:GetClass() == "weapon_zm_improvised" then
                     if wep.PAPUpgrade ~= nil then
                         return false
                     else
+                        foundCrowbar = true
                         break
                     end
                 end
             end
+
+            if not foundCrowbar then return false end
         end
     end
 
@@ -2107,7 +2112,7 @@ function GiftData:Spawn(giftee)
     return false
 end
 
--- cf. excel sheet in addon resources (GitHub)
+-- cf. formulas sheet (link in GitHub readme)
 function CalcQualityScale(dayOfYear, score)
     if not dayOfYear then dayOfYear = tonumber(os.date("%j")) end
 
@@ -2123,7 +2128,7 @@ function CalcQualityScale(dayOfYear, score)
     return xmasFactor + scoreFactor
 end
 
--- cf. excel sheet in addon resources (GitHub)
+-- cf. formulas sheet (link in GitHub readme)
 function GiftData:CalcWeight(qualityScale)
     if not self.can_be_random_gift then return 0 end
     if not qualityScale then
@@ -2215,7 +2220,6 @@ function GetCategoryWeightBreakdown(qualityScale)
             elseif category == GiftCategory.SENT or category == GiftCategory.NPC then
                 breakdown.SENTCnt = breakdown.SENTCnt + 1
                 breakdown.SENTWeight = breakdown.SENTWeight + giftWeight
-                print(label, giftWeight)
             end
         end
     end
@@ -2268,6 +2272,8 @@ function GetRandomGiftData(giftee)
 end
 
 function GetGiftDataFromLabel(giftLabel)
+    if not giftLabel then return nil end
+
     for label, giftData in pairs(giftDataCatalog) do
         if label == giftLabel then
             return giftData
@@ -2362,6 +2368,7 @@ function GetEntGiftData(ent)
 
     -- Generating placeholder data from entity attributes
     dbg.Log("Could not find gift data for "..tostring(ent).."; generating placeholder...")
+    dbg.Log("=> Model path: ", ent:GetModel())
     local placeholderData = GiftData.New({})
     local placeholderLabel = "gift_ent_"..tostring(ent:EntIndex())
     placeholderData.identifier = entIdentifier
