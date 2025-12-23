@@ -651,7 +651,7 @@ local giftDataCatalog = {
         name     = "Gangster's Judgement", desc       = "the Gangster's gun",
         category = GiftCategory.WorldSWEP, identifier = "weapon_gangstersjudge",
         can_be_random_gift = true,
-        factor_rarity = 3, factor_quality = 3,
+        factor_rarity = 5, factor_quality = 3,
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Sterile,  attrib_feel = GiftFeel.Cursed,
     },
