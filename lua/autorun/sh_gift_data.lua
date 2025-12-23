@@ -53,7 +53,7 @@ GiftSound = {
     Whooshing  = {snd="", desc="like it's whooshing"},
     Pulsing    = {snd="", desc="like it's pulsing"},
     Muffled    = {snd="", desc="muffled"}, --TODO: check for use on things other than duct tape + silenced guns
-    Train      = {snd="", desc="chugging along"},
+    Train      = {snd="", desc="like it's chugging along"},
     None       = nil -- should maybe see more use
 }
 
@@ -328,12 +328,13 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Food,     attrib_feel = GiftFeel.Alive,
     },
     chomik = GiftData.New {
-        name     = "Chomik",          desc       = "a Chomik",
+        name     = "Chomik",          desc       = "a collectible",
         category = GiftCategory.SENT, identifier = "ttt_chomik",
         can_be_random_gift = true,
-        factor_rarity = 5, factor_quality = 0,
+        factor_rarity = 2, factor_quality = -1,
         attrib_sound = GiftSound.Muffled, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Random,
+        up_vel = 400, up_min = 0, up_max = 2,
     },
     kfc = GiftData.New {
         name     = "KFC Bucket",      desc       = "a bucket o' chicken",
@@ -641,14 +642,16 @@ local giftDataCatalog = {
     fulton = GiftData.New {
         name     = "Fulton",               desc       = "an air lift",
         category = GiftCategory.WorldSWEP, identifier = "terror_fulton",
-        can_be_random_gift = false,
+        can_be_random_gift = true,
+        factor_rarity = 2, factor_quality = 4,
         attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Leather,   attrib_feel = GiftFeel.Round,
     },
     gangsters = GiftData.New {
         name     = "Gangster's Judgement", desc       = "the Gangster's gun",
         category = GiftCategory.WorldSWEP, identifier = "weapon_gangstersjudge",
-        can_be_random_gift = false,
+        can_be_random_gift = true,
+        factor_rarity = 3, factor_quality = 3,
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Sterile,  attrib_feel = GiftFeel.Cursed,
     },
@@ -706,7 +709,8 @@ local giftDataCatalog = {
     id_disguise = GiftData.New {
         name     = "Identity Disguiser",   desc       = "a disguise kit",
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_identity_disguiser",
-        can_be_random_gift = false,
+        can_be_random_gift = true,
+        factor_rarity = 5, factor_quality = 7,
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Rusty,    attrib_feel = GiftFeel.Sharp,
     },
@@ -1056,8 +1060,8 @@ local giftDataCatalog = {
         category = GiftCategory.Item, identifier = "item_ttt_glider",
         can_be_random_gift = true,
         factor_rarity = 1, factor_quality = 6,
-        attrib_sound = GiftSound.Rustling, attrib_size = GiftSize.Huge,
-        attrib_smell = GiftSmell.Leather,  attrib_feel = GiftFeel.Sturdy,
+        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Rubbery,   attrib_feel = GiftFeel.Sturdy,
     },
     pog_instant = GiftData.New { -- weird bug (og addon): will always try giving you a pap upgrade if holding something that doesn't have one lol
         name     = "Pot of Greedier (Instant)", desc       = "Pot of Greed, which lets you draw two additional gifts from your deck",
@@ -1350,7 +1354,7 @@ local deployableSWEPs = {
 
     hwapoon = GiftData.New {name = "Hwapoon", desc = "a harpoon", 
                SWEP_category = GiftCategory.AutoEquipSWEP,
-               SENT_setup_var = {k = "set_owner"},
+               SENT_setup_var = {k = "set_owner"}, --TODO DOUBLE CHECK WRAPPING THE ENT WORKS
                SENT_id = "hwapoon_arrow", SWEP_id = "weapon_ttt_hwapoon",
                SENT_random = false, SWEP_random = false,
                sound = GiftSound.Metallic, smell = GiftSmell.Rusty, feel = GiftFeel.Long},
@@ -1366,7 +1370,7 @@ local deployableSWEPs = {
                SENT_id = "ttt_id_swap_grenade_proj", SWEP_id = "weapon_ttt_identity_swap_grenade",
                SENT_setup = "grenade",
                SENT_random = true, SENT_rarity = 4, SENT_quality = -1,
-               SWEP_random = true, SWEP_rarity = 6, SWEP_quality = 1,
+               SWEP_random = true, SWEP_rarity = 3, SWEP_quality = 1,
                sound = GiftSound.Thudding, smell = GiftSmell.Gunpowder, feel = GiftFeel.RealityWarp},
 
     incend  = {name = "Incendiary Grenade", desc = "a fiery grenade",

@@ -634,9 +634,7 @@ if SERVER then
         -- Chat Notif
         if giftEnt ~= false then
             if giftObj:GetIsRandomGift() then
-                if giftData.factor_rarity and giftData.factor_rarity >= 5
-                  and giftData.factor_quality and giftData.factor_quality > 0
-                  and math.random() <= 0.8 then
+                if giftData.factor_rarity and giftData.factor_rarity >= 5 then
                     gifteePly:ChatPrint(superRare[math.random(#superRare)])
 
                 elseif giftData.factor_quality then
