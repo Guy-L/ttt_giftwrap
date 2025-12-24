@@ -1544,7 +1544,7 @@ local deployableSWEPs = {
     turret  = {name = "Turret", desc = "a next-gen turret",
                SENT_category = GiftCategory.NPC,
                SENT_id = "npc_turret_floor", SWEP_id = "weapon_ttt_turret",
-               SENT_setup_var = {k = "stick_to_ground"},
+               SENT_setup_var = {{k = "stick_to_ground"}, {k = "keep_motion"}},
                SENT_random = true, SENT_rarity = 4, SENT_quality = -8,
                SWEP_random = false,
                sound = GiftSound.Beeping, smell = GiftSmell.Sterile, feel = GiftFeel.Moving},
@@ -1935,7 +1935,7 @@ function GiftData:ApplyPostUnwrapAdjustments(giftEnt, giftee)
     if self.stick_to_ground then
         local phys = giftEnt:GetPhysicsObject()
         if IsValid(phys) then
-            phys:EnableMotion(false)
+            phys:EnableMotion(self.keep_motion == true)
         end
 
         if not giftEnt:IsOnGround() then
