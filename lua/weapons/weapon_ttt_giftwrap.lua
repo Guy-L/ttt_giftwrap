@@ -197,7 +197,8 @@ if SERVER then
           and ent:GetModel() == SNUFFLE_TREE_MODEL then
             local wep = ply:GetActiveWeapon()
 
-            if utils.IsGiftWrap(wep) and wep:HeldByWrapper(ply) then
+            if utils.IsGiftWrap(wep) and wep:HeldByWrapper(ply)
+              and (not ply.LastGiftPlace or CurTime() > ply.LastGiftPlace + 1) then
                  -- not really sure why I wanted these not to be retrievable, odd
                 local giftProp = wep:MakePropCopy(false)
 
@@ -217,6 +218,7 @@ if SERVER then
                 giftProp:Spawn()
                 wep:Remove()
                 ply:EmitSound(sounds["pop"], 75, math.random(90, 120))
+                ply.LastGiftPlace = CurTime() -- wep:Remove() can apparently fail to immediately mean the owner doesn't hold it on real servers, so this is needed
             end
         end
     end)
@@ -366,6 +368,7 @@ function SWEP:SetupDataTables()
     if CLIENT then
         self:NetworkVarNotify("StoredGift", function(name, old, new)
             timer.Simple(0.1, function() -- value isn't changed yet
+                if not IsValid(self) then return end
                 self:UpdateUI("storage update")
                 self:UpdateModel("storage update")
                 self:UpdateMarkerVision("storage update")
