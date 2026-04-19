@@ -850,7 +850,9 @@ elseif CLIENT then
         dbg.Log("Clearing viewmodel colors for "..ply:Nick().." ("..reason..")")
 
         if IsValid(vm) then
-            ClearGiftColors(vm)
+            timer.Simple(0.1, function()
+                ClearGiftColors(vm)
+            end)
             vm._gwColorsApplied = false
         end
     end

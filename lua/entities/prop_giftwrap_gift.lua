@@ -75,7 +75,10 @@ function ENT:Initialize()
 
     elseif CLIENT then
         self:UpdateScale(self:GetGiftScale())
-        SetGiftColors(self, self:GetGiftBoxHue(), self:GetGiftRibbonHue())
+        self:SyncColors()
+
+        self._spawning = true -- bs to make sync work on real servers
+        timer.Simple(1, function() self._spawning = false end)
     end
 end
 
@@ -158,6 +161,11 @@ function ENT:SetupDataTables()
     end)
 end
 
+
+
+----------------------------------
+----- SERVER REALM SENT DEFS -----
+----------------------------------
 if SERVER then
     AddCSLuaFile()
     util.AddNetworkString(TREE_FOUND_MSG)
@@ -373,14 +381,26 @@ if SERVER then
 
 
 
-
-
+----------------------------------
+----- CLIENT REALM SENT DEFS -----
+----------------------------------
 elseif CLIENT then
     local matTreeIcon = Material("vgui/ttt/marker_vision/c4")
 
     net.Receive(TREE_FOUND_MSG, function()
         christmasTree = net.ReadEntity()
     end)
+
+    function ENT:SyncColors(delay)
+        if not delay then
+            SetGiftColors(self, self:GetGiftBoxHue(), self:GetGiftRibbonHue())
+
+        else
+            timer.Simple(delay, function()
+                self:SyncColors()
+            end)
+        end
+    end
 
     hook.Add("TTT2RenderMarkerVisionInfo", HOOK_GIFTWRAP_MARKER_UI, function(mvData)
         local ent = mvData:GetEntity()
@@ -456,6 +476,15 @@ elseif CLIENT then
             end
         end
     end)
+
+    -- ugly; unfortunately needed to work on external servers
+    function ENT:Draw()
+        if self._spawning then
+            self:SyncColors()
+        end
+
+        self:DrawModel()
+    end
 end
 
 dbg.Log("(prop) Initialized gift entity Lua")
