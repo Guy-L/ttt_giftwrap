@@ -14,6 +14,7 @@ local HOOK_GIFTWRAP_TREE_USE = "TTT_GiftWrap_UseTree"
 local HOOK_ANGLE_CORRECTION  = "TTT_GiftWrap_CorrectGiftAngle"
 local HOOK_ROUND_RESET_OPENS = "TTT_GiftWrap_ResetOpenedRandomGiftCounts"
 local HOOK_RELOAD_SOUNDS     = "TTT_GiftWrap_ReloadSounds"
+local HOOK_RESET_VM_COLORS   = "TTT_GiftWrap_ResetVMColors"
 local WRAPPED_GIFT_REMOVE    = "TTT_GiftWrap_WrappedGiftRemove"
 local GIFTWRAP_REMOVE        = "TTT_GiftWrap_XMasBeaconRemove"
 
@@ -335,7 +336,7 @@ function SWEP:UpdateModel(reason)
     if vmChange then
         local owner = self:GetOwner()
 
-        -- note: the GetViewModel function existance check is for Doppelganger lol
+        -- note: the GetViewModel function existence check is for Doppelganger lol
         if IsValid(owner) and owner.GetViewModel then 
             self:SetModel(self.ViewModel)
             self:ResetSequenceInfo()
@@ -361,6 +362,8 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Bool", 0, "IsOpening")
     self:NetworkVar("Bool", 1, "IsShaking")
     self:NetworkVar("Bool", 2, "IsRandomGift")
+    self:NetworkVar("Float", 0, "GiftBoxHue")
+    self:NetworkVar("Float", 1, "GiftRibbonHue")
     self:NetworkVar("String", 0, "WrapperSID")
     self:NetworkVar("String", 1, "CachedDataLabel")
     self:NetworkVar("Entity", 0, "StoredGift")
@@ -415,7 +418,7 @@ function SWEP:PrimaryAttack()
 
     else
         if self:OwnedByWrapper(owner) then -- Throw gift prop
-            if SERVER then self:Throw(owner) end
+            self:Throw(owner)
 
         else -- Try to open gift
             local ownerOpenedRandomGift = owner:GetNWBool("OpenedRandomGift")
@@ -423,7 +426,7 @@ function SWEP:PrimaryAttack()
             -- Throw if not allowed due to opening a second random gift
             if ownerOpenedRandomGift and self:GetIsRandomGift() and not dbg.Cvar:GetBool() then
                 utils.NonSpamMessage(owner, "OpenAttempt", ERROR_ALREADY_OPENED)
-                if SERVER then self:Throw(owner) end
+                self:Throw(owner)
 
             else -- Open gift
                 if SERVER then
@@ -523,6 +526,35 @@ function SWEP:Deploy()
     end
 end
 
+function SWEP:Throw(owner, force)
+    if not owner then owner = self:GetOwner() end
+    if not IsValid(owner) then return end
+
+    if SERVER then
+        local giftProp = self:MakePropCopy(false)
+        if not IsValid(giftProp) then return end
+        giftProp:SetPos(owner:GetShootPos())
+        giftProp:Spawn()
+
+        local phys = giftProp:GetPhysicsObject()
+        if IsValid(phys) then
+            if not force then force = 800 end
+            local throwVel = owner:GetAimVector()
+            --throwVel.z = 0.3 -- hardlock trajectory vertically
+            throwVel = throwVel * force
+
+            phys:SetVelocity(throwVel)
+            phys:AddAngleVelocity(Vector(500, 0, 0))
+        end
+
+        self:Remove()
+        owner:EmitSound(sounds["throw"], 75, math.random(90, 120))
+
+    elseif CLIENT then
+        ClearVMColors(owner, "throw")
+    end
+end
+
 ----------------------------------
 ----- SERVER REALM SWEP DEFS -----
 ----------------------------------
@@ -573,7 +605,7 @@ if SERVER then
         end
     end
 
-    local superRare   = {
+    local superRare = {
         "You got a super rare item!",
         "You pulled a super rare!",
         "You found a super rare gift!",
@@ -728,32 +760,10 @@ if SERVER then
         giftProp:SetStoredGift(self:GetStoredGift())
         giftProp:SetCachedDataLabel(self:GetCachedDataLabel())
         giftProp:SetNotRetrievable(notRetrievable)
+        giftProp:SetGiftBoxHue(self:GetGiftBoxHue())
+        giftProp:SetGiftRibbonHue(self:GetGiftRibbonHue())
 
         return giftProp
-    end
-
-    function SWEP:Throw(owner, force)
-        if not owner then owner = self:GetOwner() end
-        if not IsValid(owner) then return end
-
-        local giftProp = self:MakePropCopy(false)
-        if not IsValid(giftProp) then return end
-        giftProp:SetPos(owner:GetShootPos())
-        giftProp:Spawn()
-
-        local phys = giftProp:GetPhysicsObject()
-        if IsValid(phys) then
-            if not force then force = 800 end
-            local throwVel = owner:GetAimVector()
-            --throwVel.z = 0.3 -- hardlock trajectory vertically
-            throwVel = throwVel * force
-
-            phys:SetVelocity(throwVel)
-            phys:AddAngleVelocity(Vector(500, 0, 0))
-        end
-
-        self:Remove()
-        owner:EmitSound(sounds["throw"], 75, math.random(90, 120))
     end
 
     function SWEP:Reload()
@@ -787,6 +797,11 @@ if SERVER then
             self:SetWrapperSID(owner:SteamID64())
             self:SetStoredGift(ent)
 
+            local boxHue = math.random(0, 360)
+            local ribbonHue = (boxHue + (math.random() <= 0.25 and math.random(180-50, 180+50) or 50)) % 360
+            self:SetGiftBoxHue(boxHue)
+            self:SetGiftRibbonHue(ribbonHue)
+
             GetCachedGiftData(self):ApplyOnWrapAdjustments(ent)
             ent:CallOnRemove(WRAPPED_GIFT_REMOVE, function()
                 if IsValid(self) and IsValid(owner) then
@@ -805,6 +820,41 @@ if SERVER then
 ----- CLIENT REALM SWEP DEFS -----
 ----------------------------------
 elseif CLIENT then
+    function SWEP:PostDrawViewModel(vm, weapon, ply)
+        if self:HasGift() then
+            if not vm._gwColorsApplied then
+                SetGiftColors(vm, self:GetGiftBoxHue(), self:GetGiftRibbonHue())
+                vm._gwColorsApplied = true
+            end
+
+        else
+            vm._gwColorsApplied = false
+            ClearGiftColors(vm)
+        end
+    end
+
+    function ClearVMColors(ply, reason)
+        if not IsValid(ply) then return end
+
+        local vm = ply:GetViewModel()
+        if not vm._gwColorsApplied then return end
+        dbg.Log("Clearing viewmodel colors for "..ply:Nick().." ("..reason..")")
+
+        if IsValid(vm) then
+            ClearGiftColors(vm)
+            vm._gwColorsApplied = false
+        end
+    end
+
+    hook.Add("Think", HOOK_RESET_VM_COLORS, function()
+        local ply = LocalPlayer()
+        if not IsValid(ply) then return end
+
+        if not utils.IsGiftWrap(ply:GetActiveWeapon()) then
+            ClearVMColors(ply, "watchdog hook")
+        end
+    end)
+
     function SWEP:UpdateUI(reason)
         dbg.Log("Updating UI... ("..reason..")")
 
@@ -863,6 +913,7 @@ elseif CLIENT then
 
     function SWEP:Holster()
         self:UpdateMarkerVision("holster")
+        ClearVMColors(self:GetOwner(), "holster")
     end
 
     function SWEP:AddToSettingsMenu(parent)

@@ -67,12 +67,15 @@ function ENT:Initialize()
         self:SetAngles(Angle(90, math.random(0, 360), 0))
         self.LastUprightCheck = CurTime()
         self.UprightCheckFreq = 2
+
         self:SetGiftScale(scale)
         self:UpdateScale(scale)
+
         self:SetDescriptionLine(math.random(#normalDescriptionLines))
 
     elseif CLIENT then
         self:UpdateScale(self:GetGiftScale())
+        SetGiftColors(self, self:GetGiftBoxHue(), self:GetGiftRibbonHue())
     end
 end
 
@@ -129,12 +132,16 @@ end
 function ENT:SetupDataTables()
     self:NetworkVar("Float", 0, "GiftScale")
     self:NetworkVar("Float", 1, "GroundPitch")
+    self:NetworkVar("Float", 2, "GiftBoxHue")
+    self:NetworkVar("Float", 3, "GiftRibbonHue")
     self:NetworkVar("Int", 0, "DescriptionLine")
-    self:NetworkVar("Bool", 0, "NotRetrievable")
 
+    self:NetworkVar("Bool", 0, "NotRetrievable")
     self:NetworkVar("Bool", 1, "IsRandomGift")
+
     self:NetworkVar("String", 0, "WrapperSID")
     self:NetworkVar("String", 1, "CachedDataLabel")
+
     self:NetworkVar("Entity", 0, "StoredGift")
 
     self:NetworkVarNotify("GroundPitch", function(ent, name, old, new)
@@ -219,6 +226,8 @@ if SERVER then
             newGift:SetWrapperSID(self:GetWrapperSID())
             newGift:SetStoredGift(self:GetStoredGift())
             newGift:SetCachedDataLabel(self:GetCachedDataLabel())
+            newGift:SetGiftBoxHue(self:GetGiftBoxHue())
+            newGift:SetGiftRibbonHue(self:GetGiftRibbonHue())
 
             activator:PickupWeapon(newGift)
             activator:SelectWeapon(SWEP_CLASS_NAME)
@@ -359,6 +368,12 @@ if SERVER then
     hook.Add("TTTBeginRound", HOOK_ROUND_START_TIME, function()
         utils.RoundStartTime = CurTime()
     end)
+
+
+
+
+
+
 
 elseif CLIENT then
     local matTreeIcon = Material("vgui/ttt/marker_vision/c4")

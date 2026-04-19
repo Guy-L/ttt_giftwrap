@@ -1407,7 +1407,7 @@ local deployableSWEPs = {
                SWEP_random = false,
                sound = GiftSound.Beeping, smell = GiftSmell.Gunpowder, feel = GiftFeel.Round},
 
-    m4_slam  = {name = "M4 Slam", desc = "a wall-mounted explosive",
+    m4_slam  = {name = "M4 Slam", desc = "a SLAM",
                SENT_id = "ttt_slam_satchel", SWEP_id = "weapon_ttt_slam",
                SENT_setup = "slam_setup",
                SENT_random = false, SWEP_random = false,
@@ -1419,7 +1419,7 @@ local deployableSWEPs = {
                SENT_random = false, SWEP_random = false,
                sound = GiftSound.Splashing, smell = GiftSmell.Oily, feel = GiftFeel.Hot},
 
-    moon_grenade = {name = "Moon Grenade", desc = "a bag of marbles from the Moon",
+    moon_grenade = {name = "Moon Grenade", desc = "a bag of marbles",
                SENT_id = "ent_moongrenade", SWEP_id = "weapon_ttt_moongrenade",
                SENT_setup = "moon_grenade_setup",
                SENT_random = true, SENT_rarity = 2, SENT_quality = -3,
