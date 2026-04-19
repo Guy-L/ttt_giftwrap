@@ -333,6 +333,14 @@ function SWEP:UpdateModel(reason)
         self:SetHoldType("physgun")
     end
 
+    if CLIENT then
+        if self:HasGift() then
+            SetGiftColors(self, self:GetGiftBoxHue(), self:GetGiftRibbonHue())
+        else
+            ClearGiftColors(self)
+        end
+    end
+
     if vmChange then
         local owner = self:GetOwner()
 
@@ -797,6 +805,7 @@ if SERVER then
             self:SetWrapperSID(owner:SteamID64())
             self:SetStoredGift(ent)
 
+            -- Determine color for wrap
             local boxHue = math.random(0, 360)
             local ribbonHue = (boxHue + (math.random() <= 0.25 and math.random(180-50, 180+50) or 50)) % 360
             self:SetGiftBoxHue(boxHue)
