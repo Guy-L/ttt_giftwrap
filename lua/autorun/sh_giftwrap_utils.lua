@@ -3,7 +3,7 @@ GW_DBG.Cvar = CreateConVar("ttt2_giftwrap_debug", 0, {FCVAR_NOTIFY, FCVAR_ARCHIV
 
 function GW_DBG.Inspect(obj)
     if not GW_DBG.Cvar:GetBool() then return end
-    GW_DBG.Log(obj, type(obj))
+    GW_DBG.Log(obj, ", of type "..type(obj))
 
     if obj then
         if type(obj) == "table" then
@@ -12,26 +12,39 @@ function GW_DBG.Inspect(obj)
         elseif obj.GetTable and obj:GetTable() then
             PrintTable(obj:GetTable())
         end
+
+        local meta = getmetatable(obj)
+        if meta then
+            print("Metatable found:")
+            PrintTable(meta)
+        else
+            print("No metatable")
+        end
    end
 end
 
-function GW_DBG.InspectUI(el, ind)
+function GW_DBG.InspectUI(el, ind, depthLimit)
     if not GW_DBG.Cvar:GetBool() then return end
 
     if not ind then ind = 0 end
+    if not depthLimit then depthLimit = 999 end
     local indS = string.rep("  ", ind)
     local class = el:GetClassName()
 
-    if class == "Panel" then
-        GW_DBG.Log(indS.."Panel "..el:GetName().." (#"..#el:GetChildren().." elements)", el)
-        for _, c in ipairs(el:GetChildren()) do
-            DebugInspectUI(c, ind + 1)
+    if class == "Panel" or el.GetChildren then
+        GW_DBG.Log(indS.."Panel "..el:GetName().." (#"..#el:GetChildren().." elements)", el, el:GetSize())
+        if ind < depthLimit then
+            for _, c in ipairs(el:GetChildren()) do
+                GW_DBG.InspectUI(c, ind + 1, depthLimit)
+            end
         end
 
     elseif class == "Label" then
         GW_DBG.Log(indS.."Label "..el:GetName()..": \""..el:GetText().."\"", el)
-        for _, c in ipairs(el:GetChildren()) do
-            DebugInspectUI(c, ind + 1)
+        if ind < depthLimit then
+            for _, c in ipairs(el:GetChildren()) do
+                GW_DBG.InspectUI(c, ind + 1, depthLimit)
+            end
         end
 
     else
@@ -118,6 +131,14 @@ function GW_Utils.GetEntChildAt(ent, i)
 
     if #children >= i then
         return children[i]
+    end
+end
+
+function GW_Utils.GetChildNamed(panel, name)
+    for _, el in ipairs(panel:GetChildren()) do
+        if el:GetName() == name then
+            return el
+        end
     end
 end
 
@@ -237,7 +258,6 @@ function GW_Utils.DumpAllModelPaths()
     file.Write("all_models.txt", table.concat(out, "\n"))
     GW_DBG.Log("Saved dump to all_models.txt.")
 end
-
 
 
 

@@ -7,8 +7,10 @@ local utils = GW_Utils
 local WRAP_NAME = "Gift Wrap"
 local GIFT_NAME = "Gift"
 
+GIFTWRAP_DROP_CONT_MSG = "TTT_GiftWrap_DropContentRequest"
 local GIFTWRAP_PICKUP_MSG    = "TTT_GiftWrap_PickUpMsg"
 local GIFTWRAP_HL_CHAT_MSG   = "TTT_GiftWrap_HighlightChatMsg"
+local GIFTWRAP_GIFT_DATA_MSG = "TTT_GiftWrap_SendWrapperData"
 local HOOK_GIFTWRAP_PICKUP   = "TTT_GiftWrap_PickUp"
 local HOOK_GIFTWRAP_TREE_USE = "TTT_GiftWrap_UseTree"
 local HOOK_ANGLE_CORRECTION  = "TTT_GiftWrap_CorrectGiftAngle"
@@ -55,6 +57,8 @@ if SERVER then
 
     util.AddNetworkString(GIFTWRAP_PICKUP_MSG)
     util.AddNetworkString(GIFTWRAP_HL_CHAT_MSG)
+    util.AddNetworkString(GIFTWRAP_GIFT_DATA_MSG)
+    util.AddNetworkString(GIFTWRAP_DROP_CONT_MSG)
     util.PrecacheModel(WRAP_VIEWMODEL)
     util.PrecacheModel(WRAP_WORLDMODEL)
     util.PrecacheModel(GIFT_VIEWMODEL)
@@ -311,6 +315,9 @@ function SWEP:Initialize() --on buy
         self:CallOnRemove(GIFTWRAP_REMOVE, function(goneSelf)
             goneSelf:UpdateMarkerVision("swep removal")
         end)
+
+    elseif SERVER then
+        RollGiftColors(self)
     end
 
     return self.BaseClass.Initialize(self)
@@ -335,7 +342,7 @@ function SWEP:UpdateModel(reason)
 
     if CLIENT then
         if self:HasGift() then
-            SetGiftColors(self, self:GetGiftBoxHue(), self:GetGiftRibbonHue())
+            SetGiftColors(self, self:GetGiftBoxColor(), self:GetGiftRibbonColor())
         else
             ClearGiftColors(self)
         end
@@ -370,8 +377,8 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Bool", 0, "IsOpening")
     self:NetworkVar("Bool", 1, "IsShaking")
     self:NetworkVar("Bool", 2, "IsRandomGift")
-    self:NetworkVar("Float", 0, "GiftBoxHue")
-    self:NetworkVar("Float", 1, "GiftRibbonHue")
+    self:NetworkVar("Int", 0, "GiftBoxColor")
+    self:NetworkVar("Int", 1, "GiftRibbonColor")
     self:NetworkVar("String", 0, "WrapperSID")
     self:NetworkVar("String", 1, "CachedDataLabel")
     self:NetworkVar("Entity", 0, "StoredGift")
@@ -387,8 +394,22 @@ function SWEP:SetupDataTables()
                 if not self:HasGift() and not self:GetIsOpening() then
                     self:EmitSound(sounds["undo_wrap"], 150, math.random(90, 110))
                 end
+
+                if IsValid(HELPSCRN._contentMenu) then
+                    HELPSCRN._contentMenu:Clear()
+                    DoContentsMenu(HELPSCRN._contentMenu)
+                end
             end)
         end)
+
+        local function InvalidateVMColor(name, old, new)
+            local ply = LocalPlayer()
+            if not IsValid(ply) then return end
+            ply:GetViewModel()._gwColorsApplied = false
+        end
+
+        self:NetworkVarNotify("GiftBoxColor", InvalidateVMColor)
+        self:NetworkVarNotify("GiftRibbonColor", InvalidateVMColor)
     end
 end
 
@@ -460,20 +481,13 @@ end
 
 function SWEP:SecondaryAttack()
     if self:GetIsOpening() then return end
+    local owner = self:GetOwner()
+    if not owner then return end
 
-    if self:OwnedByWrapper() then -- gift options
-        if dbg.Cvar:GetBool() then
-            self:SetWrapperSID("WORLD") --DEBUG
-            if CLIENT then self:UpdateUI("debug") end
+    if not self:HasGift() or self:OwnedByWrapper() then -- gift options
+        if CLIENT then OpenGiftOptions(self) end
 
-        elseif SERVER then
-            local owner = self:GetOwner()
-            if not owner then return end
-
-            utils.NonSpamMessage(owner, "RMBAttempt", "No options yet. Coming soon! (TM)")
-        end
-
-    elseif self:HasGift() and not self:GetIsShaking() then -- shake
+    elseif not self:GetIsShaking() then -- shake
         self:EmitSound(sounds["generic_shake"], 100, math.random(95, 105))
         self:SendWeaponAnim(ACT_VM_SECONDARYATTACK)
 
@@ -482,9 +496,6 @@ function SWEP:SecondaryAttack()
             timer.Simple(1.25, function() 
                 if IsValid(self) then self:SetIsShaking(false) end
             end)
-
-            local owner = self:GetOwner()
-            if not owner then return end
 
             local cachedData = GetCachedGiftData(self, owner)
             local firstPart, secondPart, thirdPart = cachedData:Inspect()
@@ -680,6 +691,8 @@ if SERVER then
         end
 
         -- Chat Notif
+        local giftDesc = giftData:GetDesc(giftEnt, gifteePly)
+
         if giftEnt ~= false then
             if giftObj:GetIsRandomGift() then
                 if giftData.factor_rarity and giftData.factor_rarity >= 5 then
@@ -697,13 +710,13 @@ if SERVER then
 
             net.Start(GIFTWRAP_HL_CHAT_MSG)
             net.WriteString("You unwrapped ")
-            net.WriteString(giftData:GetDesc(giftEnt, gifteePly))
+            net.WriteString(giftDesc)
             net.WriteString("!")
             net.Send(gifteePly)
         else
             net.Start(GIFTWRAP_HL_CHAT_MSG)
             net.WriteString("You were meant to unwrap ")
-            net.WriteString(giftData.desc .. " (" .. giftData.name ..")")
+            net.WriteString(giftDesc .. " (" .. giftData:GetName() ..")")
             net.WriteString(", but it couldn't be spawned.")
             net.Send(gifteePly)
             return
@@ -768,8 +781,8 @@ if SERVER then
         giftProp:SetStoredGift(self:GetStoredGift())
         giftProp:SetCachedDataLabel(self:GetCachedDataLabel())
         giftProp:SetNotRetrievable(notRetrievable)
-        giftProp:SetGiftBoxHue(self:GetGiftBoxHue())
-        giftProp:SetGiftRibbonHue(self:GetGiftRibbonHue())
+        giftProp:SetGiftBoxColor(self:GetGiftBoxColor())
+        giftProp:SetGiftRibbonColor(self:GetGiftRibbonColor())
 
         return giftProp
     end
@@ -780,13 +793,20 @@ if SERVER then
         if self:OwnedByWrapper(owner) and not self:GetIsOpening() and not self:GetIsRandomGift() then
             local giftData = GetCachedGiftData(self, owner)
 
-            if giftData.category == GiftCategory.SENT or giftData.category == GiftCategory.NPC then
-                utils.NonSpamMessage(owner, "ReloadAttempt", "Undoing wrap for special entities is currently disabled as a precaution.")
-            else
+            if not giftData:IsDropBlocked() then
                 self:DropContents()
+            else
+                utils.NonSpamMessage(owner, "ReloadAttempt", "Undoing wrap for special entities is currently disabled as a precaution.")
             end
         end
     end
+
+    net.Receive(GIFTWRAP_DROP_CONT_MSG, function(len, ply)
+        local giftEnt = net.ReadEntity()
+        if not IsValid(giftEnt) then return end
+
+        giftEnt:Reload()
+    end)
 
     function SWEP:Wrap(ent)
         dbg.Log("Wrap attempt on:", ent)
@@ -805,13 +825,15 @@ if SERVER then
             self:SetWrapperSID(owner:SteamID64())
             self:SetStoredGift(ent)
 
-            -- Determine color for wrap
-            local boxHue = math.random(0, 360)
-            local ribbonHue = (boxHue + (math.random() <= 0.25 and math.random(180-50, 180+50) or 50)) % 360
-            self:SetGiftBoxHue(boxHue)
-            self:SetGiftRibbonHue(ribbonHue)
+            local newLabel, newData = GetEntGiftData(ent)
+            self:SetCachedDataLabel(newLabel)
+            newData:ApplyOnWrapAdjustments(ent)
 
-            GetCachedGiftData(self):ApplyOnWrapAdjustments(ent)
+            net.Start(GIFTWRAP_GIFT_DATA_MSG)
+            net.WriteString(newLabel)
+            net.WriteTable(newData)
+            net.Send(owner)
+
             ent:CallOnRemove(WRAPPED_GIFT_REMOVE, function()
                 if IsValid(self) and IsValid(owner) then
                     local invGiftWrap = utils.GetInventoryGiftwrap(owner)
@@ -821,6 +843,7 @@ if SERVER then
                     end
                 end
             end)
+
             self:UpdateModel("wrapped gift")
         end
     end
@@ -832,7 +855,7 @@ elseif CLIENT then
     function SWEP:PostDrawViewModel(vm, weapon, ply)
         if self:HasGift() then
             if not vm._gwColorsApplied then
-                SetGiftColors(vm, self:GetGiftBoxHue(), self:GetGiftRibbonHue())
+                SetGiftColors(vm, self:GetGiftBoxColor(), self:GetGiftRibbonColor())
                 vm._gwColorsApplied = true
             end
 
@@ -893,6 +916,13 @@ elseif CLIENT then
         end
     end
 
+    net.Receive(GIFTWRAP_GIFT_DATA_MSG, function(len, ply)
+        local label = net.ReadString()
+        local giftData = NewGiftData(net.ReadTable())
+
+        AddToGiftCatalog(label, giftData)
+    end)
+
     local TREE_COLOR = Color(15, 155, 10)
     function SWEP:UpdateMarkerVision(reason)
         if christmasTree then
@@ -925,6 +955,38 @@ elseif CLIENT then
     function SWEP:Holster()
         self:UpdateMarkerVision("holster")
         ClearVMColors(self:GetOwner(), "holster")
+    end
+
+    function OpenGiftOptions(gw)
+        local frameWidth  = 800
+        local frameHeight = 500
+        local navWidth = 175
+
+        dbg.Log("Opening gift options...")
+        HELPSCRN._gwRef = gw -- Make gift reference global for menu (bad but idk)
+
+        for _, menu in ipairs(menusIndexed) do
+            if menu.type == "gift_opt" then
+                menu = table.Copy(menu)
+                HELPSCRN:ShowMainMenu()
+                HELPSCRN:ShowSubmenu(menu)
+
+                -- Change window size & remove back button
+                local frame = HELPSCRN.menuFrame
+                frame:SetSize(frameWidth, frameHeight)
+                frame:Center()
+                frame:ShowBackButton(false)
+
+                -- Adjust layout for smaller window size
+                utils.GetChildNamed(frame, "DNavPanelTTT2"):SetWide(navWidth)
+                local content = utils.GetChildNamed(frame, "DContentPanelTTT2")
+                local contentScroll = utils.GetChildNamed(content, "DScrollPanelTTT2")
+                contentScroll:SetWide(frameWidth - navWidth)
+                contentScroll:SetTall(frameHeight - vskin.GetHeaderHeight() - vskin.GetBorderSize() - 10)
+
+                break
+            end
+        end
     end
 
     function SWEP:AddToSettingsMenu(parent)

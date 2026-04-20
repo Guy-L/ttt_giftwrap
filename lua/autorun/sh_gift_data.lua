@@ -1106,8 +1106,14 @@ local giftDataCatalog = {
 }
 
 -- defined explicitly for use by other addons
+function NewGiftData(tbl)
+    return GiftData.New(tbl)
+end
+
 function AddToGiftCatalog(label, giftData)
-    giftDataCatalog[label] = giftData
+    if not giftDataCatalog[label] then
+        giftDataCatalog[label] = giftData
+    end
 end
 
 GunType = {
@@ -1779,6 +1785,10 @@ function GiftData:IsSpawnable(giftee)
     return false
 end
 
+function GiftData:IsDropBlocked()
+    return self.category == GiftCategory.SENT or self.category == GiftCategory.NPC
+end
+
 function GiftData:ApplyOnWrapAdjustments(giftEnt)
     if self.break_constraints then
         constraint.RemoveAll(giftEnt)
@@ -2079,6 +2089,16 @@ function GiftData:GetDesc(giftEnt, giftee)
     return self.desc
 end
 
+function GiftData:GetName()
+    if self.special_setup then
+        if self.special_setup == "gift_setup" then
+            return "Wrapped Gift"
+        end
+    end
+
+    return self.name
+end
+
 function GiftData:Spawn(giftee)
     if self:IsSpawnable(giftee) then
         local category   = self.category
@@ -2376,6 +2396,7 @@ function GetEntGiftData(ent)
     local placeholderData = GiftData.New({})
     local placeholderLabel = "gift_ent_"..tostring(ent:EntIndex())
     placeholderData.identifier = entIdentifier
+    placeholderData.autoGen    = true
 
     -- Find & set name if available
     local name = "gift"
@@ -2391,8 +2412,14 @@ function GetEntGiftData(ent)
         end
     end
 
-    placeholderData.name = name
-    placeholderData.desc = "a " .. name
+    if name == "gift" then
+        placeholderData.name = string.match(string.StripExtension(ent:GetModel()), "[^/\\]+$")
+        placeholderData.desc = "a " .. name
+
+    else
+        placeholderData.name = name
+        placeholderData.desc = "a " .. name
+    end
 
     -- Set sound/smell/feel from material
     placeholderData.attrib_sound = GiftSound.None
@@ -2501,16 +2528,18 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
     --timer.Simple(5, FixClutterbombLight)
 
     -- Fix for Pot of Greedier not defaulting to Detective shop for non-shopping role pots
-    PotOfGreedier._OGGetEquipmentFunc = PotOfGreedier._OGGetEquipmentFunc or PotOfGreedier.GetEquipmentServerSided
-    --PotOfGreedier.GetEquipmentServerSided = PotOfGreedier._OGGetEquipmentFunc --restore
+    if PotOfGreedier then
+        PotOfGreedier._OGGetEquipmentFunc = PotOfGreedier._OGGetEquipmentFunc or PotOfGreedier.GetEquipmentServerSided
+        --PotOfGreedier.GetEquipmentServerSided = PotOfGreedier._OGGetEquipmentFunc --restore
 
-    PotOfGreedier.GetEquipmentServerSided = function(ply, subRole, noModification)
-        local subRoleData = utils.GetSubRoleData(subRole)
+        PotOfGreedier.GetEquipmentServerSided = function(ply, subRole, noModification)
+            local subRoleData = utils.GetSubRoleData(subRole)
 
-        if not subRoleData or not subRoleData:IsShoppingRole() then
-            return PotOfGreedier._OGGetEquipmentFunc(ply, ROLE_DETECTIVE, noModification)
-        else
-            return PotOfGreedier._OGGetEquipmentFunc(ply, subRole, noModification)
+            if not subRoleData or not subRoleData:IsShoppingRole() then
+                return PotOfGreedier._OGGetEquipmentFunc(ply, ROLE_DETECTIVE, noModification)
+            else
+                return PotOfGreedier._OGGetEquipmentFunc(ply, subRole, noModification)
+            end
         end
     end
 end)

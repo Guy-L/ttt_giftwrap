@@ -75,7 +75,7 @@ function ENT:Initialize()
 
     elseif CLIENT then
         self:UpdateScale(self:GetGiftScale())
-        self:SyncColors()
+        SyncGiftColors(self)
 
         self._spawning = true -- bs to make sync work on real servers
         timer.Simple(1, function() self._spawning = false end)
@@ -135,9 +135,9 @@ end
 function ENT:SetupDataTables()
     self:NetworkVar("Float", 0, "GiftScale")
     self:NetworkVar("Float", 1, "GroundPitch")
-    self:NetworkVar("Float", 2, "GiftBoxHue")
-    self:NetworkVar("Float", 3, "GiftRibbonHue")
     self:NetworkVar("Int", 0, "DescriptionLine")
+    self:NetworkVar("Int", 1, "GiftBoxColor")
+    self:NetworkVar("Int", 2, "GiftRibbonColor")
 
     self:NetworkVar("Bool", 0, "NotRetrievable")
     self:NetworkVar("Bool", 1, "IsRandomGift")
@@ -234,8 +234,8 @@ if SERVER then
             newGift:SetWrapperSID(self:GetWrapperSID())
             newGift:SetStoredGift(self:GetStoredGift())
             newGift:SetCachedDataLabel(self:GetCachedDataLabel())
-            newGift:SetGiftBoxHue(self:GetGiftBoxHue())
-            newGift:SetGiftRibbonHue(self:GetGiftRibbonHue())
+            newGift:SetGiftBoxColor(self:GetGiftBoxColor())
+            newGift:SetGiftRibbonColor(self:GetGiftRibbonColor())
 
             activator:PickupWeapon(newGift)
             activator:SelectWeapon(SWEP_CLASS_NAME)
@@ -391,17 +391,6 @@ elseif CLIENT then
         christmasTree = net.ReadEntity()
     end)
 
-    function ENT:SyncColors(delay)
-        if not delay then
-            SetGiftColors(self, self:GetGiftBoxHue(), self:GetGiftRibbonHue())
-
-        else
-            timer.Simple(delay, function()
-                self:SyncColors()
-            end)
-        end
-    end
-
     hook.Add("TTT2RenderMarkerVisionInfo", HOOK_GIFTWRAP_MARKER_UI, function(mvData)
         local ent = mvData:GetEntity()
         local mvObject = mvData:GetMarkerVisionObject()
@@ -480,7 +469,7 @@ elseif CLIENT then
     -- ugly; unfortunately needed to work on external servers
     function ENT:Draw()
         if self._spawning then
-            self:SyncColors()
+            SyncGiftColors(self)
         end
 
         self:DrawModel()

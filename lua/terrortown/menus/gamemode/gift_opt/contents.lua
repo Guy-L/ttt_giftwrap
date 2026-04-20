@@ -1,0 +1,217 @@
+--- @ignore
+CLGAMEMODESUBMENU.base  = "base_gamemodesubmenu"
+CLGAMEMODESUBMENU.title = "gift_opt_contents_title"
+
+local curcont_bg = Color(90, 90, 95, 255)
+local curcont_pad = 20
+
+local queuedSpawnIcons = {}
+local lastRequestingImg = nil
+
+local function GenerateSpawnIcon(model)
+    dbg.Log("Building icon for "..model.."...")
+
+    local wipSpawnIcon = vgui.Create("SpawnIcon")
+    wipSpawnIcon:SetModel(model)
+    wipSpawnIcon:RebuildSpawnIcon()
+    queuedSpawnIcons[model] = wipSpawnIcon
+end
+
+hook.Add("SpawniconGenerated", "TEST_GW_SPAWNICON", function(lastModel, imageName, modelsLeft)
+    if queuedSpawnIcons[lastModel] then
+        queuedSpawnIcons[lastModel]:Remove()
+        queuedSpawnIcons[lastModel] = nil
+
+        -- if still available, set the image of the lastRequesting canvas to the generated image
+        if IsValid(lastRequestingImg) then
+            local imgPath = "spawnicons/" .. string.StripExtension(lastModel) .. ".png"
+
+            if file.Exists("materials/" .. imgPath, "GAME") then
+                lastRequestingImg:SetImage(imgPath)
+            end
+        end
+    end
+end)
+
+function SetModelImage(dImage, ent)
+    if not IsValid(ent) then
+        dImage:SetImage("vgui/ttt/vskin/icon_cross")
+        return
+    end
+
+    local entModel = ent:GetModel()
+    local imgPath = "spawnicons/" .. string.StripExtension(entModel) .. ".png"
+
+    if file.Exists("materials/"..imgPath, "GAME") then
+        dImage:SetImage(imgPath)
+
+    else
+        dImage:SetImage("icon16/help.png")
+        lastRequestingImg = dImage
+        GenerateSpawnIcon(entModel)
+    end
+end
+
+function CreateCurrentContentsBox(storedEnt, giftData, parent)
+    local curContents = vgui.Create("DPanel", parent)
+    curContents:SetPaintBackground(true)
+    curContents:SetBackgroundColor(curcont_bg)
+    curContents.Paint = function(self, w, h)
+        surface.SetDrawColor(curcont_bg)
+        surface.DrawRect(0, 0, w, h)
+    end
+    curContents:Dock(TOP)
+    curContents:DockMargin(curcont_pad, curcont_pad, curcont_pad, curcont_pad)
+    curContents:SetTall(giftData and 150 or 100)
+
+    -- HEADER
+    local header = vgui.Create("DPanel", curContents)
+    header:Dock(TOP)
+    header:SetTall(30)
+
+    header.Paint = function(self, w, h)
+        surface.SetDrawColor(60, 60, 65, 255)
+        surface.DrawRect(0, 0, w, h)
+    end
+
+    local headerLabel = vgui.Create("DLabel", header)
+    headerLabel:Dock(LEFT)
+    headerLabel:DockMargin(10, 0, 0, 0)
+
+    headerLabel:SetFont("DermaDefaultBold")
+    headerLabel:SetText(LANG.TryTranslation("gift_opt_current_content"))
+    headerLabel:SizeToContents()
+    headerLabel:SetContentAlignment(4)
+
+    -- LEFT: image preview container
+    local imgPanel = vgui.Create("DPanel", curContents)
+    imgPanel:Dock(LEFT)
+    imgPanel:DockMargin(10, 10, 10, 10)
+    imgPanel.PerformLayout = function(self, w, h)
+        local size = h * 0.7
+        self:SetWide(size)
+        self:SetTall(size)
+    end
+    imgPanel.Paint = nil
+
+    local contentImg = vgui.Create("DImage", imgPanel)
+    contentImg:Dock(FILL)
+    SetModelImage(contentImg, storedEnt)
+    contentImg:SetKeepAspect(true)
+
+    -- RIGHT: info text container
+    local textPanel = vgui.Create("DPanel", curContents)
+    textPanel:Dock(FILL)
+    textPanel:DockPadding(5, 10, 10, 10)
+    textPanel.Paint = nil
+
+    local name = vgui.Create("DLabel", textPanel)
+    name:Dock(TOP)
+    name:SetFont("DermaLarge")
+    name:SetText(giftData and giftData:GetName() or "Nothing yet")
+    name:SetTall(30)
+
+    local desc
+    if giftData then
+        local giftDesc = giftData:GetDesc(storedEnt, LocalPlayer())
+        desc = FancyLine(textPanel, "It's ", giftDesc, giftData.autoGen and "! (auto-generated)" or "!")
+    else
+        desc = FancyLine(textPanel, "Go find something they'll ", "love", "!")
+    end
+    desc:SetTall(20)
+    desc:DockMargin(0, 0, 0, 4)
+    desc:SetWrap(true)
+
+    if giftData then
+        AttributeLine(textPanel, "sounds", giftData.attrib_sound and giftData.attrib_sound.desc or nil, "It doesn't make a distinct sound")
+        AttributeLine(textPanel, "feels",  giftData.attrib_feel, "Just holding it doesn't tell you much")
+        AttributeLine(textPanel, "smells", giftData.attrib_smell, "It doesn't smell like anything")
+    end
+end
+
+function FancyLine(parent, leftGrayText, whiteText, rightGrayText)
+    local line = vgui.Create("DPanel", parent)
+    line:Dock(TOP)
+
+    local leftPart = vgui.Create("DLabel", line)
+    leftPart:Dock(LEFT)
+    leftPart:SetText(leftGrayText)
+    leftPart:SetTextColor(Color(150, 150, 150))
+    leftPart:SizeToContents()
+
+    if whiteText then
+        local whitePart = vgui.Create("DLabel", line)
+        whitePart:Dock(LEFT)
+        whitePart:SetText(whiteText)
+        whitePart:SetTextColor(color_white)
+        whitePart:SizeToContents()
+    end
+
+    if rightGrayText then
+        local rightPart = vgui.Create("DLabel", line)
+        rightPart:Dock(LEFT)
+        rightPart:SetText(rightGrayText)
+        rightPart:SetTextColor(Color(150, 150, 150))
+        rightPart:SizeToContents()
+    end
+
+    line:SetTall(leftPart:GetTall())
+    return line
+end
+
+function AttributeLine(parent, verb, value, placeholder)
+    local attrLine
+
+    if value then
+        attrLine = FancyLine(parent, "→ It "..verb.." ", value, "...")
+    else
+        attrLine = FancyLine(parent, "→ "..placeholder.."...")
+    end
+
+    attrLine:SizeToContentsY()
+    attrLine:DockMargin(0, 0, 0, 2)
+
+    return attrLine
+end
+
+function CLGAMEMODESUBMENU:Populate(parent)
+    local gwRef = HELPSCRN._gwRef
+    HELPSCRN._contentMenu = parent
+
+    if not IsValid(gwRef) then
+        local error_line = vgui.Create("DLabel", parent)
+        error_line:SetPos(40, 40)
+        error_line:SetFont("DermaLarge")
+        error_line:SetText(LANG.TryTranslation("gift_opt_error"))
+        error_line:SizeToContents()
+        return
+    end
+
+    -----------------------------------------------
+    -- Current Contents ---------------------------
+    local giftEnt  = gwRef:GetStoredGift()
+    local giftData = GetGiftDataFromLabel(gwRef:GetCachedDataLabel())
+    CreateCurrentContentsBox(giftEnt, giftData, parent)
+
+    ------------------------------------------------
+    ---- Change Contents ---------------------------
+    local wrapForm = vgui.CreateTTT2Form(parent, "gift_opt_change_content_form")
+    local dropBtn = wrapForm:MakeButton({
+        label = "gift_opt_change_content_form_drop_desc",
+        buttonLabel = "gift_opt_change_content_form_drop",
+        OnClick = function(slf)
+            net.Start(GIFTWRAP_DROP_CONT_MSG)
+            net.WriteEntity(gwRef)
+            net.SendToServer()
+        end
+    })
+
+    if not IsValid(giftEnt) then
+        dropBtn:SetEnabled(false)
+        dropBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_content_form_drop_error_none"))
+
+    elseif giftData:IsDropBlocked() then
+        dropBtn:SetEnabled(false)
+        dropBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_content_form_drop_error_block"))
+    end
+end

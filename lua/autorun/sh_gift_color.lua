@@ -2,20 +2,34 @@ include("sh_giftwrap_utils.lua")
 local utils = GW_Utils
 local dbg   = GW_DBG
 
+GIFTWRAP_UPDATE_COLOR_MSG = "TTT_GiftWrap_UpdateColorMsg"
+GIFTWRAP_REROLL_COLOR_MSG = "TTT_GiftWrap_RerollColorMsg"
+
+function PackColor(c)
+    return bit.lshift(c.r, 16) + bit.lshift(c.g, 8) + c.b
+end
+
+function UnpackColor(i)
+    return Color(
+        bit.rshift(i, 16) % 256,
+        bit.rshift(i, 8) % 256,
+        i % 256
+    )
+end
+
 if CLIENT then
     -- Original box red:        Hue = 5,  Sat = 0.592, Bright = 0.906
     -- Original ribbons yellow: Hue = 53, Sat = 0.690, Bright = 0.906
     local giftMatCache = {}
 
-    function MakeGiftMaterial(baseMat, hue, sat, bright)
-        local key = baseMat .. "_" .. hue .. "_" .. sat .. "_" .. bright
+    function MakeGiftMaterial(baseMat, colorCode)
+        local key = baseMat .. "_" .. colorCode
         if giftMatCache[key] then
-            --dbg.Log("Using cached color for Hue = "..hue..", Sat = "..sat..", Bright = "..bright)
             return giftMatCache[key]
         end
 
-        local newColor = HSVToColor(hue, sat, bright)
-        dbg.Log("Making new color from Hue = "..hue..", Sat = "..sat..", Bright = "..bright)
+        local newColor = UnpackColor(colorCode)
+        dbg.Log("Making new color from Red = "..newColor.r..", Green = "..newColor.g..", Blue = "..newColor.b)
 
         local giftMat = CreateMaterial(
             "gift_" .. util.CRC(key),
@@ -36,16 +50,80 @@ if CLIENT then
         return giftMat
     end
 
-    function SetGiftColors(ent, boxHue, ribbonHue)
-        local boxMat = MakeGiftMaterial("models/ttt/giftwrap/box", boxHue, 0.592, 0.906)
-        local ribbonMat = MakeGiftMaterial("models/ttt/giftwrap/ribbons", ribbonHue, 0.690, 0.906)
+    function SetGiftColors(ent, boxColor, ribbonColor)
+        local boxMat = MakeGiftMaterial("models/ttt/giftwrap/box", boxColor)
+        local ribbonMat = MakeGiftMaterial("models/ttt/giftwrap/ribbons", ribbonColor)
 
         ent:SetSubMaterial(0, "!" .. ribbonMat:GetName())
         ent:SetSubMaterial(1, "!" .. boxMat:GetName())
+    end
+
+    function SyncGiftColors(ent, delay)
+        if not delay then
+            SetGiftColors(ent, ent:GetGiftBoxColor(), ent:GetGiftRibbonColor())
+
+        else
+            timer.Simple(delay, function()
+                ent:SyncColors()
+            end)
+        end
     end
 
     function ClearGiftColors(ent)
         ent:SetSubMaterial(0, "")
         ent:SetSubMaterial(1, "")
     end
+
+
+elseif SERVER then
+    util.AddNetworkString(GIFTWRAP_UPDATE_COLOR_MSG)
+    util.AddNetworkString(GIFTWRAP_REROLL_COLOR_MSG)
+
+    local hueBias = {
+        {min = 200, max = 280, reroll = 0.6}, -- blue/purple
+        {min = 60,  max = 120, reroll = 0.4}, -- orange to green
+    }
+
+    local function ShouldRerollHue(hue)
+        for _, range in ipairs(hueBias) do
+            if hue >= range.min and hue <= range.max then
+                if math.random() < range.reroll then
+                    return true
+                end
+            end
+        end
+        return false
+    end
+
+    function RollGiftColors(ent)
+        local boxHue
+
+        repeat
+            boxHue = math.random(0, 360)
+        until not ShouldRerollHue(boxHue)
+        local ribbonHue = (boxHue + (math.random() <= 0.25 and math.random(180-50, 180+50) or 50)) % 360
+
+        ent:SetGiftBoxColor(PackColor(HSVToColor(boxHue, 0.592, 0.906)))
+        ent:SetGiftRibbonColor(PackColor(HSVToColor(ribbonHue, 0.690, 0.906)))
+    end
+
+    net.Receive(GIFTWRAP_UPDATE_COLOR_MSG, function(len, ply)
+        local giftEnt  = net.ReadEntity()
+        local color    = net.ReadUInt(32)
+        local isRibbon = net.ReadBool()
+
+        if not IsValid(giftEnt) then return end
+        if isRibbon then
+            giftEnt:SetGiftRibbonColor(color)
+        else
+            giftEnt:SetGiftBoxColor(color)
+        end
+    end)
+
+    net.Receive(GIFTWRAP_REROLL_COLOR_MSG, function(len, ply)
+        local giftEnt = net.ReadEntity()
+        if not IsValid(giftEnt) then return end
+
+        RollGiftColors(giftEnt)
+    end)
 end
