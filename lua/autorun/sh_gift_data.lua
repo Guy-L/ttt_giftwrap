@@ -1110,10 +1110,8 @@ function NewGiftData(tbl)
     return GiftData.New(tbl)
 end
 
-function AddToGiftCatalog(label, giftData)
-    if not giftDataCatalog[label] then
-        giftDataCatalog[label] = giftData
-    end
+function UpdateCatalog(label, giftData)
+    giftDataCatalog[label] = giftData
 end
 
 GunType = {
@@ -1204,7 +1202,7 @@ for label, data in pairs(standardGuns) do
         end
     end
 
-    AddToGiftCatalog(label, GiftData.New {
+    UpdateCatalog(label, GiftData.New {
         name     = data.name, desc       = (data.an and "an " or "a ")..data.name,
         category = data.cat,  identifier = data.id,
         can_be_random_gift = data.random,
@@ -1477,7 +1475,7 @@ local deployableSWEPs = {
                sound = GiftSound.Revving, smell = GiftSmell.Rusty, feel = GiftFeel.Electric,
                SWEP_desc = "an RC car in a can"},
 
-    shellmet = {name = "Shellmet", desc = "a sparkling-new helmet",
+    shellmet = {name = "Shellmet", desc = "a shiny helmet",
                SWEP_category = GiftCategory.Item,
                SENT_setup = "shellmet_setup", SENT_setup_var = {k = "up_vel", v = 200},
                SENT_id = "ttt2_hat_shellmet", SWEP_id = "item_ttt2_shellmet",
@@ -1584,7 +1582,7 @@ for label, data in pairs(deployableSWEPs) do
     -- add SENT entry
     local SENTCategory = data.SENT_category or GiftCategory.SENT
 
-    AddToGiftCatalog(label, GiftData.New {
+    UpdateCatalog(label, GiftData.New {
         name     = "Live "..data.name, desc       = data.desc,
         category = SENTCategory,       identifier = data.SENT_id,
         can_be_random_gift = data.SENT_random,
@@ -1609,7 +1607,7 @@ for label, data in pairs(deployableSWEPs) do
     local SWEPDesc  = data.SWEP_desc or data.desc
     local SWEPSmell = data.SWEP_smell or data.smell
 
-    AddToGiftCatalog(label.."_item", GiftData.New {
+    UpdateCatalog(label.."_item", GiftData.New {
         name     = data.name,     desc       = SWEPDesc,
         category = SWEPCategory,  identifier = data.SWEP_id,
         can_be_random_gift = data.SWEP_random,
@@ -1643,7 +1641,7 @@ local resistances = {
 }
 
 for label, data in pairs(resistances) do
-    AddToGiftCatalog("no_"..label.."_dmg", GiftData.New {
+    UpdateCatalog("no_"..label.."_dmg", GiftData.New {
         name = "No "..data.type.." Damage", desc = "a resistance",
         category = GiftCategory.Item,       identifier = "item_ttt_no"..label.."dmg",
         can_be_random_gift = true,
@@ -1663,7 +1661,7 @@ local perks = {
 }
 
 for label, data in pairs(perks) do
-    AddToGiftCatalog(label, GiftData.New {
+    UpdateCatalog(label, GiftData.New {
         name     = data.name,                  desc       = data.adj.." cold one",
         category = GiftCategory.AutoEquipSWEP, identifier = "ttt_perk_"..label,
         can_be_random_gift = data.random,
@@ -2136,8 +2134,9 @@ function GiftData:Spawn(giftee)
     return false
 end
 
+
 -- cf. formulas sheet (link in GitHub readme)
-function CalcQualityScale(dayOfYear, score)
+function CalcQualityFactors(dayOfYear, score)
     if not dayOfYear then dayOfYear = tonumber(os.date("%j")) end
 
     local xmasDist = math.min(math.abs(XMAS_DAY - dayOfYear), 365 - math.abs(XMAS_DAY - dayOfYear))
@@ -2147,17 +2146,16 @@ function CalcQualityScale(dayOfYear, score)
     local r = (score + SCORE_INTERCEPT) / SCORE_PARA_MAX
     local scoreFactor = r * math.abs(r)
 
-    dbg.Log("Calculated quality scaler:", xmasFactor + scoreFactor)
+    dbg.Log("Calculated quality factors:")
     dbg.Log("Day", dayOfYear, "->", xmasFactor, "| Score", score, "->", scoreFactor)
-    return xmasFactor + scoreFactor
+    return xmasFactor, scoreFactor
 end
 
 -- cf. formulas sheet (link in GitHub readme)
-function GiftData:CalcWeight(qualityScale)
+function GiftData:CalcWeight(xmasFactor, scoreFactor)
     if not self.can_be_random_gift then return 0 end
-    if not qualityScale then
-        qualityScale = -XMAS_SUB + 0 --sum of defaults
-    end
+    if not xmasFactor then xmasFactor = -XMAS_SUB end
+    if not scoreFactor then scoreFactor = 0 end
 
     local category = self.category
     local categoryMult = 1
@@ -2177,40 +2175,46 @@ function GiftData:CalcWeight(qualityScale)
         categoryMult = SPECIAL_WEIGHT_MULT:GetFloat()
     end
 
-    local scaledQuality = ((self.factor_quality / QUALITY_MAX) * qualityScale + 1) / 2
-    return math.max(0, categoryMult * (scaledQuality / self.factor_rarity))
+    local scaledQuality = self.factor_quality / QUALITY_MAX
+    local qualityFactor = ((scaledQuality * scoreFactor) + (math.abs(scaledQuality) * xmasFactor) + 1) / 2
+    return math.max(0, categoryMult * (qualityFactor / self.factor_rarity))
 end
 
-function GetTotalWeight(qualityScale)
-    if not qualityScale then qualityScale = CalcQualityScale() end
+function GetTotalWeight(xmasFactor, scoreFactor)
+    if not xmasFactor or not scoreFactor then
+        xmasFactor, scoreFactor = CalcQualityFactors()
+    end
 
     local total = 0
     local count = 0
 
     for label, giftData in pairs(giftDataCatalog) do
-        --print(label, giftData.category)
-        total = total + giftData:CalcWeight(qualityScale)
+        total = total + giftData:CalcWeight(xmasFactor, scoreFactor)
         count = count + 1
     end
 
     return total, count
 end
 
-function GetPerGiftWeightBreakdown(qualityScale)
-    if not qualityScale then qualityScale = CalcQualityScale() end
+function GetPerGiftWeightBreakdown(xmasFactor, scoreFactor)
+    if not xmasFactor or not scoreFactor then
+        xmasFactor, scoreFactor = CalcQualityFactors()
+    end
 
     local breakdown = {}
 
     for label, giftData in pairs(giftDataCatalog) do
         breakdown[label.."_spawnable"] = giftData:IsSpawnable()
-        breakdown[label.."_weight"]    = giftData:CalcWeight(qualityScale)
+        breakdown[label.."_weight"]    = giftData:CalcWeight(xmasFactor, scoreFactor)
     end
 
     return breakdown
 end
 
-function GetCategoryWeightBreakdown(qualityScale)
-    if not qualityScale then qualityScale = CalcQualityScale() end
+function GetCategoryWeightBreakdown(xmasFactor, scoreFactor)
+    if not xmasFactor or not scoreFactor then
+        xmasFactor, scoreFactor = CalcQualityFactors()
+    end
 
     local breakdown = {}
     breakdown.propCnt    = 0
@@ -2225,7 +2229,7 @@ function GetCategoryWeightBreakdown(qualityScale)
     for label, giftData in pairs(giftDataCatalog) do
         if giftData.can_be_random_gift then
             local category = giftData.category
-            local giftWeight = giftData:CalcWeight(qualityScale)
+            local giftWeight = giftData:CalcWeight(xmasFactor, scoreFactor)
 
             if category == GiftCategory.PhysProp then
                 breakdown.propCnt = breakdown.propCnt + 1
@@ -2248,27 +2252,30 @@ function GetCategoryWeightBreakdown(qualityScale)
         end
     end
 
-    breakdown.totalWeight = GetTotalWeight(qualityScale)
+    breakdown.totalWeight = GetTotalWeight(xmasFactor, scoreFactor)
     return breakdown
 end
 
-function GetRandomGiftData(giftee)
+function GetRandomGiftData(giftee, scoreBonus)
     if dbg.Cvar:GetBool() and DEBUG_TEST_GIFT then
-        return DEBUG_TEST_GIFT, giftDataCatalog[DEBUG_TEST_GIFT]
+        return DEBUG_TEST_GIFT, giftDataCatalog[DEBUG_TEST_GIFT]:Furnish()
     end
 
     local score = 0
     if IsPlayer(giftee) then
         score = giftee:Frags()
     end
+    if scoreBonus then
+        score = score + scoreBonus
+    end
 
-    local dayOfYear = tonumber(os.date("%j"))
-    local qualityScale = CalcQualityScale(dayOfYear, score)
+    local dayOfYear = scoreBonus and XMAS_DAY or tonumber(os.date("%j"))
+    local xmasFactor, scoreFactor = CalcQualityFactors(dayOfYear, score)
 
     local totalWeight = 0
     for label, giftData in pairs(giftDataCatalog) do
         if giftData:IsSpawnable(giftee) then
-            giftData.cachedWeight = giftData:CalcWeight(qualityScale)
+            giftData.cachedWeight = giftData:CalcWeight(xmasFactor, scoreFactor)
         else
             giftData.cachedWeight = 0
         end
@@ -2286,13 +2293,58 @@ function GetRandomGiftData(giftee)
 
             if roll <= accum then
                 dbg.Log("Picked gift: "..label.." (weight: "..tostring(giftData.cachedWeight)..")")
-                return label, giftData
+                return label, giftData:Furnish()
             end
         end
     end
 
     dbg.Log("Failed to pick gift, defaulting to melon")
     return "melon", giftDataCatalog.melon
+end
+
+-- For things we can derive only server-side from gift data
+-- and might want later
+function GiftData:Furnish()
+    if self.category == GiftCategory.NPC and not self.npcModel then
+        local previewNPC = ents.Create(self.identifier)
+
+        if IsValid(previewNPC) then
+            previewNPC:Spawn()
+            self.npcModel = previewNPC:GetModel()
+            previewNPC:Remove()
+        end
+    end
+
+    return self
+end
+
+function GiftData:GetVisuals()
+    local category = self.category
+    if category == GiftCategory.PhysProp then
+        return self.identifier
+
+    elseif category == GiftCategory.SENT then
+         -- would rather get a Lua error here so I know if there's any other path to it (or any SENTs without a model)
+        local sent = scripted_ents.GetStored(self.identifier)
+        return sent.t.Model
+
+    elseif category == GiftCategory.NPC then
+        return self.npcModel --cached server-side (can't retrieve client-side afaik)
+
+    elseif category == GiftCategory.FloorSWEP or category == GiftCategory.WorldSWEP then
+        local swep = weapons.GetStored(self.identifier)
+        return swep.WorldModel
+
+    elseif category == GiftCategory.AutoEquipSWEP then
+        local swep = weapons.GetStored(self.identifier)
+        return swep.material, true
+
+    elseif category == GiftCategory.Item then
+        local item = items.GetStored(self.identifier)
+        return item.material, true
+    end
+
+    return nil
 end
 
 function GetGiftDataFromLabel(giftLabel)

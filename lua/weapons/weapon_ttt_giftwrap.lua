@@ -7,7 +7,8 @@ local utils = GW_Utils
 local WRAP_NAME = "Gift Wrap"
 local GIFT_NAME = "Gift"
 
-GIFTWRAP_DROP_CONT_MSG = "TTT_GiftWrap_DropContentRequest"
+GIFTWRAP_DROP_CONT_MSG   = "TTT_GiftWrap_DropContentRequest"
+GIFTWRAP_REQ_RANDOM_GIFT = "TTT_GiftWrap_RandomContentRequest"
 local GIFTWRAP_PICKUP_MSG    = "TTT_GiftWrap_PickUpMsg"
 local GIFTWRAP_HL_CHAT_MSG   = "TTT_GiftWrap_HighlightChatMsg"
 local GIFTWRAP_GIFT_DATA_MSG = "TTT_GiftWrap_SendWrapperData"
@@ -59,6 +60,7 @@ if SERVER then
     util.AddNetworkString(GIFTWRAP_HL_CHAT_MSG)
     util.AddNetworkString(GIFTWRAP_GIFT_DATA_MSG)
     util.AddNetworkString(GIFTWRAP_DROP_CONT_MSG)
+    util.AddNetworkString(GIFTWRAP_REQ_RANDOM_GIFT)
     util.PrecacheModel(WRAP_VIEWMODEL)
     util.PrecacheModel(WRAP_WORLDMODEL)
     util.PrecacheModel(GIFT_VIEWMODEL)
@@ -384,6 +386,13 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Entity", 0, "StoredGift")
 
     if CLIENT then
+        local function UpdateActiveContentMenu()
+            if IsValid(HELPSCRN._contentMenu) then
+                HELPSCRN._contentMenu:Clear()
+                DoContentsMenu(HELPSCRN._contentMenu)
+            end
+        end
+
         self:NetworkVarNotify("StoredGift", function(name, old, new)
             timer.Simple(0.1, function() -- value isn't changed yet
                 if not IsValid(self) then return end
@@ -395,10 +404,14 @@ function SWEP:SetupDataTables()
                     self:EmitSound(sounds["undo_wrap"], 150, math.random(90, 110))
                 end
 
-                if IsValid(HELPSCRN._contentMenu) then
-                    HELPSCRN._contentMenu:Clear()
-                    DoContentsMenu(HELPSCRN._contentMenu)
-                end
+                UpdateActiveContentMenu()
+            end)
+        end)
+
+        self:NetworkVarNotify("IsRandomGift", function(name, old, new)
+            timer.Simple(0.1, function()
+                self:UpdateUI("randomness update")
+                UpdateActiveContentMenu()
             end)
         end)
 
@@ -848,6 +861,34 @@ if SERVER then
         end
     end
 
+    net.Receive(GIFTWRAP_REQ_RANDOM_GIFT, function(len, ply)
+        local giftEnt = net.ReadEntity()
+        if not IsValid(giftEnt) then return end
+        dbg.Log("Random gift request by "..ply:Nick())
+
+        if ply:GetCredits() > 0 then
+            local newLabel, newData = GetRandomGiftData(ply, 20)
+            giftEnt:SetIsRandomGift(true)
+            giftEnt:SetCachedDataLabel(newLabel)
+            giftEnt:SetWrapperSID(ply:SteamID64())
+
+            -- Note: I have no clue why I need to do this for the colors
+            --       to update properly and I hate it (TODO clean up?)
+            ply:SelectWeapon('weapon_zm_improvised')
+            timer.Simple(0.1, function()
+                ply:SelectWeapon('weapon_ttt_giftwrap')
+            end)
+
+            -- Send table data update, just in case
+            net.Start(GIFTWRAP_GIFT_DATA_MSG)
+            net.WriteString(giftEnt:GetCachedDataLabel())
+            net.WriteTable(newData)
+            net.Send(ply)
+
+            ply:AddCredits(-1)
+        end
+    end)
+
 ----------------------------------
 ----- CLIENT REALM SWEP DEFS -----
 ----------------------------------
@@ -920,7 +961,7 @@ elseif CLIENT then
         local label = net.ReadString()
         local giftData = NewGiftData(net.ReadTable())
 
-        AddToGiftCatalog(label, giftData)
+        UpdateCatalog(label, giftData)
     end)
 
     local TREE_COLOR = Color(15, 155, 10)

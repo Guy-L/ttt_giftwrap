@@ -1,6 +1,8 @@
 --- @ignore
 CLGAMEMODESUBMENU.base  = "base_gamemodesubmenu"
 CLGAMEMODESUBMENU.title = "gift_opt_contents_title"
+local utils = GW_Utils
+local dbg   = GW_DBG
 
 local curcont_bg = Color(90, 90, 95, 255)
 local curcont_pad = 20
@@ -33,13 +35,30 @@ hook.Add("SpawniconGenerated", "TEST_GW_SPAWNICON", function(lastModel, imageNam
     end
 end)
 
-function SetModelImage(dImage, ent)
-    if not IsValid(ent) then
+function SetModelImage(dImage, ent, giftData)
+    local entModel
+
+    if IsValid(ent) then
+        entModel = ent:GetModel()
+
+    elseif giftData then
+        local giftImgPath, isMat = giftData:GetVisuals()
+
+        if giftImgPath then
+            entModel = giftImgPath
+
+            if isMat then
+                dImage:SetImage(entModel)
+                return
+            end
+        end
+    end
+
+    if not entModel then
         dImage:SetImage("vgui/ttt/vskin/icon_cross")
         return
     end
 
-    local entModel = ent:GetModel()
     local imgPath = "spawnicons/" .. string.StripExtension(entModel) .. ".png"
 
     if file.Exists("materials/"..imgPath, "GAME") then
@@ -96,7 +115,7 @@ function CreateCurrentContentsBox(storedEnt, giftData, parent)
 
     local contentImg = vgui.Create("DImage", imgPanel)
     contentImg:Dock(FILL)
-    SetModelImage(contentImg, storedEnt)
+    SetModelImage(contentImg, storedEnt, giftData)
     contentImg:SetKeepAspect(true)
 
     -- RIGHT: info text container
@@ -124,8 +143,8 @@ function CreateCurrentContentsBox(storedEnt, giftData, parent)
 
     if giftData then
         AttributeLine(textPanel, "sounds", giftData.attrib_sound and giftData.attrib_sound.desc or nil, "It doesn't make a distinct sound")
-        AttributeLine(textPanel, "feels",  giftData.attrib_feel, "Just holding it doesn't tell you much")
         AttributeLine(textPanel, "smells", giftData.attrib_smell, "It doesn't smell like anything")
+        AttributeLine(textPanel, "feels",  giftData.attrib_feel, "Just holding it doesn't tell you much")
     end
 end
 
@@ -174,7 +193,7 @@ function AttributeLine(parent, verb, value, placeholder)
     return attrLine
 end
 
-function CLGAMEMODESUBMENU:Populate(parent)
+function DoContentsMenu(parent)
     local gwRef = HELPSCRN._gwRef
     HELPSCRN._contentMenu = parent
 
@@ -197,8 +216,8 @@ function CLGAMEMODESUBMENU:Populate(parent)
     ---- Change Contents ---------------------------
     local wrapForm = vgui.CreateTTT2Form(parent, "gift_opt_change_content_form")
     local dropBtn = wrapForm:MakeButton({
-        label = "gift_opt_change_content_form_drop_desc",
-        buttonLabel = "gift_opt_change_content_form_drop",
+        label = "gift_opt_change_form_drop_desc",
+        buttonLabel = "gift_opt_change_form_drop",
         OnClick = function(slf)
             net.Start(GIFTWRAP_DROP_CONT_MSG)
             net.WriteEntity(gwRef)
@@ -206,12 +225,40 @@ function CLGAMEMODESUBMENU:Populate(parent)
         end
     })
 
-    if not IsValid(giftEnt) then
+    if not gwRef:HasGift() then
         dropBtn:SetEnabled(false)
-        dropBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_content_form_drop_error_none"))
+        dropBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_drop_error_none"))
 
-    elseif giftData:IsDropBlocked() then
+    elseif giftData:IsDropBlocked() or gwRef:GetIsOpening() then
         dropBtn:SetEnabled(false)
-        dropBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_content_form_drop_error_block"))
+        dropBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_drop_error_block"))
+
+    elseif not gwRef:OwnedByWrapper(owner) or gwRef:GetIsRandomGift() then
+        dropBtn:SetEnabled(false)
+        dropBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_drop_error_random"))
     end
+
+
+    local randomBtn = wrapForm:MakeButton({
+        label = "gift_opt_change_form_random_desc",
+        buttonLabel = "gift_opt_change_form_random",
+        OnClick = function(slf)
+            net.Start(GIFTWRAP_REQ_RANDOM_GIFT)
+            net.WriteEntity(gwRef)
+            net.SendToServer()
+        end
+    })
+
+    if gwRef:HasGift() then
+        randomBtn:SetEnabled(false)
+        randomBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_random_error_full"))
+
+    elseif LocalPlayer():GetCredits() <= 0 then
+        randomBtn:SetEnabled(false)
+        randomBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_random_error_nocred"))
+    end
+end
+
+function CLGAMEMODESUBMENU:Populate(parent)
+    DoContentsMenu(parent)
 end
