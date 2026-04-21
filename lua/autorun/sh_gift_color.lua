@@ -2,8 +2,10 @@ include("sh_giftwrap_utils.lua")
 local utils = GW_Utils
 local dbg   = GW_DBG
 
-GIFTWRAP_UPDATE_COLOR_MSG = "TTT_GiftWrap_UpdateColorMsg"
-GIFTWRAP_REROLL_COLOR_MSG = "TTT_GiftWrap_RerollColorMsg"
+GIFTWRAP_UPDATE_COLOR_MSG = "TTT_GiftWrapCL_UpdateColorMsg"
+GIFTWRAP_REROLL_COLOR_MSG = "TTT_GiftWrapCL_RerollColorMsg"
+GIFTWRAP_SYNC_COLORS_MSG  = "TTT_GiftWrapSV_UpdateColorMixers"
+
 
 function PackColor(c)
     return bit.lshift(c.r, 16) + bit.lshift(c.g, 8) + c.b
@@ -78,6 +80,7 @@ if CLIENT then
 elseif SERVER then
     util.AddNetworkString(GIFTWRAP_UPDATE_COLOR_MSG)
     util.AddNetworkString(GIFTWRAP_REROLL_COLOR_MSG)
+    util.AddNetworkString(GIFTWRAP_SYNC_COLORS_MSG)
 
     local hueBias = {
         {min = 200, max = 280, reroll = 0.6}, -- blue/purple
@@ -103,8 +106,19 @@ elseif SERVER then
         until not ShouldRerollHue(boxHue)
         local ribbonHue = (boxHue + (math.random() <= 0.25 and math.random(180-50, 180+50) or 50)) % 360
 
-        ent:SetGiftBoxColor(PackColor(HSVToColor(boxHue, 0.592, 0.906)))
-        ent:SetGiftRibbonColor(PackColor(HSVToColor(ribbonHue, 0.690, 0.906)))
+        local boxColor = PackColor(HSVToColor(boxHue, 0.592, 0.906))
+        local ribbonColor = PackColor(HSVToColor(ribbonHue, 0.690, 0.906))
+
+        ent:SetGiftBoxColor(boxColor)
+        ent:SetGiftRibbonColor(ribbonColor)
+
+        -- done separately from network var update to prevent an infinite loop
+        local owner = ent:GetOwner()
+
+        if IsValid(owner) then
+            net.Start(GIFTWRAP_SYNC_COLORS_MSG)
+            net.Send(owner)
+        end
     end
 
     net.Receive(GIFTWRAP_UPDATE_COLOR_MSG, function(len, ply)

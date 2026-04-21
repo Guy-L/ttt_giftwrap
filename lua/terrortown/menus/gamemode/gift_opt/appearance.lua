@@ -2,6 +2,9 @@ CLGAMEMODESUBMENU.base = "base_gamemodesubmenu"
 CLGAMEMODESUBMENU.title = "gift_opt_appearance_title"
 CLGAMEMODESUBMENU.icon = Material("vgui/ttt/menu_icon_gift")
 CLGAMEMODESUBMENU.priority = 100
+local utils = GW_Utils
+local dbg   = GW_DBG
+
 local mixerHeight = 150
 local mixerShowPalette = false
 
@@ -59,13 +62,13 @@ function CLGAMEMODESUBMENU:Populate(parent)
         end
     }):GetChildren()[1]
 
-    gwRef:NetworkVarNotify("GiftBoxColor", function(e, name, old, new)
-        if not IsValid(boxMixer) then return end
-        boxMixer:SetColor(UnpackColor(new))
-    end)
+    net.Receive(GIFTWRAP_SYNC_COLORS_MSG, function()
+        timer.Simple(0.01, function() -- safety sync wait
+            local boxColor = gwRef:GetGiftBoxColor()
+            local ribbonColor = gwRef:GetGiftRibbonColor()
 
-    gwRef:NetworkVarNotify("GiftRibbonColor", function(e, name, old, new)
-        if not IsValid(ribbonMixer) then return end
-        ribbonMixer:SetColor(UnpackColor(new))
+            if IsValid(boxMixer) then boxMixer:SetColor(UnpackColor(boxColor)) end
+            if IsValid(ribbonMixer) then ribbonMixer:SetColor(UnpackColor(ribbonColor)) end
+        end)
     end)
 end
