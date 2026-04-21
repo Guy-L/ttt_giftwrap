@@ -5,7 +5,7 @@ function GW_DBG.Inspect(obj)
     if not GW_DBG.Cvar:GetBool() then return end
     GW_DBG.Log(obj, ", of type "..type(obj))
 
-    if obj then
+    if obj and not (type(obj) == "number") then
         if type(obj) == "table" then
             PrintTable(obj)
 
@@ -122,6 +122,20 @@ function GW_Utils.GetInventoryGiftwrap(ply)
         if GW_Utils.IsGiftWrap(wep) then
             -- assumption that player can only have one
             return wep
+        end
+    end
+end
+
+function GW_Utils.GetEquipment(ply, equipmentName)
+    for _, wep in ipairs(ply:GetWeapons()) do
+        if wep:GetClass() == equipmentName then
+            return wep, false
+        end
+    end
+
+    for _, itm in ipairs(ply:GetEquipmentItems()) do
+        if itm == equipmentName then
+            return itm, true
         end
     end
 end

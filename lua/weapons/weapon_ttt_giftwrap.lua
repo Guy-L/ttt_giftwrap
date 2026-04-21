@@ -7,13 +7,18 @@ local utils = GW_Utils
 local WRAP_NAME = "Gift Wrap"
 local GIFT_NAME = "Gift"
 
-GIFTWRAP_DROP_CONT_MSG   = "TTT_GiftWrap_DropContentRequest"
-GIFTWRAP_REQ_RANDOM_GIFT = "TTT_GiftWrap_RandomContentRequest"
+GIFTWRAP_DROP_CONT_MSG      = "TTT_GiftWrap_DropContentRequest"
+GIFTWRAP_RANDOM_GIFT_MSG    = "TTT_GiftWrap_RandomContentRequest"
+GIFTWRAP_UPDATE_NOTE_MSG    = "TTT_GiftWrapCL_UpdateNoteMsg"
+GIFTWRAP_REMOVE_WRAPPER_MSG = "TTT_GiftWrapCL_DebugRemoveWrapperTag"
 local GIFTWRAP_PICKUP_MSG    = "TTT_GiftWrap_PickUpMsg"
 local GIFTWRAP_HL_CHAT_MSG   = "TTT_GiftWrap_HighlightChatMsg"
 local GIFTWRAP_GIFT_DATA_MSG = "TTT_GiftWrap_SendWrapperData"
+local GIFTWRAP_IN_OPTS_MSG   = "TTT_GiftWrapCL_InOptionsMenu"
+local GIFTWRAP_CLEAR_BUY_MSG = "TTT_GiftWrapSV_ClearGiftBoughtFlag"
 local HOOK_GIFTWRAP_PICKUP   = "TTT_GiftWrap_PickUp"
 local HOOK_GIFTWRAP_TREE_USE = "TTT_GiftWrap_UseTree"
+local HOOK_ORDER_EQUIPMENT   = "TTT_GiftWrap_OrderedEquipment"
 local HOOK_ANGLE_CORRECTION  = "TTT_GiftWrap_CorrectGiftAngle"
 local HOOK_ROUND_RESET_OPENS = "TTT_GiftWrap_ResetOpenedRandomGiftCounts"
 local HOOK_RELOAD_SOUNDS     = "TTT_GiftWrap_ReloadSounds"
@@ -60,7 +65,11 @@ if SERVER then
     util.AddNetworkString(GIFTWRAP_HL_CHAT_MSG)
     util.AddNetworkString(GIFTWRAP_GIFT_DATA_MSG)
     util.AddNetworkString(GIFTWRAP_DROP_CONT_MSG)
-    util.AddNetworkString(GIFTWRAP_REQ_RANDOM_GIFT)
+    util.AddNetworkString(GIFTWRAP_RANDOM_GIFT_MSG)
+    util.AddNetworkString(GIFTWRAP_UPDATE_NOTE_MSG)
+    util.AddNetworkString(GIFTWRAP_REMOVE_WRAPPER_MSG)
+    util.AddNetworkString(GIFTWRAP_IN_OPTS_MSG)
+    util.AddNetworkString(GIFTWRAP_CLEAR_BUY_MSG)
     util.PrecacheModel(WRAP_VIEWMODEL)
     util.PrecacheModel(WRAP_WORLDMODEL)
     util.PrecacheModel(GIFT_VIEWMODEL)
@@ -383,6 +392,7 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Int", 1, "GiftRibbonColor")
     self:NetworkVar("String", 0, "WrapperSID")
     self:NetworkVar("String", 1, "CachedDataLabel")
+    self:NetworkVar("String", 2, "UnwrapNote")
     self:NetworkVar("Entity", 0, "StoredGift")
 
     if CLIENT then
@@ -390,6 +400,25 @@ function SWEP:SetupDataTables()
             if IsValid(HELPSCRN._contentMenu) then
                 HELPSCRN._contentMenu:Clear()
                 DoContentsMenu(HELPSCRN._contentMenu)
+
+            else
+                -- this is very ass but I like the convenience
+                -- of it switching tabs automatically to show your buy was intercepted
+                local ply = LocalPlayer()
+
+                if IsValid(ply) and ply._gwInOptMenu then
+                    local menuEl = utils.GetChildNamed(HELPSCRN.menuFrame, "DNavPanelTTT2")
+                    menuEl = utils.GetChildNamed(menuEl, "DSubmenuListTTT2")
+                    menuEl = utils.GetChildNamed(menuEl, "DScrollPanelTTT2")
+                    menuEl = utils.GetChildNamed(menuEl, "Panel")
+                    menuEl = utils.GetChildNamed(menuEl, "DIconLayout")
+
+                    for _, submenuButton in ipairs(menuEl:GetChildren()) do
+                        if submenuButton:GetTitle() == "gift_opt_contents_title" then
+                            submenuButton.DoClick(submenuButton)
+                        end
+                    end
+                end
             end
         end
 
@@ -408,12 +437,15 @@ function SWEP:SetupDataTables()
             end)
         end)
 
-        self:NetworkVarNotify("IsRandomGift", function(name, old, new)
+        local function UpdateUIAndMenu(name, old, new)
             timer.Simple(0.1, function()
-                self:UpdateUI("randomness update")
+                self:UpdateUI("isRandom/wrapper update")
                 UpdateActiveContentMenu()
             end)
-        end)
+        end
+
+        self:NetworkVarNotify("IsRandomGift", UpdateUIAndMenu)
+        self:NetworkVarNotify("WrapperSID", UpdateUIAndMenu)
 
         local function InvalidateVMColor(name, old, new)
             local ply = LocalPlayer()
@@ -726,6 +758,19 @@ if SERVER then
             net.WriteString(giftDesc)
             net.WriteString("!")
             net.Send(gifteePly)
+
+            local unwrapNote = giftObj:GetUnwrapNote()
+            dbg.Log("Unwrap note: '"..unwrapNote.."'")
+
+            if unwrapNote and unwrapNote != "" then
+                timer.Simple(1, function()
+                    net.Start(GIFTWRAP_HL_CHAT_MSG)
+                    net.WriteString("A note was attached: \"")
+                    net.WriteString(unwrapNote)
+                    net.WriteString("\"")
+                    net.Send(gifteePly)
+                end)
+            end
         else
             net.Start(GIFTWRAP_HL_CHAT_MSG)
             net.WriteString("You were meant to unwrap ")
@@ -796,6 +841,7 @@ if SERVER then
         giftProp:SetNotRetrievable(notRetrievable)
         giftProp:SetGiftBoxColor(self:GetGiftBoxColor())
         giftProp:SetGiftRibbonColor(self:GetGiftRibbonColor())
+        giftProp:SetUnwrapNote(self:GetUnwrapNote())
 
         return giftProp
     end
@@ -861,31 +907,95 @@ if SERVER then
         end
     end
 
-    net.Receive(GIFTWRAP_REQ_RANDOM_GIFT, function(len, ply)
+    function SWEP:AutoWrap(label, data)
+        local owner = self:GetOwner()
+
+        self:SetCachedDataLabel(label)
+        self:SetWrapperSID(owner:SteamID64())
+        self:SetIsRandomGift(true)
+
+        -- Note: I have no clue why I need to do this for the colors
+        --       to update properly and I hate it (TODO clean up?)
+        owner:SelectWeapon('weapon_zm_improvised')
+        timer.Simple(0.1, function()
+            owner:SelectWeapon('weapon_ttt_giftwrap')
+        end)
+
+        -- Send table data update, just in case
+        net.Start(GIFTWRAP_GIFT_DATA_MSG)
+        net.WriteString(label)
+        net.WriteTable(data)
+        net.Send(owner)
+    end
+
+    net.Receive(GIFTWRAP_RANDOM_GIFT_MSG, function(len, ply)
         local giftEnt = net.ReadEntity()
         if not IsValid(giftEnt) then return end
         dbg.Log("Random gift request by "..ply:Nick())
 
         if ply:GetCredits() > 0 then
             local newLabel, newData = GetRandomGiftData(ply, 20)
-            giftEnt:SetIsRandomGift(true)
-            giftEnt:SetCachedDataLabel(newLabel)
-            giftEnt:SetWrapperSID(ply:SteamID64())
-
-            -- Note: I have no clue why I need to do this for the colors
-            --       to update properly and I hate it (TODO clean up?)
-            ply:SelectWeapon('weapon_zm_improvised')
-            timer.Simple(0.1, function()
-                ply:SelectWeapon('weapon_ttt_giftwrap')
-            end)
-
-            -- Send table data update, just in case
-            net.Start(GIFTWRAP_GIFT_DATA_MSG)
-            net.WriteString(giftEnt:GetCachedDataLabel())
-            net.WriteTable(newData)
-            net.Send(ply)
-
+            giftEnt:AutoWrap(newLabel, newData)
             ply:AddCredits(-1)
+        end
+    end)
+
+    net.Receive(GIFTWRAP_UPDATE_NOTE_MSG, function(len, ply)
+        local giftEnt = net.ReadEntity()
+        local giftNote = net.ReadString()
+        if not IsValid(giftEnt) then return end
+
+        giftEnt:SetUnwrapNote(giftNote)
+    end)
+
+    net.Receive(GIFTWRAP_REMOVE_WRAPPER_MSG, function(len, ply)
+        local giftEnt = net.ReadEntity()
+        if not IsValid(giftEnt) then return end
+        if not dbg.Cvar:GetBool() then return end
+
+        giftEnt:SetWrapperSID("WORLD")
+    end)
+
+    net.Receive(GIFTWRAP_IN_OPTS_MSG, function(len, ply)
+        ply._gwInOptMenu = net.ReadBool()
+    end)
+
+    -- handle ordering equipment for gift (TODO: items)
+    hook.Add("TTT2OrderedEquipment", HOOK_ORDER_EQUIPMENT, function(ply, equipmentName, isItem, credits, ignoreCost)
+        if not ply._gwInOptMenu then return end
+        local giftEnt = utils.GetInventoryGiftwrap(ply)
+        if not giftEnt or giftEnt:HasGift() then return end
+
+        dbg.Log(ply:Nick()..": Wrapping "..equipmentName.." into gift...")
+        local function ClearBoughtFlag()
+            if shop.buyTable[ply] then
+                shop.buyTable[ply][equipmentName] = false
+
+                net.Start(GIFTWRAP_CLEAR_BUY_MSG)
+                net.WriteString(equipmentName)
+                net.Send(ply)
+            end
+        end
+
+        if isItem then
+            local item = utils.GetEquipment(ply, equipmentName)
+
+            if item then
+                local newLabel, newData = GetItemGiftData(equipmentName)
+                giftEnt:AutoWrap(newLabel, newData)
+                ClearBoughtFlag()
+                ply:RemoveEquipmentItem(item)
+            end
+
+        else
+            local wep = utils.GetEquipment(ply, equipmentName)
+
+            if wep then
+                local newLabel, newData = GetSWEPGiftData(equipmentName)
+                giftEnt:AutoWrap(newLabel, newData)
+                ClearBoughtFlag()
+                wep:Remove()
+            end
         end
     end)
 
@@ -924,9 +1034,16 @@ elseif CLIENT then
     hook.Add("Think", HOOK_RESET_VM_COLORS, function()
         local ply = LocalPlayer()
         if not IsValid(ply) then return end
+        local heldWep = ply:GetActiveWeapon()
 
-        if not utils.IsGiftWrap(ply:GetActiveWeapon()) then
+        if not utils.IsGiftWrap(heldWep) then
             ClearVMColors(ply, "watchdog hook")
+
+            -- auto-close options menu
+            if IsValid(HELPSCRN.menuFrame) and ply._gwInOptMenu and
+             (not IsValid(heldWep) or heldWep:GetClass() != 'weapon_zm_improvised') then --further jank due to the jank mentioned in AutoWrap
+                HELPSCRN.menuFrame:Close()
+            end
         end
     end)
 
@@ -957,11 +1074,23 @@ elseif CLIENT then
         end
     end
 
-    net.Receive(GIFTWRAP_GIFT_DATA_MSG, function(len, ply)
+    net.Receive(GIFTWRAP_GIFT_DATA_MSG, function()
         local label = net.ReadString()
         local giftData = NewGiftData(net.ReadTable())
 
         UpdateCatalog(label, giftData)
+    end)
+
+    net.Receive(GIFTWRAP_CLEAR_BUY_MSG, function()
+        local equipmentName = net.ReadString()
+        local ply = LocalPlayer()
+
+        for i = #ply.bought, 1, -1 do
+            if ply.bought[i] == equipmentName then
+                table.remove(ply.bought, i)
+            end
+        end
+        shop.buyTable[ply][equipmentName] = nil
     end)
 
     local TREE_COLOR = Color(15, 155, 10)
@@ -1002,6 +1131,7 @@ elseif CLIENT then
         local frameWidth  = 800
         local frameHeight = 500
         local navWidth = 175
+        local ply = LocalPlayer()
 
         dbg.Log("Opening gift options...")
         HELPSCRN._gwRef = gw -- Make gift reference global for menu (bad but idk)
@@ -1018,12 +1148,28 @@ elseif CLIENT then
                 frame:Center()
                 frame:ShowBackButton(false)
 
+                function frame:OnClose()
+                    dbg.Log("Gift options menu closed")
+                    HELPSCRN._contentMenu = nil
+
+                    ply._gwInOptMenu = false
+                    net.Start(GIFTWRAP_IN_OPTS_MSG)
+                    net.WriteBool(ply._gwInOptMenu)
+                    net.SendToServer()
+                end
+
                 -- Adjust layout for smaller window size
                 utils.GetChildNamed(frame, "DNavPanelTTT2"):SetWide(navWidth)
                 local content = utils.GetChildNamed(frame, "DContentPanelTTT2")
                 local contentScroll = utils.GetChildNamed(content, "DScrollPanelTTT2")
                 contentScroll:SetWide(frameWidth - navWidth)
                 contentScroll:SetTall(frameHeight - vskin.GetHeaderHeight() - vskin.GetBorderSize() - 10)
+
+                -- Tell server client is in menu state
+                ply._gwInOptMenu = true
+                net.Start(GIFTWRAP_IN_OPTS_MSG)
+                net.WriteBool(ply._gwInOptMenu)
+                net.SendToServer()
 
                 break
             end

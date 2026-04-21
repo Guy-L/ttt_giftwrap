@@ -1107,7 +1107,19 @@ local giftDataCatalog = {
 
 -- defined explicitly for use by other addons
 function NewGiftData(tbl)
-    return GiftData.New(tbl)
+    local newGift = GiftData.New(tbl)
+
+    -- client-side furnish with client-only SWEP info
+    if CLIENT and newGift.placeholderEquip then
+        local swep = weapons.GetStored(newGift.identifier)
+
+        if swep then
+            if swep.PrintName then newGift.name = swep.PrintName end
+            if swep.desc then newGift.desc = swep.desc end
+        end
+    end
+
+    return newGift
 end
 
 function UpdateCatalog(label, giftData)
@@ -1662,13 +1674,13 @@ local perks = {
 
 for label, data in pairs(perks) do
     UpdateCatalog(label, GiftData.New {
-        name     = data.name,                  desc       = data.adj.." cold one",
-        category = GiftCategory.AutoEquipSWEP, identifier = "ttt_perk_"..label,
+        name     = data.name,         desc       = data.adj.." cold one",
+        category = GiftCategory.Item, identifier = "item_ttt_"..label,
         can_be_random_gift = data.random,
         factor_rarity = data.rarity, factor_quality = data.quality,
         attrib_sound = GiftSound.Splashing, attrib_size = GiftSize.Normal,
         attrib_smell = data.smell,          attrib_feel = GiftFeel.Cold,
-        unless_has_item = "item_ttt_"..label,
+        special_setup = "perk_bottle"
     })
 end
 
@@ -2042,7 +2054,6 @@ function GiftData:ApplyPostUnwrapAdjustments(giftEnt, giftee)
             --else
             --    giftEnt:WearHat(giftee)
             --end
-
         end
     end
 
@@ -2126,6 +2137,11 @@ function GiftData:Spawn(giftee)
         elseif category == GiftCategory.Item then -- Item
             self:ApplyPreSpawnAdjustments(nil, giftee)
             giftee:GiveEquipmentItem(identifier)
+
+            -- apply perk (blocked when buying for gift)
+            if self.special_setup == "perk_bottle" then
+                items.GetStored(identifier):Bought(giftee)
+            end
         end
 
         return nil
@@ -2547,37 +2563,72 @@ function GetEntGiftData(ent)
     return placeholderLabel, placeholderData
 end
 
-hook.Add("Initialize", INIT_FIXES_HOOK, function()
-    -- Fix for invisible clutterbombs continuing their warning light effect
-    function FixClutterbombLight()
-        hook.Remove("PreRender", "ClutterbombProj_DynamicLight")
-        hook.Remove("PreRender", "RClutterbombProj_DynamicLight")
-
-        -- same code, just made common for both addons & checking NoDraw
-        hook.Add("PreRender", CLUTTERBOMB_LIGHT_FIX_HOOK, function()
-            local clutterbombs = ents.FindByClass("ttt_clutterbomb_proj")
-            table.Add(clutterbombs, ents.FindByClass("ttt_rclutterbomb_proj"))
-
-            for _, ent in pairs(clutterbombs) do
-                local dlight = DynamicLight(ent:EntIndex())
-
-                if dlight and not ent:GetNoDraw() then
-                    dlight.pos = ent:GetPos()
-                    dlight.r = 255
-                    dlight.g = 111
-                    dlight.b = 0
-                    dlight.brightness = 4
-                    dlight.Decay = 258
-                    dlight.Size = 258
-                    dlight.DieTime = CurTime() + 0.1
-                    dlight.Style = 4
-                end
-            end
-        end)
+function GetSWEPGiftData(swepID)
+    for label, giftData in pairs(giftDataCatalog) do
+        if giftData.identifier == swepID then
+            return label, giftData
+        end
     end
 
-    FixClutterbombLight()
-    --timer.Simple(5, FixClutterbombLight)
+    local swep = weapons.GetStored(swepID)
+    local placeholderData = GiftData.New {
+        name     = swep.PrintName, -- likely not to be set server-side
+        desc     = "a gift",
+        category = GiftCategory.AutoEquipSWEP,
+        identifier = swepID,
+        placeholderEquip = true
+    }
+
+    UpdateCatalog(swepID, placeholderData)
+    return swepID, placeholderData
+end
+
+function GetItemGiftData(itemID)
+    for label, giftData in pairs(giftDataCatalog) do
+        if giftData.identifier == itemID then
+            return label, giftData
+        end
+    end
+
+    local item = items.GetStored(itemID)
+    local placeholderData = GiftData.New {
+        name     = item.PrintName,
+        desc     = item.desc,
+        category = GiftCategory.Item,
+        identifier = itemID,
+        placeholderEquip = true
+    }
+
+    UpdateCatalog(itemID, placeholderData)
+    return itemID, placeholderData
+end
+
+hook.Add("Initialize", INIT_FIXES_HOOK, function()
+    -- Fix for invisible clutterbombs continuing their warning light effect
+    hook.Remove("PreRender", "ClutterbombProj_DynamicLight")
+    hook.Remove("PreRender", "RClutterbombProj_DynamicLight")
+
+    -- same code, just made common for both addons & checking NoDraw
+    hook.Add("PreRender", CLUTTERBOMB_LIGHT_FIX_HOOK, function()
+        local clutterbombs = ents.FindByClass("ttt_clutterbomb_proj")
+        table.Add(clutterbombs, ents.FindByClass("ttt_rclutterbomb_proj"))
+
+        for _, ent in pairs(clutterbombs) do
+            local dlight = DynamicLight(ent:EntIndex())
+
+            if dlight and not ent:GetNoDraw() then
+                dlight.pos = ent:GetPos()
+                dlight.r = 255
+                dlight.g = 111
+                dlight.b = 0
+                dlight.brightness = 4
+                dlight.Decay = 258
+                dlight.Size = 258
+                dlight.DieTime = CurTime() + 0.1
+                dlight.Style = 4
+            end
+        end
+    end)
 
     -- Fix for Pot of Greedier not defaulting to Detective shop for non-shopping role pots
     if PotOfGreedier then
@@ -2594,9 +2645,25 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             end
         end
     end
+
+    -- Change perk bottle item Bought functions to prevent effects happening
+    -- before we can intercept them (if buying for gift)
+    for label, _ in pairs(perks) do
+        local perkItem = items.GetStored("item_ttt_"..label)
+
+        if perkItem then
+            local ogBoughtFunc = perkItem.Bought
+
+            perkItem.Bought = function(self, ply)
+                if not ply._gwInOptMenu then
+                    ogBoughtFunc(self, ply)
+                end
+            end
+        end
+    end
 end)
 
 if SERVER then
     local initTotalWeight, initGiftCount = GetTotalWeight()
     dbg.Log("Gift data loaded ("..initGiftCount.." gifts, totalling "..initTotalWeight.." weight).")
-end
+end 

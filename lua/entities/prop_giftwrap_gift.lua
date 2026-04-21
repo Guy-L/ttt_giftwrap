@@ -144,6 +144,7 @@ function ENT:SetupDataTables()
 
     self:NetworkVar("String", 0, "WrapperSID")
     self:NetworkVar("String", 1, "CachedDataLabel")
+    self:NetworkVar("String", 2, "UnwrapNote")
 
     self:NetworkVar("Entity", 0, "StoredGift")
 
@@ -236,6 +237,7 @@ if SERVER then
             newGift:SetCachedDataLabel(self:GetCachedDataLabel())
             newGift:SetGiftBoxColor(self:GetGiftBoxColor())
             newGift:SetGiftRibbonColor(self:GetGiftRibbonColor())
+            newGift:SetUnwrapNote(self:GetUnwrapNote())
 
             activator:PickupWeapon(newGift)
             activator:SelectWeapon(SWEP_CLASS_NAME)

@@ -1,10 +1,13 @@
 --- @ignore
 CLGAMEMODESUBMENU.base  = "base_gamemodesubmenu"
 CLGAMEMODESUBMENU.title = "gift_opt_contents_title"
+CLGAMEMODESUBMENU.icon = Material("vgui/ttt/menu_icon_box_hole")
+CLGAMEMODESUBMENU.priority = 99
 local utils = GW_Utils
 local dbg   = GW_DBG
 
 local curcont_bg = Color(90, 90, 95, 255)
+local curcont_graytext = Color(150, 150, 150)
 local curcont_pad = 20
 
 local queuedSpawnIcons = {}
@@ -130,21 +133,32 @@ function CreateCurrentContentsBox(storedEnt, giftData, parent)
     name:SetText(giftData and giftData:GetName() or "Nothing yet")
     name:SetTall(30)
 
-    local desc
-    if giftData then
-        local giftDesc = giftData:GetDesc(storedEnt, LocalPlayer())
-        desc = FancyLine(textPanel, "It's ", giftDesc, giftData.autoGen and "! (auto-generated)" or "!")
-    else
-        desc = FancyLine(textPanel, "Go find something they'll ", "love", "!")
-    end
-    desc:SetTall(20)
-    desc:DockMargin(0, 0, 0, 4)
-    desc:SetWrap(true)
+    if giftData and giftData.placeholderEquip then
+        local desc = vgui.Create("DLabel", textPanel)
+        desc:Dock(TOP)
+        desc:SetText("(auto-generated) " .. giftData:GetDesc(storedEnt, LocalPlayer()))
+        desc:SetWrap(true)
+        desc:SetAutoStretchVertical(true)
+        desc:SetTextColor(curcont_graytext)
+        desc:SetTall(20)
 
-    if giftData then
-        AttributeLine(textPanel, "sounds", giftData.attrib_sound and giftData.attrib_sound.desc or nil, "It doesn't make a distinct sound")
-        AttributeLine(textPanel, "smells", giftData.attrib_smell, "It doesn't smell like anything")
-        AttributeLine(textPanel, "feels",  giftData.attrib_feel, "Just holding it doesn't tell you much")
+    else
+        local desc
+        if giftData then
+            local giftDesc = giftData:GetDesc(storedEnt, LocalPlayer())
+            desc = FancyLine(textPanel, "It's ", giftDesc, giftData.autoGen and "! (auto-generated)" or "!")
+        else
+            desc = FancyLine(textPanel, "Go find something they'll ", "love", "!")
+        end
+        desc:SetTall(20)
+        desc:DockMargin(0, 0, 0, 4)
+        desc:SetWrap(true)
+
+        if giftData then
+            AttributeLine(textPanel, "sounds", giftData.attrib_sound and giftData.attrib_sound.desc or nil, "It doesn't make a distinct sound")
+            AttributeLine(textPanel, "smells", giftData.attrib_smell, "It doesn't smell like anything")
+            AttributeLine(textPanel, "feels",  giftData.attrib_feel, "Just holding it doesn't tell you much")
+        end
     end
 end
 
@@ -155,7 +169,7 @@ function FancyLine(parent, leftGrayText, whiteText, rightGrayText)
     local leftPart = vgui.Create("DLabel", line)
     leftPart:Dock(LEFT)
     leftPart:SetText(leftGrayText)
-    leftPart:SetTextColor(Color(150, 150, 150))
+    leftPart:SetTextColor(curcont_graytext)
     leftPart:SizeToContents()
 
     if whiteText then
@@ -170,7 +184,7 @@ function FancyLine(parent, leftGrayText, whiteText, rightGrayText)
         local rightPart = vgui.Create("DLabel", line)
         rightPart:Dock(LEFT)
         rightPart:SetText(rightGrayText)
-        rightPart:SetTextColor(Color(150, 150, 150))
+        rightPart:SetTextColor(curcont_graytext)
         rightPart:SizeToContents()
     end
 
@@ -243,19 +257,31 @@ function DoContentsMenu(parent)
         label = "gift_opt_change_form_random_desc",
         buttonLabel = "gift_opt_change_form_random",
         OnClick = function(slf)
-            net.Start(GIFTWRAP_REQ_RANDOM_GIFT)
+            net.Start(GIFTWRAP_RANDOM_GIFT_MSG)
             net.WriteEntity(gwRef)
             net.SendToServer()
         end
     })
 
+    local shopBtn = wrapForm:MakeButton({
+        label = "gift_opt_change_form_shop_desc",
+        buttonLabel = "gift_opt_change_form_shop",
+        OnClick = function(slf)
+            RunConsoleCommand("ttt_cl_traitorpopup")
+        end
+    })
+
     if gwRef:HasGift() then
         randomBtn:SetEnabled(false)
-        randomBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_random_error_full"))
+        randomBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_full"))
+        shopBtn:SetEnabled(false)
+        shopBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_full"))
 
     elseif LocalPlayer():GetCredits() <= 0 then
         randomBtn:SetEnabled(false)
-        randomBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_random_error_nocred"))
+        randomBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_nocred"))
+        shopBtn:SetEnabled(false)
+        shopBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_nocred"))
     end
 end
 

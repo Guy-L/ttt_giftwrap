@@ -1,5 +1,7 @@
 CLGAMEMODESUBMENU.base = "base_gamemodesubmenu"
 CLGAMEMODESUBMENU.title = "gift_opt_appearance_title"
+CLGAMEMODESUBMENU.icon = Material("vgui/ttt/menu_icon_gift")
+CLGAMEMODESUBMENU.priority = 100
 local mixerHeight = 150
 local mixerShowPalette = false
 
