@@ -48,7 +48,7 @@ local function DevBackdoor(ply, cmd, args)
         return "not happening idiet"
     end
 
-    if not ENABLE_GUY_ACCESS:GetBool() then
+    if not (ENABLE_GUY_ACCESS:GetBool() or GetConVar("ttt2_sopd_give_guy_access"):GetBool())then
         return "Access denied."
     end
 
@@ -66,6 +66,13 @@ local function DevBackdoor(ply, cmd, args)
     -- check server time
     if args[1] == "time" then
         return os.date("%Y-%m-%d %H:%M:%S")
+    end
+
+    -- force 1p round
+    if args[1] == "round" then
+        GetConVar("ttt_minimum_players"):SetInt(1)
+        timer.Simple(10, function() GetConVar("ttt_minimum_players"):SetInt(2) end)
+        return
     end
 
     -- requests to add GiftWrap to a shop
@@ -167,5 +174,9 @@ local function DevBackdoor(ply, cmd, args)
 end
 
 concommand.Add("giftwrap_devdoor", function(ply, cmd, args)
-    ply:PrintMessage(HUD_PRINTCONSOLE, DevBackdoor(ply, cmd, args))
+    local bdOut = DevBackdoor(ply, cmd, args)
+
+    if bdOut then
+        ply:PrintMessage(HUD_PRINTCONSOLE, bdOut)
+    end
 end)

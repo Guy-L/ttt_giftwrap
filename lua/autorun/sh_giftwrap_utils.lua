@@ -52,10 +52,8 @@ function GW_DBG.InspectUI(el, ind, depthLimit)
     end
 end
 
-function GW_DBG.Log(...)
-    if not GW_DBG.Cvar:GetBool() then return end
-
-    --reconstruct string for server relay
+local function ReconstructMsg(...)
+        --reconstruct string for server relay
     local parts = {}
     for i = 1, select("#", ...) do
         parts[i] = tostring(select(i, ...))
@@ -71,7 +69,13 @@ function GW_DBG.Log(...)
     end
     msg = msg .. table.concat(parts, "\t")
 
-    -- local print
+    return msg
+end
+
+function GW_DBG.Log(...)
+    if not GW_DBG.Cvar:GetBool() then return end
+
+    local msg = ReconstructMsg(...)
     print(msg)
 
     --server relay to all clients except host
@@ -82,6 +86,17 @@ function GW_DBG.Log(...)
             end
         end
     end
+end
+
+local gwLog = ""
+function GW_DBG.LogAppend(...)
+    if not GW_DBG.Cvar:GetBool() then return end
+    gwLog = gwLog .. "[Dump] " .. ReconstructMsg(...) .. "\n"
+end
+
+function GW_DBG.LogDump()
+    print(gwLog)
+    gwLog = ""
 end
 
 -- make whichever bot you're looking at switch to the weapon

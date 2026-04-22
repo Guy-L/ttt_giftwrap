@@ -6,7 +6,7 @@ local utils = GW_Utils
 local dbg   = GW_DBG
 
 function CLGAMEMODESUBMENU:ShouldShow()
-    return dbg.Cvar:GetBool()
+    return dbg.Cvar:GetBool() or GetGlobalBool("ttt2_deathmatch_active", false)
 end
 
 function CLGAMEMODESUBMENU:Populate(parent)

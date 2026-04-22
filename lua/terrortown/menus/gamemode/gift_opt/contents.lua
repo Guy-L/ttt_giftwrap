@@ -5,6 +5,7 @@ CLGAMEMODESUBMENU.icon = Material("vgui/ttt/menu_icon_box_hole")
 CLGAMEMODESUBMENU.priority = 100
 local utils = GW_Utils
 local dbg   = GW_DBG
+local TL    = LANG.TryTranslation
 
 local curcont_bg = Color(90, 90, 95, 255)
 local curcont_graytext = Color(150, 150, 150)
@@ -102,7 +103,7 @@ function CreateCurrentContentsBox(storedEnt, giftData, parent)
     headerLabel:DockMargin(10, 0, 0, 0)
 
     headerLabel:SetFont("DermaDefaultBold")
-    headerLabel:SetText(LANG.TryTranslation("gift_opt_current_content"))
+    headerLabel:SetText(TL("gift_opt_current_content"))
     headerLabel:SizeToContents()
     headerLabel:SetContentAlignment(4)
 
@@ -215,7 +216,7 @@ function CLGAMEMODESUBMENU:Populate(parent)
         local error_line = vgui.Create("DLabel", parent)
         error_line:SetPos(40, 40)
         error_line:SetFont("DermaLarge")
-        error_line:SetText(LANG.TryTranslation("gift_opt_error"))
+        error_line:SetText(TL("gift_opt_error"))
         error_line:SizeToContents()
         return
     end
@@ -241,15 +242,15 @@ function CLGAMEMODESUBMENU:Populate(parent)
 
     if not gwRef:HasGift() then
         dropBtn:SetEnabled(false)
-        dropBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_drop_error_none"))
+        dropBtn:SetTooltip(TL("gift_opt_change_form_drop_error_none"))
 
     elseif giftData:IsDropBlocked() or gwRef:GetIsOpening() then
         dropBtn:SetEnabled(false)
-        dropBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_drop_error_block"))
+        dropBtn:SetTooltip(TL("gift_opt_change_form_drop_error_block"))
 
     elseif not gwRef:OwnedByWrapper(owner) or gwRef:GetIsRandomGift() then
         dropBtn:SetEnabled(false)
-        dropBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_drop_error_random"))
+        dropBtn:SetTooltip(TL("gift_opt_change_form_drop_error_random"))
     end
 
 
@@ -267,20 +268,37 @@ function CLGAMEMODESUBMENU:Populate(parent)
         label = "gift_opt_change_form_shop_desc",
         buttonLabel = "gift_opt_change_form_shop",
         OnClick = function(slf)
-            RunConsoleCommand("ttt_cl_traitorpopup")
+            if GetGlobalBool("ttt2_deathmatch_active", false) then
+                RunConsoleCommand("dm_shop")
+            else
+                RunConsoleCommand("ttt_cl_traitorpopup")
+            end
         end
     })
 
     if gwRef:HasGift() then
         randomBtn:SetEnabled(false)
-        randomBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_full"))
+        randomBtn:SetTooltip(TL("gift_opt_change_form_error_full"))
         shopBtn:SetEnabled(false)
-        shopBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_full"))
+        shopBtn:SetTooltip(TL("gift_opt_change_form_error_full"))
 
-    elseif LocalPlayer():GetCredits() <= 0 then
-        randomBtn:SetEnabled(false)
-        randomBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_nocred"))
-        shopBtn:SetEnabled(false)
-        shopBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_nocred"))
+    elseif not GetGlobalBool("ttt2_deathmatch_active", false) then
+        local ply = LocalPlayer()
+        local rd = roles.GetByIndex(GetShopFallback(ply:GetSubRole()))
+        local noShop = GetGlobalString("ttt_" .. rd.abbr .. "_shop_fallback") == SHOP_DISABLED
+        local noCreds = ply:GetCredits() <= 0
+
+        if noCreds then
+            randomBtn:SetEnabled(false)
+            randomBtn:SetTooltip(TL("gift_opt_change_form_error_nocred"))
+        end
+
+        if noShop then
+            shopBtn:SetEnabled(false)
+            shopBtn:SetTooltip(TL("gift_opt_change_form_shop_error_role"))
+        elseif noCreds then
+            shopBtn:SetEnabled(false)
+            shopBtn:SetTooltip(TL("gift_opt_change_form_error_nocred"))
+        end
     end
 end

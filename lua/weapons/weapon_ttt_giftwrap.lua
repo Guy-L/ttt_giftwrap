@@ -7,18 +7,11 @@ local utils = GW_Utils
 local WRAP_NAME = "Gift Wrap"
 local GIFT_NAME = "Gift"
 
-GIFTWRAP_IN_OPTS_MSG        = "TTT_GiftWrapCL_InOptionsMenu"
-GIFTWRAP_DROP_CONT_MSG      = "TTT_GiftWrap_DropContentRequest"
-GIFTWRAP_RANDOM_GIFT_MSG    = "TTT_GiftWrap_RandomContentRequest"
-GIFTWRAP_UPDATE_NOTE_MSG    = "TTT_GiftWrapCL_UpdateNoteMsg"
-GIFTWRAP_REMOVE_WRAPPER_MSG = "TTT_GiftWrapCL_DebugRemoveWrapperTag"
 local GIFTWRAP_PICKUP_MSG    = "TTT_GiftWrap_PickUpMsg"
 local GIFTWRAP_HL_CHAT_MSG   = "TTT_GiftWrap_HighlightChatMsg"
 local GIFTWRAP_GIFT_DATA_MSG = "TTT_GiftWrap_SendWrapperData"
-local GIFTWRAP_CLEAR_BUY_MSG = "TTT_GiftWrapSV_ClearGiftBoughtFlag"
 local HOOK_GIFTWRAP_PICKUP   = "TTT_GiftWrap_PickUp"
 local HOOK_GIFTWRAP_TREE_USE = "TTT_GiftWrap_UseTree"
-local HOOK_ORDER_EQUIPMENT   = "TTT_GiftWrap_OrderedEquipment"
 local HOOK_ANGLE_CORRECTION  = "TTT_GiftWrap_CorrectGiftAngle"
 local HOOK_ROUND_RESET_OPENS = "TTT_GiftWrap_ResetOpenedRandomGiftCounts"
 local HOOK_RELOAD_SOUNDS     = "TTT_GiftWrap_ReloadSounds"
@@ -64,12 +57,6 @@ if SERVER then
     util.AddNetworkString(GIFTWRAP_PICKUP_MSG)
     util.AddNetworkString(GIFTWRAP_HL_CHAT_MSG)
     util.AddNetworkString(GIFTWRAP_GIFT_DATA_MSG)
-    util.AddNetworkString(GIFTWRAP_DROP_CONT_MSG)
-    util.AddNetworkString(GIFTWRAP_RANDOM_GIFT_MSG)
-    util.AddNetworkString(GIFTWRAP_UPDATE_NOTE_MSG)
-    util.AddNetworkString(GIFTWRAP_REMOVE_WRAPPER_MSG)
-    util.AddNetworkString(GIFTWRAP_IN_OPTS_MSG)
-    util.AddNetworkString(GIFTWRAP_CLEAR_BUY_MSG)
     util.PrecacheModel(WRAP_VIEWMODEL)
     util.PrecacheModel(WRAP_WORLDMODEL)
     util.PrecacheModel(GIFT_VIEWMODEL)
@@ -834,13 +821,6 @@ if SERVER then
         end
     end
 
-    net.Receive(GIFTWRAP_DROP_CONT_MSG, function(len, ply)
-        local giftEnt = net.ReadEntity()
-        if not IsValid(giftEnt) then return end
-
-        giftEnt:Reload()
-    end)
-
     function SWEP:Wrap(ent)
         dbg.Log("Wrap attempt on:", ent)
         local owner = self:GetOwner()
@@ -901,77 +881,6 @@ if SERVER then
         net.WriteTable(data)
         net.Send(owner)
     end
-
-    net.Receive(GIFTWRAP_RANDOM_GIFT_MSG, function(len, ply)
-        local giftEnt = net.ReadEntity()
-        if not IsValid(giftEnt) then return end
-        dbg.Log("Random gift request by "..ply:Nick())
-
-        if ply:GetCredits() > 0 then
-            local newLabel, newData = GetRandomGiftData(ply, 20)
-            giftEnt:AutoWrap(newLabel, newData)
-            ply:AddCredits(-1)
-        end
-    end)
-
-    net.Receive(GIFTWRAP_UPDATE_NOTE_MSG, function(len, ply)
-        local giftEnt = net.ReadEntity()
-        local giftNote = net.ReadString()
-        if not IsValid(giftEnt) then return end
-
-        giftEnt:SetUnwrapNote(giftNote)
-    end)
-
-    net.Receive(GIFTWRAP_REMOVE_WRAPPER_MSG, function(len, ply)
-        local giftEnt = net.ReadEntity()
-        if not IsValid(giftEnt) then return end
-        if not dbg.Cvar:GetBool() then return end
-
-        giftEnt:SetWrapperSID("WORLD")
-    end)
-
-    net.Receive(GIFTWRAP_IN_OPTS_MSG, function(len, ply)
-        ply._gwInOptMenu = net.ReadBool()
-    end)
-
-    -- handle ordering equipment for gift (TODO: items)
-    hook.Add("TTT2OrderedEquipment", HOOK_ORDER_EQUIPMENT, function(ply, equipmentName, isItem, credits, ignoreCost)
-        if not ply._gwInOptMenu then return end
-        local giftEnt = utils.GetInventoryGiftwrap(ply)
-        if not giftEnt or giftEnt:HasGift() then return end
-
-        dbg.Log(ply:Nick()..": Wrapping "..equipmentName.." into gift...")
-        local function ClearBoughtFlag()
-            if shop.buyTable[ply] then
-                shop.buyTable[ply][equipmentName] = false
-
-                net.Start(GIFTWRAP_CLEAR_BUY_MSG)
-                net.WriteString(equipmentName)
-                net.Send(ply)
-            end
-        end
-
-        if isItem then
-            local item = utils.GetEquipment(ply, equipmentName)
-
-            if item then
-                local newLabel, newData = GetItemGiftData(equipmentName)
-                giftEnt:AutoWrap(newLabel, newData)
-                ClearBoughtFlag()
-                ply:RemoveEquipmentItem(item)
-            end
-
-        else
-            local wep = utils.GetEquipment(ply, equipmentName)
-
-            if wep then
-                local newLabel, newData = GetSWEPGiftData(equipmentName)
-                giftEnt:AutoWrap(newLabel, newData)
-                ClearBoughtFlag()
-                wep:Remove()
-            end
-        end
-    end)
 
 ----------------------------------
 ----- CLIENT REALM SWEP DEFS -----
@@ -1053,18 +962,6 @@ elseif CLIENT then
         local giftData = NewGiftData(net.ReadTable())
 
         UpdateCatalog(label, giftData)
-    end)
-
-    net.Receive(GIFTWRAP_CLEAR_BUY_MSG, function()
-        local equipmentName = net.ReadString()
-        local ply = LocalPlayer()
-
-        for i = #ply.bought, 1, -1 do
-            if ply.bought[i] == equipmentName then
-                table.remove(ply.bought, i)
-            end
-        end
-        shop.buyTable[ply][equipmentName] = nil
     end)
 
     local TREE_COLOR = Color(15, 155, 10)

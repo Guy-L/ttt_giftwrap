@@ -63,6 +63,7 @@ L["gift_opt_change_form_random"] = "Random Gift"
 
 L["gift_opt_change_form_shop_desc"] = "Wrap something from your Shop"
 L["gift_opt_change_form_shop"] = "Shop for Gift"
+L["gift_opt_change_form_shop_error_role"] = "Your role doesn't have a shop."
 
 L["gift_opt_debug_title"] = "Debug"
 L["gift_opt_debug_form"] = "Debug Options"

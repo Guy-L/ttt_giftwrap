@@ -313,7 +313,7 @@ if SERVER then
             -- setup UI indicator for placing gift near tree & do matched player count rounds
             elseif ent:GetClass() == "prop_dynamic" then
                 timer.Simple(0.1, function()
-                    if ent:GetModel() == SNUFFLE_TREE_MODEL then
+                    if IsValid(ent) and ent:GetModel() == SNUFFLE_TREE_MODEL then
                         dbg.Log("Located christmas tree:", ent)
                         christmasTree = ent
 
