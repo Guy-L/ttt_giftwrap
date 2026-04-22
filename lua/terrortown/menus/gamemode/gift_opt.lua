@@ -79,6 +79,11 @@ function OpenGiftOptions(gw)
             catcher:SetSize(ScrW(), ScrH())
             catcher:SetPaintBackground(false)
             catcher:MouseCapture(true)
+            timer.Simple(0.4, function()
+                if IsValid(catcher) then
+                    catcher:MouseCapture(false)
+                end
+            end)
 
             catcher.OnMousePressed = function(self, code)
                 if code == MOUSE_RIGHT then
