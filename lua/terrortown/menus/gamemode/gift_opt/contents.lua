@@ -16,7 +16,8 @@ local lastRequestingImg = nil
 local function GenerateSpawnIcon(model)
     dbg.Log("Building icon for "..model.."...")
 
-    local wipSpawnIcon = vgui.Create("SpawnIcon")
+    local wipSpawnIcon = vgui.Create("SpawnIcon", HELPSCRN._gwOptMenu)
+    wipSpawnIcon:SetPos(-1000, -1000)
     wipSpawnIcon:SetModel(model)
     wipSpawnIcon:RebuildSpawnIcon()
     queuedSpawnIcons[model] = wipSpawnIcon
@@ -24,7 +25,7 @@ end
 
 hook.Add("SpawniconGenerated", "TEST_GW_SPAWNICON", function(lastModel, imageName, modelsLeft)
     if queuedSpawnIcons[lastModel] then
-        queuedSpawnIcons[lastModel]:Remove()
+        queuedSpawnIcons[lastModel]:Remove() -- TODO: broken, currently "fixed" by hiding wip icon off-screen (-1000, -1000)
         queuedSpawnIcons[lastModel] = nil
 
         -- if still available, set the image of the lastRequesting canvas to the generated image

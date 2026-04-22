@@ -2648,15 +2648,17 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
 
     -- Change perk bottle item Bought functions to prevent effects happening
     -- before we can intercept them (if buying for gift)
-    for label, _ in pairs(perks) do
-        local perkItem = items.GetStored("item_ttt_"..label)
+    if SERVER then
+        for label, _ in pairs(perks) do
+            local perkItem = items.GetStored("item_ttt_"..label)
 
-        if perkItem then
-            local ogBoughtFunc = perkItem.Bought
+            if perkItem then
+                local ogBoughtFunc = perkItem.Bought
 
-            perkItem.Bought = function(self, ply)
-                if not ply._gwInOptMenu then
-                    ogBoughtFunc(self, ply)
+                perkItem.Bought = function(self, ply)
+                    if not ply._gwInOptMenu then
+                        ogBoughtFunc(self, ply)
+                    end
                 end
             end
         end
