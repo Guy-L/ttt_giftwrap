@@ -2168,7 +2168,7 @@ function CalcQualityFactors(dayOfYear, score)
 end
 
 -- cf. formulas sheet (link in GitHub readme)
-function GiftData:CalcWeight(xmasFactor, scoreFactor)
+function GiftData:CalcWeight(xmasFactor, scoreFactor, isBoosted)
     if not self.can_be_random_gift then return 0 end
     if not xmasFactor then xmasFactor = -XMAS_SUB end
     if not scoreFactor then scoreFactor = 0 end
@@ -2185,7 +2185,7 @@ function GiftData:CalcWeight(xmasFactor, scoreFactor)
         categoryMult = SHOP_WEIGHT_MULT:GetFloat()
 
     elseif category == GiftCategory.FloorSWEP then
-        categoryMult = FLOOR_WEIGHT_MULT:GetFloat()
+        categoryMult = isBoosted and 0.1 or FLOOR_WEIGHT_MULT:GetFloat()
 
     elseif category == GiftCategory.SENT or category == GiftCategory.NPC then
         categoryMult = SPECIAL_WEIGHT_MULT:GetFloat()
@@ -2281,17 +2281,19 @@ function GetRandomGiftData(giftee, scoreBonus)
     if IsPlayer(giftee) then
         score = giftee:Frags()
     end
-    if scoreBonus then
+
+    local isBoosted = scoreBonus and scoreBonus > 0
+    if isBoosted then
         score = score + scoreBonus
     end
 
-    local dayOfYear = scoreBonus and XMAS_DAY or tonumber(os.date("%j"))
+    local dayOfYear = isBoosted and XMAS_DAY or tonumber(os.date("%j"))
     local xmasFactor, scoreFactor = CalcQualityFactors(dayOfYear, score)
 
     local totalWeight = 0
     for label, giftData in pairs(giftDataCatalog) do
         if giftData:IsSpawnable(giftee) then
-            giftData.cachedWeight = giftData:CalcWeight(xmasFactor, scoreFactor)
+            giftData.cachedWeight = giftData:CalcWeight(xmasFactor, scoreFactor, isBoosted)
         else
             giftData.cachedWeight = 0
         end
