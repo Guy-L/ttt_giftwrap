@@ -138,7 +138,7 @@ function CreateCurrentContentsBox(storedEnt, giftData, parent)
     if giftData and giftData.placeholderEquip then
         local desc = vgui.Create("DLabel", textPanel)
         desc:Dock(TOP)
-        desc:SetText("(auto-generated) " .. giftData:GetDesc(storedEnt, LocalPlayer()))
+        desc:SetText("(auto-generated)\n" .. giftData:GetDesc(storedEnt, LocalPlayer()))
         desc:SetWrap(true)
         desc:SetAutoStretchVertical(true)
         desc:SetTextColor(curcont_graytext)
@@ -244,7 +244,7 @@ function CLGAMEMODESUBMENU:Populate(parent)
         dropBtn:SetEnabled(false)
         dropBtn:SetTooltip(TL("gift_opt_change_form_drop_error_none"))
 
-    elseif giftData:IsDropBlocked() or gwRef:GetIsOpening() then
+    elseif not giftData or giftData:IsDropBlocked() or gwRef:GetIsOpening() then
         dropBtn:SetEnabled(false)
         dropBtn:SetTooltip(TL("gift_opt_change_form_drop_error_block"))
 

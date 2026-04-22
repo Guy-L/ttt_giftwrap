@@ -135,6 +135,7 @@ if SERVER then
             --"ent_ttt_fan", -- TODO: bugged (wind remains), need ownership check
             --"sent_greendemon_box", --TODO: bugged (ui remains), needs ownership check, possible balance issue
             --"sent_greendemon", --TODO: bugged
+            "ttt_hat_deerstalker",
             "env_headcrabcanister", -- blocked later (affixed)
             "npc_headcrab",
             "npc_headcrab_fast", -- bunger
@@ -922,10 +923,11 @@ elseif CLIENT then
         if not utils.IsGiftWrap(heldWep) then
             ClearVMColors(ply, "watchdog hook")
 
-            -- auto-close options menu
+            -- auto-close options menu (& shop if open)
             if IsValid(HELPSCRN._gwOptMenu) and
              (not IsValid(heldWep) or heldWep:GetClass() != 'weapon_zm_improvised') then --further jank due to the jank mentioned in AutoWrap
                 HELPSCRN._gwOptMenu:Close()
+                RunConsoleCommand("ttt_cl_traitorpopup_close")
             end
         end
     end)
