@@ -98,6 +98,16 @@ function GW_DBG.MakeBotFireClass(ply, class)
     end
 end
 
+function GW_DBG.ProfileStart()
+    GW_DBG.profileStart = os.clock()
+    GW_DBG.profileLast  = GW_DBG.profileStart
+end
+
+function GW_DBG.Profile(checkpointName)
+    GW_DBG.Log("[Profile - "..checkpointName.."] Time:", string.format("%.4f", (os.clock() - GW_DBG.profileStart)), "("..string.format("%.4f", (os.clock() - GW_DBG.profileLast)).." since last)")
+    GW_DBG.profileLast = os.clock()
+end
+
 -----------------------------------------------------
 --------------------- Utils -------------------------
 -----------------------------------------------------

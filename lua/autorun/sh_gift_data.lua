@@ -969,7 +969,7 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Nondescript, attrib_feel = GiftFeel.Futuristic,
     },
     thermal_rifle = GiftData.New {
-        name     = "Thermal Rifle",        desc       = "a heat vision goggle (+ gun)",
+        name     = "Thermal Rifle",        desc       = "a gun-mounted heat vision goggle",
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_thermalrifle",
         can_be_random_gift = true,
         factor_rarity = 2, factor_quality = 5,

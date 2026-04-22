@@ -7,6 +7,7 @@ local utils = GW_Utils
 local WRAP_NAME = "Gift Wrap"
 local GIFT_NAME = "Gift"
 
+GIFTWRAP_IN_OPTS_MSG        = "TTT_GiftWrapCL_InOptionsMenu"
 GIFTWRAP_DROP_CONT_MSG      = "TTT_GiftWrap_DropContentRequest"
 GIFTWRAP_RANDOM_GIFT_MSG    = "TTT_GiftWrap_RandomContentRequest"
 GIFTWRAP_UPDATE_NOTE_MSG    = "TTT_GiftWrapCL_UpdateNoteMsg"
@@ -14,7 +15,6 @@ GIFTWRAP_REMOVE_WRAPPER_MSG = "TTT_GiftWrapCL_DebugRemoveWrapperTag"
 local GIFTWRAP_PICKUP_MSG    = "TTT_GiftWrap_PickUpMsg"
 local GIFTWRAP_HL_CHAT_MSG   = "TTT_GiftWrap_HighlightChatMsg"
 local GIFTWRAP_GIFT_DATA_MSG = "TTT_GiftWrap_SendWrapperData"
-local GIFTWRAP_IN_OPTS_MSG   = "TTT_GiftWrapCL_InOptionsMenu"
 local GIFTWRAP_CLEAR_BUY_MSG = "TTT_GiftWrapSV_ClearGiftBoughtFlag"
 local HOOK_GIFTWRAP_PICKUP   = "TTT_GiftWrap_PickUp"
 local HOOK_GIFTWRAP_TREE_USE = "TTT_GiftWrap_UseTree"
@@ -396,32 +396,6 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Entity", 0, "StoredGift")
 
     if CLIENT then
-        local function UpdateActiveContentMenu()
-            if IsValid(HELPSCRN._contentMenu) then
-                HELPSCRN._contentMenu:Clear()
-                DoContentsMenu(HELPSCRN._contentMenu)
-
-            else
-                -- this is very ass but I like the convenience
-                -- of it switching tabs automatically to show your buy was intercepted
-                local ply = LocalPlayer()
-
-                if IsValid(ply) and ply._gwInOptMenu then
-                    local menuEl = utils.GetChildNamed(HELPSCRN.menuFrame, "DNavPanelTTT2")
-                    menuEl = utils.GetChildNamed(menuEl, "DSubmenuListTTT2")
-                    menuEl = utils.GetChildNamed(menuEl, "DScrollPanelTTT2")
-                    menuEl = utils.GetChildNamed(menuEl, "Panel")
-                    menuEl = utils.GetChildNamed(menuEl, "DIconLayout")
-
-                    for _, submenuButton in ipairs(menuEl:GetChildren()) do
-                        if submenuButton:GetTitle() == "gift_opt_contents_title" then
-                            submenuButton.DoClick(submenuButton)
-                        end
-                    end
-                end
-            end
-        end
-
         self:NetworkVarNotify("StoredGift", function(name, old, new)
             timer.Simple(0.1, function() -- value isn't changed yet
                 if not IsValid(self) then return end
@@ -433,14 +407,14 @@ function SWEP:SetupDataTables()
                     self:EmitSound(sounds["undo_wrap"], 150, math.random(90, 110))
                 end
 
-                UpdateActiveContentMenu()
+                UpdateGiftContentMenu()
             end)
         end)
 
         local function UpdateUIAndMenu(name, old, new)
             timer.Simple(0.1, function()
                 self:UpdateUI("isRandom/wrapper update")
-                UpdateActiveContentMenu()
+                UpdateGiftContentMenu()
             end)
         end
 
@@ -1040,9 +1014,9 @@ elseif CLIENT then
             ClearVMColors(ply, "watchdog hook")
 
             -- auto-close options menu
-            if IsValid(HELPSCRN.menuFrame) and ply._gwInOptMenu and
+            if IsValid(HELPSCRN._gwOptMenu) and
              (not IsValid(heldWep) or heldWep:GetClass() != 'weapon_zm_improvised') then --further jank due to the jank mentioned in AutoWrap
-                HELPSCRN.menuFrame:Close()
+                HELPSCRN._gwOptMenu:Close()
             end
         end
     end)
@@ -1125,55 +1099,6 @@ elseif CLIENT then
     function SWEP:Holster()
         self:UpdateMarkerVision("holster")
         ClearVMColors(self:GetOwner(), "holster")
-    end
-
-    function OpenGiftOptions(gw)
-        local frameWidth  = 800
-        local frameHeight = 500
-        local navWidth = 175
-        local ply = LocalPlayer()
-
-        dbg.Log("Opening gift options...")
-        HELPSCRN._gwRef = gw -- Make gift reference global for menu (bad but idk)
-
-        for _, menu in ipairs(menusIndexed) do
-            if menu.type == "gift_opt" then
-                menu = table.Copy(menu)
-                HELPSCRN:ShowMainMenu()
-                HELPSCRN:ShowSubmenu(menu)
-
-                -- Change window size & remove back button
-                local frame = HELPSCRN.menuFrame
-                frame:SetSize(frameWidth, frameHeight)
-                frame:Center()
-                frame:ShowBackButton(false)
-
-                function frame:OnClose()
-                    dbg.Log("Gift options menu closed")
-                    HELPSCRN._contentMenu = nil
-
-                    ply._gwInOptMenu = false
-                    net.Start(GIFTWRAP_IN_OPTS_MSG)
-                    net.WriteBool(ply._gwInOptMenu)
-                    net.SendToServer()
-                end
-
-                -- Adjust layout for smaller window size
-                utils.GetChildNamed(frame, "DNavPanelTTT2"):SetWide(navWidth)
-                local content = utils.GetChildNamed(frame, "DContentPanelTTT2")
-                local contentScroll = utils.GetChildNamed(content, "DScrollPanelTTT2")
-                contentScroll:SetWide(frameWidth - navWidth)
-                contentScroll:SetTall(frameHeight - vskin.GetHeaderHeight() - vskin.GetBorderSize() - 10)
-
-                -- Tell server client is in menu state
-                ply._gwInOptMenu = true
-                net.Start(GIFTWRAP_IN_OPTS_MSG)
-                net.WriteBool(ply._gwInOptMenu)
-                net.SendToServer()
-
-                break
-            end
-        end
     end
 
     function SWEP:AddToSettingsMenu(parent)

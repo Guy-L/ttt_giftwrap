@@ -2,7 +2,7 @@
 CLGAMEMODESUBMENU.base  = "base_gamemodesubmenu"
 CLGAMEMODESUBMENU.title = "gift_opt_contents_title"
 CLGAMEMODESUBMENU.icon = Material("vgui/ttt/menu_icon_box_hole")
-CLGAMEMODESUBMENU.priority = 99
+CLGAMEMODESUBMENU.priority = 100
 local utils = GW_Utils
 local dbg   = GW_DBG
 
@@ -207,9 +207,8 @@ function AttributeLine(parent, verb, value, placeholder)
     return attrLine
 end
 
-function DoContentsMenu(parent)
+function CLGAMEMODESUBMENU:Populate(parent)
     local gwRef = HELPSCRN._gwRef
-    HELPSCRN._contentMenu = parent
 
     if not IsValid(gwRef) then
         local error_line = vgui.Create("DLabel", parent)
@@ -283,8 +282,4 @@ function DoContentsMenu(parent)
         shopBtn:SetEnabled(false)
         shopBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_nocred"))
     end
-end
-
-function CLGAMEMODESUBMENU:Populate(parent)
-    DoContentsMenu(parent)
 end

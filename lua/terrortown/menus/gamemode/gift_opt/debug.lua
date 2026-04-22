@@ -32,7 +32,7 @@ function CLGAMEMODESUBMENU:Populate(parent)
             net.Start(GIFTWRAP_REMOVE_WRAPPER_MSG)
             net.WriteEntity(gwRef)
             net.SendToServer()
-            HELPSCRN.menuFrame:Close()
+            HELPSCRN._gwOptMenu:Close()
         end
     })
 
