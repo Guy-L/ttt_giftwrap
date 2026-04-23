@@ -2437,7 +2437,7 @@ end
 
 function GetRandomGiftData(giftee, scoreBonus)
     if dbg.Cvar:GetBool() and DEBUG_TEST_GIFT then
-        return DEBUG_TEST_GIFT, giftDataCatalog[DEBUG_TEST_GIFT]:Furnish()
+        return DEBUG_TEST_GIFT, giftDataCatalog[DEBUG_TEST_GIFT]:Furnish(giftee)
     end
 
     local score = 0
@@ -2474,7 +2474,7 @@ function GetRandomGiftData(giftee, scoreBonus)
 
             if roll <= accum then
                 dbg.Log("Picked gift: "..label.." (weight: "..tostring(giftData.cachedWeight)..")")
-                return label, giftData:Furnish()
+                return label, giftData:Furnish(giftee)
             end
         end
     end
@@ -2484,33 +2484,52 @@ function GetRandomGiftData(giftee, scoreBonus)
 end
 
 -- For things we can derive only server-side from gift data
--- and might want later
-function GiftData:Furnish()
-    if self.category == GiftCategory.NPC and not self.npcModel then
-        local previewNPC = ents.Create(self.identifier)
+-- and might want later (ply can be any player)
+if SERVER then
+function GiftData:Furnish(ply)
+    if not self.cachedModel and self.category == GiftCategory.SENT then
+        local sent = scripted_ents.GetStored(self.identifier)
 
-        if IsValid(previewNPC) then
-            previewNPC:Spawn()
-            self.npcModel = previewNPC:GetModel()
-            previewNPC:Remove()
+        if sent.Model then
+            self.cachedModel = sent.Model
+            return self
+        elseif sent.t and sent.t.Model then
+            self.cachedModel = sent.t.Model
+            return self
+        end
+    end
+
+    if not self.cachedModel and (self.category == GiftCategory.NPC or self.category == GiftCategory.SENT) then
+        local previewEnt = ents.Create(self.identifier)
+
+        if previewEnt.SetThrower then previewEnt:SetThrower(ply) end
+        if previewEnt.SetOriginator then previewEnt:SetOriginator(ply) end
+
+        if IsValid(previewEnt) then
+            if previewEnt.Initialize then previewEnt:Initialize()
+            else previewEnt:Spawn() end
+            self.cachedModel = previewEnt:GetModel()
+            previewEnt:Remove()
         end
     end
 
     return self
 end
+end
 
+if CLIENT then
 function GiftData:GetVisuals()
     local category = self.category
+
     if category == GiftCategory.PhysProp then
         return self.identifier
 
     elseif category == GiftCategory.SENT then
-         -- would rather get a Lua error here so I know if there's any other path to it (or any SENTs without a model)
         local sent = scripted_ents.GetStored(self.identifier)
-        return sent.t.Model
+        return sent.t.Model and sent.t.Model or self.cachedModel
 
     elseif category == GiftCategory.NPC then
-        return self.npcModel --cached server-side (can't retrieve client-side afaik)
+        return self.cachedModel --cached server-side (can't retrieve client-side afaik)
 
     elseif category == GiftCategory.FloorSWEP or category == GiftCategory.WorldSWEP then
         local swep = weapons.GetStored(self.identifier)
@@ -2526,6 +2545,7 @@ function GiftData:GetVisuals()
     end
 
     return nil
+end
 end
 
 function GetGiftDataFromLabel(giftLabel)

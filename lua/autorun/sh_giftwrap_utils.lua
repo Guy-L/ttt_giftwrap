@@ -216,7 +216,7 @@ function GW_Utils.GetEntCenter(ent)
     local phys = ent:GetPhysicsObject()
     if IsValid(phys) then
         local mins, maxs = phys:GetAABB()
-        return phys:LocalToWorld((mins + maxs) * 0.5) --+ Vector(0, 0, 10)
+        return phys:LocalToWorld((mins + maxs) * 0.5) + Vector(0, 0, 10)
     end
 
     -- fallback (other centering methods are way off for my gift, fucked bbox)
