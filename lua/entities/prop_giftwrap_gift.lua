@@ -20,6 +20,7 @@ ENT.Purpose = "Gift from TTT2 Gift Wrap. Holds a random trinket!"
 ENT.Category = "Utility"
 ENT.Spawnable = true -- for sandbox ig
 ENT.Author = "Guy"
+ENT.Model = GIFT_WORLDMODEL --purely for Contents menu rendering
 
 local sounds = {
     bells1 = Sound("giftwrap/tf2_nm_bells1.wav"),

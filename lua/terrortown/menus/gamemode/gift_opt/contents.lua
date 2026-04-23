@@ -45,17 +45,21 @@ function SetModelImage(dImage, ent, giftData)
 
     if IsValid(ent) then
         entModel = ent:GetModel()
+        dbg.Log("Got preview image from live model:", entModel)
 
     elseif giftData then
         local giftImgPath, isMat = giftData:GetVisuals()
 
         if giftImgPath then
+            dbg.Log("Got preview image from data:", giftImgPath)
             entModel = giftImgPath
 
             if isMat then
                 dImage:SetImage(entModel)
                 return
             end
+        else
+            dbg.Log("Failed to retrieve preview image from data")
         end
     end
 

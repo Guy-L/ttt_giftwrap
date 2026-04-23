@@ -251,6 +251,7 @@ Gifts made by others can be opened with LMB (while holding them or via crowbar),
     GW_METASWEP.ViewModelFOV  = 85
     GW_METASWEP.DrawCrosshair = false
     GW_METASWEP.UseHands      = true
+    GW_METASWEP.WorldModel    = WRAP_WORLDMODEL --purely for Contents menu rendering
 
     function UpdateLocalInventoryGiftWrap(reason)
         local ownedGiftwrap = utils.GetInventoryGiftwrap(LocalPlayer())

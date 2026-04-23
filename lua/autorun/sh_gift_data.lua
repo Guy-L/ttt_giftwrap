@@ -2035,6 +2035,7 @@ function GiftData:ApplyPreSpawnAdjustments(giftEnt, giftee)
         elseif self.special_setup == "gift_setup" then
             giftEnt:SetIsRandomGift(true)
             giftEnt:SetWrapperSID("WORLD")
+            RollGiftColors(giftEnt)
 
         elseif self.special_setup == "snuffles_present_setup" then
             local presentModels = {
