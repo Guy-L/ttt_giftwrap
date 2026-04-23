@@ -247,7 +247,7 @@ local giftDataCatalog = {
         name     = "Plush Turtle",        desc       = "a turtle plushie",
         category = GiftCategory.PhysProp, identifier = "models/props/de_tides/vending_turtle.mdl",
         can_be_random_gift = true,
-        factor_rarity = 1, factor_quality = 9,
+        factor_rarity = 1, factor_quality = 8,
         attrib_sound = GiftSound.None,     attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Cotton,   attrib_feel = GiftFeel.Squishy,
     },
@@ -375,7 +375,7 @@ local giftDataCatalog = {
         name     = "Live Bunger",    desc       = "a cute Bunger",
         category = GiftCategory.NPC, identifier = "npc_headcrab_fast",
         can_be_random_gift = true,
-        factor_rarity = 4, factor_quality = 2,
+        factor_rarity = 2, factor_quality = 2,
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Alive,
         special_setup = "bunger_setup"
@@ -1486,7 +1486,7 @@ local deployableSWEPs = {
     groovitron = {name = "Groovitron", desc = "a disco ball",
                SENT_id = "ttt_pap_groovitron_proj", SWEP_id = "ttt_pap_groovitron",
                SENT_setup = "grenade", --todo fix stuff remaining active on wrap
-               SENT_random = true, SENT_rarity = 10, SENT_quality = -5,
+               SENT_random = true, SENT_rarity = 4, SENT_quality = -5,
                SWEP_random = false,
                SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Mini,
                sound = GiftSound.Musical, smell = GiftSmell.Nondescript, feel = GiftFeel.Bright},
@@ -1542,7 +1542,8 @@ local deployableSWEPs = {
     killer_bungers = {name = "Bunger Grenade", desc = "a bunch of friendly Bungers",
                SENT_id = "ttt_bungernade_proj", SWEP_id = "weapon_ttt_bungernade",
                SENT_setup = "grenade", --TODO fix not being able to wrap sent nade
-               SENT_random = false, SWEP_random = false,
+               SENT_random = true, SENT_rarity = 5, SENT_quality = -8,
+               SWEP_random = false,
                SENT_size = GiftSize.Gigantic, SWEP_size = GiftSize.Large,
                sound = GiftSound.Springy, smell = GiftSmell.Food, feel = GiftFeel.Otherworldly},
 
