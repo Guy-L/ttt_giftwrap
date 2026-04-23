@@ -40,6 +40,7 @@ GiftSound = {
     Fleshy     = {snd="", desc="fleshy"},
     Talking    = {snd="", desc="like it's talking"},
     Meowing    = {snd="", desc="like it's meowing"},
+    Bleating   = {snd="", desc="like it's bleating"}, -- lambert only
     Thudding   = {snd="", desc="like it's thudding"},
     Whirring   = {snd="", desc="like it's whirring"},
     Revving    = {snd="", desc="like it's revving"},
@@ -47,6 +48,7 @@ GiftSound = {
     Granular   = {snd="", desc="granular"},
     Springy    = {snd="", desc="springy"},
     Musical    = {snd="", desc="musical"},
+    Squeaky    = {snd="", desc="squeaky"}, --new, underused
     Splashing  = {snd="", desc="like it's splashing"},
     Squelching = {snd="", desc="like it's squelching"},
     Rustling   = {snd="", desc="like it's rustling"},
@@ -82,6 +84,7 @@ GiftSmell = {
     Cardboard   = "like cardboard",
     Caffeine    = "like caffeine",
     Cotton      = "like cotton", -- currently props only
+    Wool        = "like wool", -- new, underused
     Leather     = "like leather",
     Nice        = "nice",
     Stinky      = "stinky",
@@ -95,6 +98,7 @@ GiftSmell = {
     Dry         = "dry",
     Rusty       = "rusty",
     Sterile     = "sterile",
+    Metallic    = "metallic", -- new, super underused (high overlap with Sterile)
     Rubbery     = "rubbery",
     Strange     = "strange", -- not ideal
     Nondescript = nil,
@@ -141,6 +145,7 @@ GiftFeel = {
     Special       = "special", -- currently unused, very not ideal
     Meta          = "meta... or used to", -- used only for TEC-9 (joke)
     Sus           = "suspicious", -- used only for Wormhole-Vent (joke)
+    Flat          = "flat", -- new, underused
     Indescribable = nil, -- should maybe see more use
 }
 
@@ -167,6 +172,21 @@ local giftDataCatalog = {
     --},
 
     -- PhysProps
+    argemia = GiftData.New {
+        name     = "Argemia Plushie",     desc       = "an Ariral plushie",
+        category = GiftCategory.PhysProp, identifier = "models/drm/argemia_plush.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Meowing,  attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Metallic, attrib_feel = GiftFeel.Otherworldly,
+    },
+    cirno_fumo = GiftData.New {
+        name     = "Cirno Fumo",          desc       = "a fumo",
+        category = GiftCategory.PhysProp, identifier = "models/asianbop/coolprops/u8/cirno.mdl",
+        can_be_random_gift = false,
+        --factor_rarity = 0.9, factor_quality = 9,
+        attrib_sound = GiftSound.None,   attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Cotton, attrib_feel = GiftFeel.Cold,
+    },
     companion_doll = GiftData.New {
         name     = "Companion Doll",      desc       = "a plush doll",
         category = GiftCategory.PhysProp, identifier = "models/maxofs2d/companion_doll.mdl",
@@ -191,6 +211,38 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Squishy,
     },
+    goober = GiftData.New {
+        name     = "Goober",              desc       = "a goober",
+        category = GiftCategory.PhysProp, identifier = "models/propper/ttt_unsung_star_a3/goober_0.mdl",
+        can_be_random_gift = false,
+        --factor_rarity = 2, factor_quality = 8,
+        attrib_sound = GiftSound.None,   attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Stinky, attrib_feel = GiftFeel.Flat,
+    },
+    lambert = GiftData.New {
+        name     = "Lambert Plushie",     desc       = "a sacrificial lamb",
+        category = GiftCategory.PhysProp, identifier = "models/asianbop/coolprops/u14/lambert.mdl",
+        can_be_random_gift = false,
+        --factor_rarity = 1, factor_quality = 6,
+        attrib_sound = GiftSound.Bleating, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Wool,     attrib_feel = GiftFeel.Otherworldly,
+    },
+    maxwell_prop = GiftData.New {
+        name     = "Maxwell",             desc       = "a dapper gentleman",
+        category = GiftCategory.PhysProp, identifier = "models/dingus/dingus.mdl",
+        --can_be_random_gift = false,
+        --factor_rarity = 2, factor_quality = 7,
+        attrib_sound = GiftSound.Meowing, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Fur,     attrib_feel = GiftFeel.Soft,
+    },
+    neco_arc = GiftData.New {
+        name     = "Neco Arc Plushie",    desc       = "a weird cat",
+        category = GiftCategory.PhysProp, identifier = "models/drm/neko_arc_plush.mdl",
+        can_be_random_gift = false,
+        --factor_rarity = 1, factor_quality = 3,
+        attrib_sound = GiftSound.Meowing, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Stinky,  attrib_feel = GiftFeel.Otherworldly,
+    },
     plush_turtle = GiftData.New {
         name     = "Plush Turtle",        desc       = "a turtle plushie",
         category = GiftCategory.PhysProp, identifier = "models/props/de_tides/vending_turtle.mdl",
@@ -198,6 +250,22 @@ local giftDataCatalog = {
         factor_rarity = 1, factor_quality = 9,
         attrib_sound = GiftSound.None,     attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Cotton,   attrib_feel = GiftFeel.Squishy,
+    },
+    rat = GiftData.New {
+        name     = "Rat",                desc       = "a rat",
+        category = GiftCategory.PhysProp, identifier = "models/asianbop/coolprops/u1/rat/rat.mdl",
+        can_be_random_gift = false,
+        --factor_rarity = 1, factor_quality = -5,
+        attrib_sound = GiftSound.Squeaky, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Stinky,  attrib_feel = GiftFeel.Alive,
+    },
+    seal = GiftData.New {
+        name     = "Seal",                desc       = "a seal",
+        category = GiftCategory.PhysProp, identifier = "models/niko/niko.mdl",
+        can_be_random_gift = false,
+        --factor_rarity = 1, factor_quality = 5,
+        attrib_sound = GiftSound.Squeaky, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Fur,     attrib_feel = GiftFeel.Slippery,
     },
     soccer_ball = GiftData.New {
         name     = "Soccer Ball",         desc       = "a brand-new soccer ball",
@@ -334,7 +402,7 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         --factor_rarity = 2, factor_quality = -1,
         attrib_sound = GiftSound.Muffled, attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Random,
+        attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Flat,
         up_vel = 400, up_min = 0, up_max = 2,
     },
     det_hat = GiftData.New {
@@ -342,8 +410,8 @@ local giftDataCatalog = {
         category = GiftCategory.SENT, identifier = "ttt_hat_deerstalker",
         can_be_random_gift = true,
         factor_rarity = 1, factor_quality = 4,
-        attrib_sound = GiftSound.None,   attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Cotton, attrib_feel = GiftFeel.Sus,
+        attrib_sound = GiftSound.None, attrib_size = GiftSize.Small,
+        attrib_smell = GiftSmell.Wool, attrib_feel = GiftFeel.Sus,
     },
     kfc = GiftData.New {
         name     = "KFC Bucket",      desc       = "a bucket o' chicken",
@@ -750,8 +818,8 @@ local giftDataCatalog = {
         category = GiftCategory.WorldSWEP, identifier = "ttt_pap_jam",
         can_be_random_gift = true,
         factor_rarity = 0.5, factor_quality = 2,
-        attrib_sound = GiftSound.Glass, attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Food,  attrib_feel = GiftFeel.Sticky,
+        attrib_sound = GiftSound.Squelching, attrib_size = GiftSize.Small,
+        attrib_smell = GiftSmell.Food,       attrib_feel = GiftFeel.Sticky,
     },
     kf5 = GiftData.New {
         name     = "KF5 Dominator",        desc       = "a KF5 Dominator",
@@ -1475,6 +1543,7 @@ local deployableSWEPs = {
                SENT_id = "ttt_bungernade_proj", SWEP_id = "weapon_ttt_bungernade",
                SENT_setup = "grenade", --TODO fix not being able to wrap sent nade
                SENT_random = false, SWEP_random = false,
+               SENT_size = GiftSize.Gigantic, SWEP_size = GiftSize.Large,
                sound = GiftSound.Springy, smell = GiftSmell.Food, feel = GiftFeel.Otherworldly},
 
     knife   = {name = "Knife", desc = "a slick knife",
@@ -2542,7 +2611,8 @@ local giftSurfaceProps = {
 
 function GetEntGiftData(ent)
     local entIdentifier = ent:GetClass()
-    if entIdentifier == "prop_physics" then
+
+    if string.find(entIdentifier, "prop_physics", nil, true) then
         entIdentifier = ent:GetModel()
     end
 
