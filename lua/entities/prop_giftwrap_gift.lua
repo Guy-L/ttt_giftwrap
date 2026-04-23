@@ -100,7 +100,7 @@ function ENT:OnTakeDamage(dmgInfo)
                 -- TODO: Proper gibbing?
                 --self:GibBreakClient(Vector(0,0,10))
                 --self:GibBreakServer(Vector(0,0,10))
-                SpawnGiftEnt(attacker, self, self:GetPos())
+                SpawnGiftEnt(attacker, self, utils.GetEntCenter(self))
                 self:Remove()
 
                 if self:GetIsRandomGift() and not attackerOpenedRandomGift then

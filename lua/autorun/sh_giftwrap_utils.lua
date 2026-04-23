@@ -212,6 +212,17 @@ function GW_Utils.GetSubRoleData(subRoleID)
     return roles.NONE
 end
 
+function GW_Utils.GetEntCenter(ent)
+    local phys = ent:GetPhysicsObject()
+    if IsValid(phys) then
+        local mins, maxs = phys:GetAABB()
+        return phys:LocalToWorld((mins + maxs) * 0.5) --+ Vector(0, 0, 10)
+    end
+
+    -- fallback (other centering methods are way off for my gift, fucked bbox)
+    return ent:GetPos()
+end
+
 function GW_Utils.GetEntSurfaceProp(ent, phys)
     if not IsValid(ent) then return nil end
     if not phys then phys = ent:GetPhysicsObject() end

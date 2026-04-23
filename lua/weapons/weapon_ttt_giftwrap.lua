@@ -402,8 +402,10 @@ function SWEP:SetupDataTables()
 
         local function UpdateUIAndMenu(name, old, new)
             timer.Simple(0.1, function()
-                self:UpdateUI("isRandom/wrapper update")
-                UpdateGiftContentMenu()
+                if IsValid(self) then
+                    self:UpdateUI("isRandom/wrapper update")
+                    UpdateGiftContentMenu()
+                end
             end)
         end
 
@@ -471,6 +473,7 @@ function SWEP:PrimaryAttack()
                     self:SetIsOpening(true)
 
                     timer.Simple(0.9, function()
+                        if not IsValid(self) then return end
                         self:DropContents()
                         self:Remove()
 

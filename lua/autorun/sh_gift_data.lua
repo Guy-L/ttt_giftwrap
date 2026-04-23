@@ -2122,16 +2122,16 @@ function GiftData:ApplyPostUnwrapAdjustments(giftEnt, giftee)
         end
 
         if not giftEnt:IsOnGround() then
-            local giftCenter = giftEnt:LocalToWorld(giftEnt:OBBCenter())
+            local giftCenter = utils.GetEntCenter(giftEnt)
 
             local groundTr = util.TraceLine({
                 start  = giftCenter + Vector(0, 0, 100),
                 endpos = giftCenter - Vector(0,0,1000),
                 filter = giftEnt,
-                mask   = MASK_SOLID,
+                mask   = MASK_NPCWORLDSTATIC,
             })
 
-            if not groundTr.HitNonWorld then
+            if groundTr.Hit then
                 giftEnt:SetPos(groundTr.HitPos)
                 giftEnt:SetAngles(groundTr.HitNormal:Angle() + Angle(90, 0, 0))
             end
