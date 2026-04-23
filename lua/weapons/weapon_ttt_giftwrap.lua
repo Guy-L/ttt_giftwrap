@@ -557,6 +557,7 @@ function SWEP:Throw(owner, force)
     if not IsValid(owner) then return end
 
     if SERVER then
+        local giftData = GetCachedGiftData(self, owner)
         local giftProp = self:MakePropCopy(false)
         if not IsValid(giftProp) then return end
         giftProp:SetPos(owner:GetShootPos())
@@ -567,7 +568,7 @@ function SWEP:Throw(owner, force)
             if not force then force = 800 end
             local throwVel = owner:GetAimVector()
             --throwVel.z = 0.3 -- hardlock trajectory vertically
-            throwVel = throwVel * force
+            throwVel = throwVel * (force + 150*giftData.attrib_size)
 
             phys:SetVelocity(throwVel)
             phys:AddAngleVelocity(Vector(500, 0, 0))
@@ -593,7 +594,7 @@ if SERVER then
         self.fingerprints = {}
 
         if self:HasGift() then
-            self:Throw(nil, 300)
+            self:Throw(nil, 400)
         end
     end
 
@@ -733,6 +734,7 @@ if SERVER then
                     net.Send(gifteePly)
                 end)
             end
+
         else
             net.Start(GIFTWRAP_HL_CHAT_MSG)
             net.WriteString("You were meant to unwrap ")
@@ -846,7 +848,7 @@ if SERVER then
             net.Start(GIFTWRAP_GIFT_DATA_MSG)
             net.WriteString(newLabel)
             net.WriteTable(newData)
-            net.Send(owner)
+            net.Broadcast()
 
             ent:CallOnRemove(WRAPPED_GIFT_REMOVE, function()
                 if IsValid(self) and IsValid(owner) then

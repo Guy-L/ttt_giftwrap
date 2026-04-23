@@ -63,18 +63,15 @@ function ENT:Initialize()
     if SERVER then
         self:PrecacheGibs()
 
-        local scale = math.Rand(0.8 , 3.5)
         self:SetAngles(Angle(90, math.random(0, 360), 0))
         self.LastUprightCheck = CurTime()
         self.UprightCheckFreq = 2
-
-        self:SetGiftScale(scale)
         self:UpdateScale(scale)
 
         self:SetDescriptionLine(math.random(#normalDescriptionLines))
 
     elseif CLIENT then
-        self:UpdateScale(self:GetGiftScale())
+        self:UpdateScale()
         SyncGiftColors(self)
 
         self._spawning = true -- bs to make sync work on real servers
@@ -114,7 +111,28 @@ function ENT:OnTakeDamage(dmgInfo)
     end
 end
 
-function ENT:UpdateScale(scale)
+function ENT:GetGiftScale()
+    local giftLabel = self:GetCachedDataLabel()
+    local giftData  = GetGiftDataFromLabel(giftLabel)
+
+    if giftLabel == "giftwrap" then
+        local storedGiftBox = self:GetStoredGift()
+
+        if IsValid(storedGiftBox) then
+            -- one of the weirdest recursions I've ever written :D
+            return storedGiftBox:GetGiftScale() * 1.25
+        end
+    end
+
+    if not giftData then
+        dbg.Log("[WARNING] Gift prop has no valid data attached; using default size; label: '"..giftLabel.."'")
+    end
+    return giftData and giftData.attrib_size or 1.5
+end
+
+function ENT:UpdateScale()
+    local scale = self:GetGiftScale()
+
     dbg.Log("(prop) Setting gift model scale to:", scale)
     self:SetModelScale(scale)
     self:Activate()
@@ -133,8 +151,7 @@ function ENT:RefreshPhysics()
 end
 
 function ENT:SetupDataTables()
-    self:NetworkVar("Float", 0, "GiftScale")
-    self:NetworkVar("Float", 1, "GroundPitch")
+    self:NetworkVar("Float", 0, "GroundPitch")
     self:NetworkVar("Int", 0, "DescriptionLine")
     self:NetworkVar("Int", 1, "GiftBoxColor")
     self:NetworkVar("Int", 2, "GiftRibbonColor")
@@ -224,7 +241,7 @@ if SERVER then
                 utils.NonSpamMessage(activator, "GiftPickupAttempt", "You can't hold both gift and wrap at the same time.")
             end
 
-            return
+            return --TODO: try throwing out held one instead to allow pickup
         end
 
         local newGift = ents.Create(SWEP_CLASS_NAME)

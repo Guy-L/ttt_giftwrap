@@ -1,7 +1,7 @@
 GW_DBG = {}
 GW_DBG.Cvar = CreateConVar("ttt2_giftwrap_debug", 0, {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Enables addon debug prints for client & server (should not be enabled for real play).", 0, 1)
 
-function GW_DBG.Inspect(obj)
+function GW_DBG.Inspect(obj, noMeta)
     if not GW_DBG.Cvar:GetBool() then return end
     GW_DBG.Log(obj, ", of type "..type(obj))
 
@@ -13,12 +13,14 @@ function GW_DBG.Inspect(obj)
             PrintTable(obj:GetTable())
         end
 
-        local meta = getmetatable(obj)
-        if meta then
-            print("Metatable found:")
-            PrintTable(meta)
-        else
-            print("No metatable")
+        if not noMeta then
+            local meta = getmetatable(obj)
+            if meta then
+                print("Metatable found:")
+                PrintTable(meta)
+            else
+                print("No metatable")
+            end
         end
    end
 end

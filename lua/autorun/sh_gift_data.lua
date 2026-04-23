@@ -64,8 +64,9 @@ GiftSize = {
     Large    = 1.5,
     Larger   = 2,
     Big      = 2.5,
-    Huge     = 3,
-    Gigantic = 3.5,
+    Huge     = 3.5,
+    Gigantic = 5,
+    Max      = 7,
 }
 
 GiftSmell = {
@@ -171,7 +172,7 @@ local giftDataCatalog = {
         category = GiftCategory.PhysProp, identifier = "models/maxofs2d/companion_doll.mdl",
         can_be_random_gift = true,
         factor_rarity = 1, factor_quality = 4,
-        attrib_sound = GiftSound.None,   attrib_size = GiftSize.Normal,
+        attrib_sound = GiftSound.None,   attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Cotton, attrib_feel = GiftFeel.Soft,
     },
     companion_doll_big = GiftData.New {
@@ -179,7 +180,7 @@ local giftDataCatalog = {
         category = GiftCategory.PhysProp,  identifier = "models/maxofs2d/companion_doll_big.mdl",
         can_be_random_gift = true,
         factor_rarity = 5, factor_quality = 4,
-        attrib_sound = GiftSound.None,   attrib_size = GiftSize.Gigantic,
+        attrib_sound = GiftSound.None,   attrib_size = GiftSize.Max,
         attrib_smell = GiftSmell.Cotton, attrib_feel = GiftFeel.Massive,
     },
     dead_bunger = GiftData.New {
@@ -195,7 +196,7 @@ local giftDataCatalog = {
         category = GiftCategory.PhysProp, identifier = "models/props/de_tides/vending_turtle.mdl",
         can_be_random_gift = true,
         factor_rarity = 1, factor_quality = 9,
-        attrib_sound = GiftSound.None, attrib_size = GiftSize.Small,
+        attrib_sound = GiftSound.None,     attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Cotton,   attrib_feel = GiftFeel.Squishy,
     },
     soccer_ball = GiftData.New {
@@ -252,13 +253,13 @@ local giftDataCatalog = {
     ads = GiftData.New {
         name     = "Live ADS",        desc       = "a defensive sentry bot",
         category = GiftCategory.SENT, identifier = "ads",
-        can_be_random_gift = true,
-        factor_rarity = 3, factor_quality = 6,
+        can_be_random_gift = false,
+        --factor_rarity = 3, factor_quality = 6,
         attrib_sound = GiftSound.Beeping,   attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Electric,
         stick_to_ground = true
     },
-    banana_peel = GiftData.New {
+    banana_peel = GiftData.New { --TODO link to swep
         name     = "Banana Peel",     desc       = "an old banana peel",
         category = GiftCategory.SENT, identifier = "ttt_banana_peel",
         can_be_random_gift = true,
@@ -330,8 +331,8 @@ local giftDataCatalog = {
     chomik = GiftData.New {
         name     = "Chomik",          desc       = "a collectible",
         category = GiftCategory.SENT, identifier = "ttt_chomik",
-        can_be_random_gift = true,
-        factor_rarity = 2, factor_quality = -1,
+        can_be_random_gift = false,
+        --factor_rarity = 2, factor_quality = -1,
         attrib_sound = GiftSound.Muffled, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Random,
         up_vel = 400, up_min = 0, up_max = 2,
@@ -363,16 +364,16 @@ local giftDataCatalog = {
     maxwell = GiftData.New {
         name     = "Maxwell",         desc       = "a dapper gentleman",
         category = GiftCategory.SENT, identifier = "ttt_dingus",
-        can_be_random_gift = true,
-        factor_rarity = 4, factor_quality = 5,
+        can_be_random_gift = false,
+        --factor_rarity = 4, factor_quality = 5,
         attrib_sound = GiftSound.Meowing, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Nice,    attrib_feel = GiftFeel.Soft,
     },
     max = GiftData.New {
         name     = "Max",             desc       = "Max",
         category = GiftCategory.SENT, identifier = "ttt_dingwell",
-        can_be_random_gift = true,
-        factor_rarity = 5, factor_quality = 8,
+        can_be_random_gift = false,
+        --factor_rarity = 5, factor_quality = 8,
         attrib_sound = GiftSound.Meowing, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Fur,     attrib_feel = GiftFeel.Soft,
     },
@@ -677,6 +678,14 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Metallic,  attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Hot,
     },
+    grave_talk = GiftData.New {
+        name     = "Gravetalk",            desc       = "a walkie-talkie",
+        category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_gravetalk",
+        can_be_random_gift = true,
+        factor_rarity = 3, factor_quality = -7,
+        attrib_sound = GiftSound.Talking, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Ghostly,
+    },
     gravity_hammer = GiftData.New {
         name     = "Gravity Hammer",        desc      = "a Gravity Hammer",
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_gravityhammer",
@@ -823,6 +832,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Woody,   attrib_feel = GiftFeel.Otherworldly,
     },
+    meatball = GiftData.New {
+        name     = "Spicy Meatball",       desc       = "a spicy meat-a-ball",
+        category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_spicy_meatball",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Small,
+        attrib_smell = GiftSmell.Food,     attrib_feel = GiftFeel.Hot,
+    },
     minifier = GiftData.New {
         name     = "Minifier",             desc       = "small mode",
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_minifier",
@@ -929,6 +945,15 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Salty,  attrib_feel = GiftFeel.Cursed,
     },
+    sopd = GiftData.New {
+        name     = "Sword of Player Defeat",
+        category = GiftCategory.WorldSWEP,   identifier = "weapon_ttt_sopd",
+        can_be_random_gift = true,
+        factor_rarity = 15, factor_quality = 7,
+        attrib_sound = GiftSound.Musical, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Sharp, -- could also go with Cursed but Sharp is underused
+        special_setup = "sopd_setup",
+    },
     speedgun = GiftData.New {
         name     = "Speedgun",             desc       = "a caffeine gun",
         category = GiftCategory.WorldSWEP, identifier = "speedgun",
@@ -936,13 +961,6 @@ local giftDataCatalog = {
         factor_rarity = 6, factor_quality = 5,
         attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Caffeine,  attrib_feel = GiftFeel.Warm,
-    },
-    meatball = GiftData.New {
-        name     = "Spicy Meatball",       desc       = "a spicy meat-a-ball",
-        category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_spicy_meatball",
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Food,     attrib_feel = GiftFeel.Hot,
     },
     stungun = GiftData.New {
         name     = "Stungun",              desc       = "a Stungun",
@@ -959,14 +977,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Beeping,   attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Cursed, -- on the fence for this pick
     },
-    sopd = GiftData.New {
-        name     = "Sword of Player Defeat",
-        category = GiftCategory.WorldSWEP,   identifier = "weapon_ttt_sopd",
+    super_magneto = GiftData.New {
+        name     = "Super Magneto-Stick",  desc       = "a magic wand",
+        category = GiftCategory.WorldSWEP, identifier = "weapon_super_carry",
         can_be_random_gift = true,
-        factor_rarity = 15, factor_quality = 7,
-        attrib_sound = GiftSound.Musical, attrib_size = GiftSize.Big,
-        attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Sharp, -- could also go with Cursed but Sharp is underused
-        special_setup = "sopd_setup",
+        factor_rarity = 7, factor_quality = 6,
+        attrib_sound = GiftSound.None,  attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Woody, attrib_feel = GiftFeel.Powerful,
     },
     teleporter = GiftData.New {
         name     = "Teleporter",           desc       = "a high-tech flip phone",
@@ -975,6 +992,14 @@ local giftDataCatalog = {
         factor_rarity = 2, factor_quality = 4,
         attrib_sound = GiftSound.Beeping,     attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Nondescript, attrib_feel = GiftFeel.Futuristic,
+    },
+    tesla_bow = GiftData.New {
+        name     = "Tesla Bow",            desc       = "an electric bow",
+        category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_teslabow",
+        can_be_random_gift = true,
+        factor_rarity = 10, factor_quality = 8,
+        attrib_sound = GiftSound.Beeping, attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Futuristic,
     },
     thermal_rifle = GiftData.New {
         name     = "Thermal Rifle",        desc       = "a gun-mounted heat vision goggle",
@@ -987,8 +1012,8 @@ local giftDataCatalog = {
     thruster_gun = GiftData.New {
         name     = "Thruster Gun",         desc       = "a Thruster Gun",
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_thruster",
-        can_be_random_gift = true,
-        factor_rarity = 9, factor_quality = 5,
+        can_be_random_gift = false,
+        --factor_rarity = 9, factor_quality = 5,
         attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Dusty,     attrib_feel = GiftFeel.Hot,
     },
@@ -1021,30 +1046,6 @@ local giftDataCatalog = {
         factor_rarity = 7, factor_quality = 6,
         attrib_sound = GiftSound.Muffled, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Sterile,  attrib_feel = GiftFeel.Negative,
-    },
-    super_magneto = GiftData.New {
-        name     = "Super Magneto-Stick",  desc       = "a magic wand",
-        category = GiftCategory.WorldSWEP, identifier = "weapon_super_carry",
-        can_be_random_gift = true,
-        factor_rarity = 7, factor_quality = 6,
-        attrib_sound = GiftSound.None,  attrib_size = GiftSize.Large,
-        attrib_smell = GiftSmell.Woody, attrib_feel = GiftFeel.Powerful,
-    },
-    tesla_bow = GiftData.New {
-        name     = "Tesla Bow",            desc       = "an electric bow",
-        category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_teslabow",
-        can_be_random_gift = true,
-        factor_rarity = 10, factor_quality = 8,
-        attrib_sound = GiftSound.Beeping, attrib_size = GiftSize.Larger,
-        attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Futuristic,
-    },
-    grave_talk = GiftData.New {
-        name     = "Gravetalk",            desc       = "a walkie-talkie",
-        category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_gravetalk",
-        can_be_random_gift = true,
-        factor_rarity = 3, factor_quality = -7,
-        attrib_sound = GiftSound.Talking, attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Ghostly,
     },
 
     ----------------------------------------------------------------------
@@ -1184,7 +1185,7 @@ local standardGuns = {
     mac10         = {cat = GiftCategory.FloorSWEP, name = "MAC10",           id = "weapon_zm_mac10",          an=false, random=true, rarity=1, quality=0,   type = GunType.Other},
     mauser        = {cat = GiftCategory.FloorSWEP, name = "Mauser C96",      id = "weapon_mauser",            an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol,  smell = GiftSmell.Woody, feel = GiftFeel.Bursting},
     mp5           = {cat = GiftCategory.FloorSWEP, name = "MP5 Navy",        id = "weapon_ttt_mp5",           an=true,  random=true, rarity=1, quality=0,   type = GunType.Other},
-    mp5k          = {cat = GiftCategory.WorldSWEP, name = "MP5K",            id = "weapon_ttt_mp5k",          an=true,  random=true, rarity=1, quality=3,   type = GunType.Other},
+    mp5k          = {cat = GiftCategory.WorldSWEP, name = "MP5K",            id = "weapon_ttt_mp5k",          an=true,  random=false, rarity=1, quality=3,  type = GunType.Other},
     mp7           = {cat = GiftCategory.FloorSWEP, name = "MP7",             id = "weapon_ttt_smg",           an=true,  random=true, rarity=1, quality=0,   type = GunType.Other},
     mrca1         = {cat = GiftCategory.FloorSWEP, name = "MR-CA1",          id = "weapon_ap_mrca1",          an=true,  random=true, rarity=1, quality=0,   type = GunType.Other},
     p228          = {cat = GiftCategory.FloorSWEP, name = "P228",            id = "weapon_ttt_p228",          an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol},
@@ -1199,7 +1200,7 @@ local standardGuns = {
     reming_pistol = {cat = GiftCategory.FloorSWEP, name = "Remington 1858",  id = "weapon_pp_remington",      an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol,  smell = GiftSmell.Dusty},
     reming_shgun  = {cat = GiftCategory.FloorSWEP, name = "Remington AE870", id = "weapon_ttt_milk_870",      an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun, smell = GiftSmell.Woody},
     rifle         = {cat = GiftCategory.FloorSWEP, name = "Rifle",           id = "weapon_zm_rifle",          an=false, random=true, rarity=1, quality=2,   type = GunType.Rifle},
-    s357          = {cat = GiftCategory.WorldSWEP, name = "'SUPER' 357",     id = "weapon_ttt_s357",          an=false, random=true, rarity=1, quality=-8,  type = GunType.Pistol,  feel = GiftFeel.Cursed},
+    s357          = {cat = GiftCategory.WorldSWEP, name = "'SUPER' 357",     id = "weapon_ttt_s357",          an=false, random=false, rarity=1, quality=-8, type = GunType.Pistol,  feel = GiftFeel.Cursed},
     sw500         = {cat = GiftCategory.WorldSWEP, name = "S&W 500",         id = "weapon_ttt_revolver",      an=true,  random=false,                       type = GunType.Pistol,  feel = GiftFeel.Powerful},
     sg550         = {cat = GiftCategory.FloorSWEP, name = "SG-550",          id = "weapon_ttt_sg550",         an=true,  random=true, rarity=1, quality=0,   type = GunType.Rifle},
     shotgun       = {cat = GiftCategory.FloorSWEP, name = "Shotgun",         id = "weapon_zm_shotgun",        an=false, random=true, rarity=1, quality=0,   type = GunType.Shotgun},
@@ -1212,7 +1213,6 @@ local standardGuns = {
     thompson      = {cat = GiftCategory.FloorSWEP, name = "1928 Thompson",   id = "weapon_ttt_milk_tommygun", an=false, random=true, rarity=1, quality=0,   type = GunType.Other,   smell = GiftSmell.Woody},
     tmp           = {cat = GiftCategory.FloorSWEP, name = "TMP",             id = "weapon_ttt_tmp",           an=false, random=true, rarity=1, quality=2,   type = GunType.Other,   feel = GiftFeel.Muffled},
     typhon        = {cat = GiftCategory.WorldSWEP, name = "'TYHPHON' AMR",   id = "weapon_ttt_typhon",        an=false, random=false,                       type = GunType.Rifle,   feel = GiftFeel.Powerful},
-
     us_dmr        = {cat = GiftCategory.FloorSWEP, name = "U.S DMR",         id = "weapon_ttt_m14",           an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun}, --shhh
     ump_prototype = {cat = GiftCategory.WorldSWEP, name = "UMP Prototype",   id = "weapon_ttt_stungun",       an=false, random=true, rarity=8, quality=7, type = GunType.Other,     sound = GiftSound.Whirring, feel = GiftFeel.Electric},
     usp           = {cat = GiftCategory.FloorSWEP, name = "USP",             id = "weapon_ttt_pistol",        an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol},
@@ -1244,7 +1244,7 @@ for label, data in pairs(standardGuns) do
         elseif isSmall then
             SWEPSize = GiftSize.Small
         else
-            SWEPSize = GiftSize.Normal -- default could be Large
+            SWEPSize = GiftSize.Large
         end
     end
 
@@ -1269,29 +1269,34 @@ local deployableSWEPs = {
                SENT_setup_var = {k = "set_thrower"},
                SENT_random = true, SENT_rarity = 1, SENT_quality = 3,
                SWEP_random = false,
+               SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Larger,
                sound = GiftSound.Pulsing, smell = GiftSmell.Sterile, feel = GiftFeel.Bright},
 
     br_charge = {name = "Breaching Charge", desc = "a wall-mounted grenade dispenser",
                SENT_id = "matryoshka", SWEP_id = "matryoshkaplacer",
                SENT_random = false, SWEP_random = false,
+               SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Larger, -- (todo check if it comes back)
                sound = GiftSound.Metallic, smell = GiftSmell.Gunpowder, feel = GiftFeel.Electric},
 
     c4      = {name = "C4", desc = "a bomb",
                SENT_id = "ttt_c4", SWEP_id = "weapon_ttt_c4",
                SENT_setup = "grenade", SENT_setup_var = {k = "explosion_delay", v = 10},
                SENT_random = false, SWEP_random = false,
+               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Beeping, smell = GiftSmell.Gunpowder, feel = GiftFeel.Heavy},
 
     camera  = {name = "Camera", desc = "a brand-new camera",
                SENT_id = "ent_ttt_ttt2_camera", SWEP_id = "weapon_ttt_ttt2_camera",
                SENT_random = false,
                SWEP_random = true, SWEP_rarity = 1, SWEP_quality = 4,
+               SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Large,
                sound = GiftSound.Metallic, smell = GiftSmell.Glass, feel = GiftFeel.Sturdy},
 
     chicken_egg = {name = "Chicken Egg", desc = "an egg ready to hatch",
                SENT_id = "sent_egg", SWEP_id = "weapon_ttt_chickennade",
                SENT_setup_var = {k = "set_owner"},
                SENT_random = false, SWEP_random = false,
+               SENT_size = GiftSize.Small, SWEP_size = GiftSize.Mini,
                sound = GiftSound.Glass, smell = GiftSmell.Food, feel = GiftFeel.Round},
 
     clutterbomb = {name = "Clutterbomb", desc = "a furniture bomb",
@@ -1300,24 +1305,28 @@ local deployableSWEPs = {
                SENT_setup = "grenade",
                SENT_random = true, SENT_rarity = 1, SENT_quality = -3,
                SWEP_random = true, SWEP_rarity = 1, SWEP_quality = -1,
+               SENT_size = GiftSize.Small, SWEP_size = GiftSize.Small,
                sound = GiftSound.Thudding, smell = GiftSmell.Dusty, feel = GiftFeel.Random},
     clusterbomb = {name = "Clusterbomb", desc = "a furniture bomb",
                SENT_id = "ttt_rclutterbomb_proj", SWEP_id = "weapon_ttt_rclutterbomb",
                SENT_setup = "grenade",
                SENT_random = true, SENT_rarity = 3, SENT_quality = -6,
                SWEP_random = false,
+               SENT_size = GiftSize.Small, SWEP_size = GiftSize.Small,
                sound = GiftSound.Beeping, smell = GiftSmell.Dusty, feel = GiftFeel.Random,
                SWEP_desc = "a rigged furniture bomb"},
 
     conc_mine = {name = "Concussion Mine", desc = "a powerful whoopie cushion",
                SENT_id = "ttt_conmine", SWEP_id = "weapon_ttt_concussionmine",
                SENT_random = false, SWEP_random = false,
+               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Beeping, smell = GiftSmell.Sterile, feel = GiftFeel.Hollow},
 
     ctrl_manhack = {name = "Controllable Manhack", desc = "a remote-control drone",
                SENT_id = "sent_controllable_manhack", SWEP_id = "weapon_controllable_manhack",
                SENT_random = false,
                SWEP_random = true, SWEP_rarity = 2, SWEP_quality = 6,
+               SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Whirring, smell = GiftSmell.Rusty, feel = GiftFeel.Bursting},
 
     d20     = {name = "D20",             desc = "a DND dice",
@@ -1325,11 +1334,13 @@ local deployableSWEPs = {
                SENT_setup = "grenade",
                SENT_random = true, SENT_rarity = 20, SENT_quality = 0,
                SWEP_random = false,
+               SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini, -- (todo check if it comes back)
                sound = GiftSound.Glass, smell = GiftSmell.Mineral, feel = GiftFeel.Random},
 
-    decoy   = {name = "Decoy", desc = "a high-tech decoy",
+    decoy   = {name = "Decoy",        desc = "a high-tech decoy",
                SENT_id = "ttt_decoy", SWEP_id = "weapon_ttt_decoy",
-               SENT_random = false, SWEP_random = false,
+               SENT_random = false,   SWEP_random = false,
+               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Whirring, smell = GiftSmell.Sterile, feel = GiftFeel.Electric},
 
     force_shield = {name = "Deployable Force Shield", desc = "a next-generation damage-blocking screen",
@@ -1338,6 +1349,7 @@ local deployableSWEPs = {
                SENT_setup = "shield_deployer_setup",
                SENT_random = false,
                SWEP_random = true, SWEP_rarity = 1, SWEP_quality = 0,
+               SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Pulsing, smell = GiftSmell.Strange, feel = GiftFeel.Bright},
 
     discombob = {name = "Discombobulator", desc = "an air-filled grenade",
@@ -1346,18 +1358,21 @@ local deployableSWEPs = {
                SENT_setup = "grenade", SENT_setup_var = {k = "explosion_delay", v = 0.2},
                SENT_random = false,
                SWEP_random = true, SWEP_rarity = 1, SWEP_quality = 0,
+               SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini,
                sound = GiftSound.Whooshing, smell = GiftSmell.Gunpowder, feel = GiftFeel.Hollow},
 
     emp     = {name = "EMP Grenade", desc = "an EMP grenade",
                SENT_id = "ttt_emp_proj", SWEP_id = "weapon_ttt_emp",
                SENT_setup = "grenade", SENT_setup_var = {k = "explosion_delay", v = 3},
                SENT_random = false, SWEP_random = false,
+               SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini,  -- (todo check if it comes back)
                sound = GiftSound.Pulsing, smell = GiftSmell.Nondescript, feel = GiftFeel.Electric},
 
-    fan     = {name = "Fan", desc = "a highly effective fan",
+    fan     = {name = "Fan", desc = "a powerful fan",
                SENT_id = "ent_ttt_fan", SWEP_id = "weapon_fan",
                SENT_setup = "fan_setup", SENT_setup_var = {k = "set_owner"},
-               SENT_random = false, SWEP_random = false,
+               SENT_random = false, SWEP_random = false, --todo SENT (fix invincible)
+               SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Large,
                sound = GiftSound.Whirring, smell = GiftSmell.Dusty, feel = GiftFeel.Moving},
 
     flashbang = {name = "Flashbang", desc = "a 5-second blinding stew",
@@ -1365,6 +1380,7 @@ local deployableSWEPs = {
                SENT_setup = "grenade_auto", SENT_setup_var = {k = "explosion_delay", v = 2},
                SENT_random = true, SENT_rarity = 4, SENT_quality = -7,
                SWEP_random = false,
+               SENT_size = GiftSize.Small, SWEP_size = GiftSize.Small,
                sound = GiftSound.Metallic, smell = GiftSmell.Food, feel = GiftFeel.Bright,
                SWEP_desc = "a flashbang"},
 
@@ -1372,6 +1388,7 @@ local deployableSWEPs = {
                SENT_id = "ttt_frag_proj", SWEP_id = "weapon_ttt_frag",
                SENT_setup = "grenade",
                SENT_random = false, SWEP_random = false,
+               SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini,
                sound = GiftSound.Thudding, smell = GiftSmell.Gunpowder, feel = GiftFeel.Round},
 
     giftwrap = {name = "Gift Wrap", desc = "another gift",
@@ -1379,6 +1396,7 @@ local deployableSWEPs = {
                SENT_setup = "gift_setup", SWEP_setup = "giftwrap_desc",
                SENT_random = true, SENT_rarity = 0.8, SENT_quality = 2,
                SWEP_random = true, SWEP_rarity = 2,   SWEP_quality = 4,
+               SWEP_size = GiftSize.Huge,
                sound = GiftSound.Rustling, smell = GiftSmell.Paper, feel = GiftFeel.Jolly},
 
     glue_trap = {name = "Glue Trap", desc = "a sticky prank toy",
@@ -1386,6 +1404,7 @@ local deployableSWEPs = {
                SENT_setup_var = {{k = "stick_to_ground"}, {k = "move_to_giftee"}},
                SENT_random = true, SENT_rarity = 1, SENT_quality = -6,
                SWEP_random = true, SWEP_rarity = 1, SWEP_quality = 5,
+               SENT_size = GiftSize.Gigantic, SWEP_size = GiftSize.Large,
                sound = GiftSound.Goopy, smell = GiftSmell.Cardboard, feel = GiftFeel.Sticky},
 
     green_demon = {name = "Green Demon", desc = "a 1-UP",
@@ -1393,6 +1412,7 @@ local deployableSWEPs = {
                SENT_setup_var = {{k = "set_owner"}},
                SENT_random = true, SENT_rarity = 10, SENT_quality = -10,
                SWEP_random = false,
+               SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Large,
                sound = GiftSound.Musical, smell = GiftSmell.Food, feel = GiftFeel.Cursed},
 
     groovitron = {name = "Groovitron", desc = "a disco ball",
@@ -1400,12 +1420,14 @@ local deployableSWEPs = {
                SENT_setup = "grenade", --todo fix stuff remaining active on wrap
                SENT_random = true, SENT_rarity = 10, SENT_quality = -5,
                SWEP_random = false,
+               SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Mini,
                sound = GiftSound.Musical, smell = GiftSmell.Nondescript, feel = GiftFeel.Bright},
 
     health_station = {name = "Health Station", desc = "a healing microwave",
                SENT_id = "ttt_health_station", SWEP_id = "weapon_ttt_health_station",
                SENT_random = true, SENT_rarity = 5, SENT_quality = 9,
                SWEP_random = false,
+               SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Huge,
                sound = GiftSound.Beeping, smell = GiftSmell.Nice, feel = GiftFeel.Warm},
 
     hwapoon = GiftData.New {name = "Hwapoon", desc = "a harpoon", 
@@ -1413,6 +1435,7 @@ local deployableSWEPs = {
                SENT_setup_var = {k = "set_owner"}, --TODO DOUBLE CHECK WRAPPING THE ENT WORKS
                SENT_id = "hwapoon_arrow", SWEP_id = "weapon_ttt_hwapoon",
                SENT_random = false, SWEP_random = false,
+               SENT_size = GiftSize.Gigantic, SWEP_size = GiftSize.Gigantic,
                sound = GiftSound.Metallic, smell = GiftSmell.Rusty, feel = GiftFeel.Long},
 
     ice_grenade = {name = "Ice Grenade", desc = "an explosive snowball",
@@ -1420,6 +1443,7 @@ local deployableSWEPs = {
                SENT_setup_var = {k = "set_owner"},
                SENT_random = true, SENT_rarity = 5, SENT_quality = -5,
                SWEP_random = false,
+               SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini,
                sound = GiftSound.Thudding, smell = GiftSmell.Gunpowder, feel = GiftFeel.ReallyCold},
 
     id_swap_grenade = {name = "Identity Swap Grenade", desc = "a confusion grenade",
@@ -1427,6 +1451,7 @@ local deployableSWEPs = {
                SENT_setup = "grenade",
                SENT_random = true, SENT_rarity = 4, SENT_quality = -1,
                SWEP_random = true, SWEP_rarity = 3, SWEP_quality = 1,
+               SENT_size = GiftSize.Small, SWEP_size = GiftSize.Small,
                sound = GiftSound.Thudding, smell = GiftSmell.Gunpowder, feel = GiftFeel.RealityWarp},
 
     incend  = {name = "Incendiary Grenade", desc = "a fiery grenade",
@@ -1435,6 +1460,7 @@ local deployableSWEPs = {
                SENT_setup = "grenade", SENT_setup_var = {k = "explosion_delay", v = 2},
                SENT_random = false,
                SWEP_random = true, SWEP_rarity = 1, SWEP_quality = 0,
+               SENT_size = GiftSize.Small, SWEP_size = GiftSize.Small,
                sound = GiftSound.Thudding, smell = GiftSmell.Ash, feel = GiftFeel.Hot},
 
     jarate  = {name = "Jarate", desc = "a jar of piss",
@@ -1442,6 +1468,7 @@ local deployableSWEPs = {
                SENT_setup_var = {k = "set_thrower"},
                SENT_random = true, SENT_rarity = 2, SENT_quality = -5,
                SWEP_random = true, SWEP_rarity = 2, SWEP_quality = 4,
+               SENT_size = GiftSize.Small, SWEP_size = GiftSize.Small,
                sound = GiftSound.Splashing, smell = GiftSmell.Stinky, feel = GiftFeel.Warm},
 
     killer_bungers = {name = "Bunger Grenade", desc = "a bunch of friendly Bungers",
@@ -1454,6 +1481,7 @@ local deployableSWEPs = {
                SENT_id = "ttt_knife_proj", SWEP_id = "weapon_ttt_knife",
                SENT_setup_var = {k = "set_owner", k = "break_constraints"},
                SENT_random = false, SWEP_random = false,
+               SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Metallic, smell = GiftSmell.Sterile, feel = GiftFeel.Sharp},
 
     lethal_mine = {name = "Lethal Mine", desc = "a landmine",
@@ -1461,18 +1489,21 @@ local deployableSWEPs = {
                SENT_setup_var = {{k = "stick_to_ground"}, {k = "move_to_giftee"}},
                SENT_random = true, SENT_rarity = 10, SENT_quality = -10,
                SWEP_random = false,
+               SENT_size = GiftSize.Big, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Beeping, smell = GiftSmell.Gunpowder, feel = GiftFeel.Round},
 
     m4_slam  = {name = "M4 Slam", desc = "a SLAM",
                SENT_id = "ttt_slam_satchel", SWEP_id = "weapon_ttt_slam",
                SENT_setup = "slam_setup",
                SENT_random = false, SWEP_random = false,
+               SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Beeping, smell = GiftSmell.Gunpowder, feel = GiftFeel.Electric},
 
     molotov  = {name = "Molotov Cocktail", desc = "a spicy cocktail",
                SENT_id = "sent_molotov", SWEP_id = "molotov_cocktail_for_ttt",
                SENT_setup_var = {k = "set_owner"},
                SENT_random = false, SWEP_random = false,
+               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Splashing, smell = GiftSmell.Oily, feel = GiftFeel.Hot},
 
     moon_grenade = {name = "Moon Grenade", desc = "a bag of marbles",
@@ -1480,21 +1511,25 @@ local deployableSWEPs = {
                SENT_setup = "moon_grenade_setup",
                SENT_random = true, SENT_rarity = 2, SENT_quality = -3,
                SWEP_random = false,
+               SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Springy, smell = GiftSmell.Mineral, feel = GiftFeel.Otherworldly},
 
     paper_plane = {name = "Paper Plane", desc = "an origami plane",
                SWEP_category = GiftCategory.AutoEquipSWEP,
                SENT_id = "ttt_paper_plane_proj", SWEP_id = "weapon_ttt_paper_plane",
                SENT_setup_var = {k = "set_thrower"},
-               SENT_random = false, SWEP_random = false,
+               SENT_random = false, SWEP_random = false, --todo fix targetting & make SENT wrappabble
+               SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Larger,
                sound = GiftSound.Whooshing, smell = GiftSmell.Paper, feel = GiftFeel.Moving},
 
     poison_station = {name = "Poison Station", desc = "a healing microwave",
                SWEP_category = GiftCategory.AutoEquipSWEP,
                SENT_id = "ttt_poison_station", SWEP_id = "weapon_ttt_poison_station",
+               SENT_setup_var = {k = "set_thrower"},  --todo broken? (can't interact)
                SWEP_setup = "poison_station_desc",
                SENT_random = true, SENT_rarity = 5, SENT_quality = -5,
                SWEP_random = false,
+               SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Huge,
                sound = GiftSound.Beeping, smell = GiftSmell.Nice, feel = GiftFeel.Warm,
                SWEP_desc = "a damaging microwave", SWEP_smell = GiftSmell.Toxic},
 
@@ -1503,6 +1538,7 @@ local deployableSWEPs = {
                SENT_setup = "pog_setup",
                SENT_random = true, SENT_rarity = 5, SENT_quality = 10,
                SWEP_random = false,
+               SENT_size = GiftSize.Big, SWEP_size = GiftSize.Big,
                sound = GiftSound.Glass, smell = GiftSmell.Earthy, feel = GiftFeel.Cursed},
 
     radio   = {name = "Radio", desc = "a toy radio",
@@ -1510,20 +1546,23 @@ local deployableSWEPs = {
                SENT_setup_var = {k = "set_thrower"},
                SENT_random = true, SENT_rarity = 1, SENT_quality = 2,
                SWEP_random = false,
+               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Musical, smell = GiftSmell.Sterile, feel = GiftFeel.Electric},
 
     ragnana = {name = "Ragnana",           desc = "an old banana peel",
                SENT_id = "ttt_ragnana_peel", SWEP_id = "ttt_ragnana",
-               SENT_random = true, SENT_rarity = 4, SENT_quality = -9,
+               SENT_random = false, --SENT_rarity = 4, SENT_quality = -9,
                SWEP_random = false,
+               SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Normal, -- (todo check if it comes back)
                sound = GiftSound.Squishy, smell = GiftSmell.Rotten, feel = GiftFeel.Slippery,
                SWEP_desc = "an extremely slippery banana"},
 
     rcxd    = {name = "RCXD",         desc = "an RC car toy",
                SENT_id = "sent_rcxd", SWEP_id = "weapon_ttt_rcxd",
                --SENT_setup_var = {k = "set_owner"}, -- doesn't work (would need to give SWEP); TODO make harmless version to give innos
-               SENT_random = true, SENT_rarity = 2, SENT_quality = 5,
+               SENT_random = false, --SENT_rarity = 2, SENT_quality = 5,
                SWEP_random = false,
+               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large, -- (todo check if it comes back)
                sound = GiftSound.Revving, smell = GiftSmell.Rusty, feel = GiftFeel.Electric,
                SWEP_desc = "an RC car in a can"},
 
@@ -1533,6 +1572,7 @@ local deployableSWEPs = {
                SENT_id = "ttt2_hat_shellmet", SWEP_id = "item_ttt2_shellmet",
                SENT_random = true, SENT_rarity = 0.8, SENT_quality = 5,
                SWEP_random = false,
+               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Thudding, smell = GiftSmell.Mineral, feel = GiftFeel.Hollow},
 
     seekgull = {name = "Seekgull in a Can", desc = "a seagull in a can", --TODO: fix trail showing up connecting wrap spot to unwrap spot? (also happens with chomik)
@@ -1541,6 +1581,7 @@ local deployableSWEPs = {
                SENT_setup = "grenade", SENT_setup_var = {k = "set_owner"},
                SENT_random = false,
                SWEP_random = true, SWEP_rarity = 1, SWEP_quality = 0,
+               SENT_size = GiftSize.Small, SWEP_size = GiftSize.Small,
                sound = GiftSound.Whooshing, smell = GiftSmell.Salty, feel = GiftFeel.Alive},
 
     smoke   = {name = "Smoke Grenade", desc = "a pocket fog machine",
@@ -1549,6 +1590,7 @@ local deployableSWEPs = {
                SENT_setup = "grenade",
                SENT_random = false,
                SWEP_random = true, SWEP_rarity = 1, SWEP_quality = 0,
+               SENT_size = GiftSize.Small, SWEP_size = GiftSize.Small,
                sound = GiftSound.Muffled, smell = GiftSmell.Ash, feel = GiftFeel.Hollow},
 
     soap    = {name = "Soap", desc = "a bar of soap",
@@ -1556,6 +1598,7 @@ local deployableSWEPs = {
                SENT_setup_var = {{k = "move_to_giftee"}, {k = "stick_to_ground"}, {k = "set_thrower"}},
                SENT_random = true, SENT_rarity = 0.8, SENT_quality = -3,
                SWEP_random = false,
+               SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini,
                sound = GiftSound.Goopy, smell = GiftSmell.Nice, feel = GiftFeel.Slippery},
 
     spring_mine = {name = "Spring Mine", desc = "a comically large spring",
@@ -1563,6 +1606,7 @@ local deployableSWEPs = {
                SENT_setup_var = {{k = "stick_to_ground"}, {k = "set_thrower"}},
                SENT_random = true, SENT_rarity = 5, SENT_quality = -8,
                SWEP_random = false,
+               SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Springy, smell = GiftSmell.Rubbery, feel = GiftFeel.Round},
 
     --star_burster = {name = "Star Burster", desc = "a cosmic magical ball", --TODO fix SWEP drops having fucked ammo count on client
@@ -1572,6 +1616,7 @@ local deployableSWEPs = {
     --           --SWEP_setup_var = {{k = "set_owner"}},
     --           SENT_random = false,
     --           SWEP_random = false,
+    --           SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Normal,
     --           sound = GiftSound.Whooshing, smell = GiftSmell.Strange, feel = GiftFeel.Magical,
     --           SWEP_desc = "cosmic magical balls"},
 
@@ -1580,13 +1625,15 @@ local deployableSWEPs = {
                SENT_setup = "grenade", SENT_setup_var = {k = "explosion_delay", v = 2.5},
                SENT_random = true, SENT_rarity = 4, SENT_quality = -7,
                SWEP_random = false,
+               SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Large,
                sound = GiftSound.Whooshing, smell = GiftSmell.Gunpowder, feel = GiftFeel.Massive},
 
-    super_smoke   = {name = "Super Smoke Grenade", desc = "a smog machine from London",
+    super_smoke = {name = "Super Smoke Grenade", desc = "a smog machine from London",
                SENT_id = "ttt_supersmokegrenade_proj", SWEP_id = "weapon_ttt_supersmoke",
                SENT_setup = "grenade",
                SENT_random = true, SENT_rarity = 6, SENT_quality = -4,
                SWEP_random = false,
+               SENT_size = GiftSize.Small, SWEP_size = GiftSize.Small,
                sound = GiftSound.Muffled, smell = GiftSmell.Ash, feel = GiftFeel.Massive},
 
     teleport_grenade = {name = "Teleport Grenade", desc = "an Ender Pearl",
@@ -1595,6 +1642,7 @@ local deployableSWEPs = {
                SENT_setup_var = {{k = "up_vel", v = 1000}, {k = "up_min", v = 1}, {k = "up_max", v = 4}},
                SENT_random = true, SENT_rarity = 1,   SENT_quality = 0,
                SWEP_random = true, SWEP_rarity = 0.6, SWEP_quality = 3,
+               SENT_size = GiftSize.Small, SWEP_size = GiftSize.Small,
                sound = GiftSound.Pulsing, smell = GiftSmell.Strange, feel = GiftFeel.Otherworldly},
 
     turret  = {name = "Turret", desc = "a next-gen turret",
@@ -1603,6 +1651,7 @@ local deployableSWEPs = {
                SENT_setup_var = {{k = "stick_to_ground"}, {k = "keep_motion"}},
                SENT_random = true, SENT_rarity = 4, SENT_quality = -8,
                SWEP_random = false,
+               SENT_size = GiftSize.Max, SWEP_size = GiftSize.Small,
                sound = GiftSound.Beeping, smell = GiftSmell.Sterile, feel = GiftFeel.Moving},
 
     visualizer = {name = "Visualizer", desc = "a high-tech crime visualizer",
@@ -1610,6 +1659,7 @@ local deployableSWEPs = {
                SENT_setup_var = {k = "set_thrower"},
                SENT_random = true, SENT_rarity = 1, SENT_quality = -2,
                SWEP_random = false, --TODO: wrapping SWEP seems buggy? (disappears on unwrap)
+               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Whirring, smell = GiftSmell.Sterile, feel = GiftFeel.Bright},
 
     wormhole_vent = {name = "Wormhole-Vent", desc = "a suspicious grate",
@@ -1618,13 +1668,15 @@ local deployableSWEPs = {
                SENT_setup_var = {{k = "stick_to_ground"}}, --TODO fix angle not applying
                SENT_random = false,
                SWEP_random = true, SWEP_rarity = 9, SWEP_quality = 6,
+               SENT_size = GiftSize.Big, SWEP_size = GiftSize.Big,
                sound = GiftSound.Metallic, smell = GiftSmell.Dusty, feel = GiftFeel.Sus,
                SWEP_desc = "the gift of venting"},
 
     zombie_ball = {name = "Zombie Ball", desc = "a pile of rotting flesh",
                SENT_id = "ttt_zombieball_proj", SWEP_id = "weapon_ttt_zombieball",
-               SENT_random = true, SENT_rarity = 6, SENT_quality = -8,
+               SENT_random = false, --SENT_rarity = 6, SENT_quality = -8,
                SWEP_random = false,
+               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large, -- (todo check if it comes back)
                sound = GiftSound.Talking, smell = GiftSmell.Rotten, feel = GiftFeel.Round,
                SWEP_desc = "a necromancy kit"},
 
@@ -1640,7 +1692,7 @@ for label, data in pairs(deployableSWEPs) do
         can_be_random_gift = data.SENT_random,
         factor_rarity  = data.SENT_random and data.SENT_rarity or nil,
         factor_quality = data.SENT_random and data.SENT_quality or nil,
-        attrib_sound = data.sound, attrib_size = GiftSize.Larger,
+        attrib_sound = data.sound, attrib_size = data.SENT_size or GiftSize.Larger,
         attrib_smell = data.smell, attrib_feel = data.feel,
         special_setup = data.SENT_setup
     })
@@ -1665,7 +1717,7 @@ for label, data in pairs(deployableSWEPs) do
         can_be_random_gift = data.SWEP_random,
         factor_rarity  = data.SWEP_random and data.SWEP_rarity or nil,
         factor_quality = data.SWEP_random and data.SWEP_quality or nil,
-        attrib_sound = data.sound, attrib_size = GiftSize.Small,
+        attrib_sound = data.sound, attrib_size = data.SWEP_size or GiftSize.Small,
         attrib_smell = SWEPSmell,  attrib_feel = data.feel,
         special_setup = data.SWEP_setup
     })
@@ -2260,7 +2312,7 @@ function GetPerGiftWeightBreakdown(xmasFactor, scoreFactor)
     local breakdown = {}
 
     for label, giftData in pairs(giftDataCatalog) do
-        breakdown[label.."_spawnable"] = giftData:IsSpawnable()
+        breakdown[label.."_spawnable"] = giftData:IsSpawnable(LocalPlayer())
         breakdown[label.."_weight"]    = giftData:CalcWeight(xmasFactor, scoreFactor)
     end
 
@@ -2565,10 +2617,20 @@ function GetEntGiftData(ent)
         end
     end
 
-    if IsValid(phys) then
+    -- Set gift size (from bounds, or mass, or rng)
+    --local mins, maxs = ent:GetModelBounds()
+    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+
+    if mins and maxs then
+        --local scale = ent.GetModelScale and ent:GetModelScale() or 1 -- included in OBB
+        local size = maxs - mins
+        local maxLen = math.max(size.x, size.y, size.z)
+        placeholderData.attrib_size = math.min(7, maxLen * 0.07 + 0.5) -- cf. resource workfiles in repo
+
+    elseif IsValid(phys) then
         local mass = phys:GetMass()
 
-        -- Set size from weight
+        -- Set size from weight (legacy code kept just in case; above branch should always be used)
         if mass <= 1      then placeholderData.attrib_size = GiftSize.Mini
         elseif mass <= 5  then placeholderData.attrib_size = GiftSize.Small
         elseif mass < 15  then placeholderData.attrib_size = GiftSize.Normal
@@ -2578,14 +2640,6 @@ function GetEntGiftData(ent)
         elseif mass < 200 then placeholderData.attrib_size = GiftSize.Huge
         else                   placeholderData.attrib_size = GiftSize.Gigantic end
 
-        -- Set feel from weight (if none found yet)
-        if placeholderData.attrib_feel == GiftFeel.Indescribable then
-            if mass < 5      then placeholderData.attrib_feel = GiftFeel.Weightless
-            elseif mass < 15 then placeholderData.attrib_feel = GiftFeel.Light
-            elseif mass < 50 then placeholderData.attrib_feel = GiftFeel.Heavy
-            else                  placeholderData.attrib_feel = GiftFeel.Massive end
-        end
-
     else
         local GiftSizeList = {}
         for _, s in pairs(GiftSize) do
@@ -2593,6 +2647,16 @@ function GetEntGiftData(ent)
         end
 
         placeholderData.attrib_size = GiftSizeList[math.random(#GiftSizeList)]
+    end
+
+    -- Set feel from weight (if none found yet)
+    if placeholderData.attrib_feel == GiftFeel.Indescribable and IsValid(phys) then
+        local mass = phys:GetMass()
+
+        if mass < 5      then placeholderData.attrib_feel = GiftFeel.Weightless
+        elseif mass < 15 then placeholderData.attrib_feel = GiftFeel.Light
+        elseif mass < 50 then placeholderData.attrib_feel = GiftFeel.Heavy
+        else                  placeholderData.attrib_feel = GiftFeel.Massive end
     end
 
     -- Special handling for grenades
@@ -2714,4 +2778,4 @@ end)
 if SERVER then
     local initTotalWeight, initGiftCount = GetTotalWeight()
     dbg.Log("Gift data loaded ("..initGiftCount.." gifts, totalling "..initTotalWeight.." weight).")
-end 
+end

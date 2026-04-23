@@ -106,7 +106,6 @@ item_ammo_357_ttt
 gmod_wire_simple_explosive
 item_ammo_smg1_ttt
 info_player_axis
-ttt_hat_deerstalker
 gtav_cm_flare_orange
 ttt_pap_barrel_bomb_proj
 q3_nail
