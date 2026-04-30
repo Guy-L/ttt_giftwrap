@@ -41,14 +41,24 @@ function CLGAMEMODESUBMENU:Populate(parent)
         anonBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_drop_error_none"))
     end
 
-    ---
+    -- prepare gift choices (check spawnable)
+    local giftChoices = {}
+    for label, giftData in pairs(GetGiftCatalog()) do
+        if giftData:IsSpawnable(LocalPlayer()) then
+            table.insert(giftChoices, {
+                title = giftData.name,
+                value = label
+            })
+        end
+    end
+
     labelSelectVal = nil
     local labelSelect = debugForm:MakeComboBox({
         label = "gift_opt_debug_form_select_label",
-        choices = GetSpawnableGiftNames(LocalPlayer()),
+        choices = giftChoices,
         enableRun = true,
         OnChange = function(val)
-            labelSelectVal = GetGiftByName(val)
+            labelSelectVal = val
         end,
         OnClickRun = function(slf)
             if labelSelectVal then
@@ -62,7 +72,7 @@ function CLGAMEMODESUBMENU:Populate(parent)
     })
     RemoveResetButton(labelSelect)
 
-    if gwRef:HasGift() then
+    if gwRef:HasGift() then -- disable all
         for _, el in ipairs(labelSelect:GetParent():GetChildren()) do
             el:SetEnabled(false)
             el:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_full"))

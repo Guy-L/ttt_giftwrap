@@ -1229,31 +1229,12 @@ function NewGiftData(tbl)
     return newGift
 end
 
+function GetGiftCatalog()
+    return giftDataCatalog
+end
+
 function UpdateCatalog(label, giftData)
     giftDataCatalog[label] = giftData
-end
-
-function GetSpawnableGiftNames(ply)
-    local names = {}
-    for label, _ in pairs(giftDataCatalog) do
-        local giftEntry = giftDataCatalog[label]
-
-        if giftEntry:IsSpawnable(ply) then
-            table.insert(names, giftDataCatalog[label].name)
-        end
-    end
-
-    return names
-end
-
-function GetGiftByName(name)
-    for label, _ in pairs(giftDataCatalog) do
-        local giftEntry = giftDataCatalog[label]
-
-        if giftEntry.name == name then
-            return label, giftEntry
-        end
-    end
 end
 
 function GetGiftDataFromLabel(giftLabel)
@@ -1266,7 +1247,7 @@ function GetGiftDataFromLabel(giftLabel)
     end
 end
 
-GunType = {
+local GunType = {
     Pistol  = "pistol",
     Shotgun = "shotgun",
     Rifle   = "rifle",

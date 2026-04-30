@@ -2,9 +2,9 @@ local SNUFFLE_PRESENT_CLASS = "christmas_present"
 
 local HOOK_GIFTWRAP_ENT_SPAWN   = "TTT_GiftWrap_EntSpawn"
 local HOOK_GIFTWRAP_MARKER_UI   = "TTT_GiftWrap_MarkerVision"
-local HOOK_GIFTWRAP_INTERACT_UI = "TTT_GiftWrap_MarkerVision"
+local HOOK_GIFTWRAP_INTERACT_UI = "TTT_GiftWrap_InteractUI"
 local HOOK_ROUND_START_TIME     = "TTT_GiftWrap_RoundStartTime"
-local TREE_FOUND_MSG            = "TTT_GiftWrap_TreeFoundMsg"
+local TREE_FOUND_MSG            = "TTT_GiftWrapSV_TreeFoundMsg"
 
 local dbg   = GW_DBG
 local utils = GW_Utils
@@ -27,6 +27,7 @@ local sounds = {
     bells2 = Sound("giftwrap/tf2_nm_bells2.wav"),
 }
 
+-- note: due to lazy design, all of these arrays must be of equal length
 local normalDescriptionLines = {
     "Have you been a good terrorist this year?",
     "Hope you aren't on the naughty list.",
@@ -36,7 +37,6 @@ local normalDescriptionLines = {
     "Merry Christmas!",
 }
 
--- note: due to lazy design, this array must match the length of the above one
 local selfDescriptionLines = {
     "Let's hope they like it!",
     "Do you think they'll like it?",
@@ -45,6 +45,25 @@ local selfDescriptionLines = {
     "Can be opened by any other terrorist.",
     "Can be opened by anyone else.",
 }
+
+local gifteeHintLines = {
+    "Help it get delivered!",
+    "Help it get delivered!",
+    "Help it get delivered!",
+    "Let them know!",
+    "Let them know!",
+    "Magneto it towards them!",
+}
+
+local deadGifteeHintLines = {
+    "RIP...",
+    "RIP...",
+    "They can't open it anymore, so you can have it.",
+    "They can't open it anymore (RIP), so you can have it.",
+    "They can't open it anymore, so it's yours if you want it.",
+    "They can't exactly open it anymore, so you can have it.",
+}
+
 
 function ENT:Initialize()
     dbg.Log("(prop) Initializing gift entity")
@@ -71,9 +90,24 @@ function ENT:Initialize()
 
         self:SetDescriptionLine(math.random(#normalDescriptionLines))
 
+        -- if clients receive the MV too early, the entity
+        -- might not have been created yet and thus be null
+        timer.Simple(0.1, function()
+            local giftee = self:GetGiftee()
+
+            if IsValid(giftee) then
+                local mvObject = self:AddMarkerVision(MV_GIFTEE_LABEL)
+                mvObject:SetOwner(giftee)
+                mvObject:SetVisibleFor(VISIBLE_FOR_PLAYER)
+                mvObject:SyncToClients()
+            end
+        end)
+
     elseif CLIENT then
         self:UpdateScale()
         SyncGiftColors(self)
+        self.LastGifteeJingleCheck = CurTime() + math.random(1, 10)
+        self.GifteeJingleCheckFreq = 20
 
         self._spawning = true -- bs to make sync work on real servers
         timer.Simple(1, function() self._spawning = false end)
@@ -90,8 +124,13 @@ function ENT:OnTakeDamage(dmgInfo)
 
         if utils.IsLivingPlayer(attacker) and inflictor
           and (inflictor:GetClass() == "weapon_zm_improvised" or inflictor:GetClass() == "weapon_ttt_inf_fists") then
+            local giftee = self:GetGiftee()
+
             if attacker:SteamID64() == self:GetWrapperSID() then
                 utils.NonSpamMessage(attacker, "OpenAttempt", "You can't open your own gift.")
+
+            elseif IsValid(giftee) and giftee != attacker and not utils.ConfirmedDead(attacker, giftee) then
+                notifyHasGiftee(attacker, giftee)
 
             elseif attackerOpenedRandomGift and self:GetIsRandomGift() and not dbg.Cvar:GetBool() then
                 utils.NonSpamMessage(attacker, "OpenAttempt", ERROR_ALREADY_OPENED)
@@ -101,6 +140,7 @@ function ENT:OnTakeDamage(dmgInfo)
                 --self:GibBreakClient(Vector(0,0,10))
                 --self:GibBreakServer(Vector(0,0,10))
                 SpawnGiftEnt(attacker, self, utils.GetEntCenter(self))
+                self:RemoveMarkerVision(MV_GIFTEE_LABEL)
                 self:Remove()
 
                 if self:GetIsRandomGift() and not attackerOpenedRandomGift then
@@ -164,6 +204,7 @@ function ENT:SetupDataTables()
     self:NetworkVar("String", 2, "UnwrapNote")
 
     self:NetworkVar("Entity", 0, "StoredGift")
+    self:NetworkVar("Entity", 1, "Giftee")
 end
 
 
@@ -224,11 +265,16 @@ if SERVER then
         end
     end
 
+    function notifyHasGiftee(ply, giftee)
+        utils.NonSpamMessage(ply, "GiftPickupAttempt", "It's meant for "..giftee:Nick()..". "..gifteeHintLines[math.random(#gifteeHintLines)])
+    end
+
     function ENT:Use(activator)
         if self:GetCollisionGroup() ~= COLLISION_GROUP_NONE then return end
         local ownedGiftwrap = utils.GetInventoryGiftwrap(activator)
+        local pickupByWrapper = activator:SteamID64() == self:GetWrapperSID()
 
-        if self:GetNotRetrievable() and activator:SteamID64() == self:GetWrapperSID() then
+        if self:GetNotRetrievable() and pickupByWrapper then
             utils.NonSpamMessage(activator, "GiftPickupAttempt", "Let's keep it neat and tidy here.")
             return
         end
@@ -243,6 +289,14 @@ if SERVER then
             return --TODO: try throwing out held one instead to allow pickup
         end
 
+        if not pickupByWrapper then
+            local giftee = self:GetGiftee()
+            if IsValid(giftee) and activator != giftee and not utils.ConfirmedDead(activator, giftee) then
+                notifyHasGiftee(activator, giftee)
+                return
+            end
+        end
+
         local newGift = ents.Create(SWEP_CLASS_NAME)
 
         if IsValid(newGift) then
@@ -254,9 +308,11 @@ if SERVER then
             newGift:SetGiftBoxColor(self:GetGiftBoxColor())
             newGift:SetGiftRibbonColor(self:GetGiftRibbonColor())
             newGift:SetUnwrapNote(self:GetUnwrapNote())
+            newGift:SetGiftee(self:GetGiftee())
 
             activator:PickupWeapon(newGift)
             activator:SelectWeapon(SWEP_CLASS_NAME)
+            self:RemoveMarkerVision(MV_GIFTEE_LABEL)
             self:Remove()
         end
     end
@@ -404,16 +460,44 @@ if SERVER then
 ----------------------------------
 elseif CLIENT then
     local matTreeIcon = Material("vgui/ttt/marker_vision/c4")
+    local giftIcon = Material("vgui/ttt/menu_icon_gift")
 
     net.Receive(TREE_FOUND_MSG, function()
         christmasTree = net.ReadEntity()
     end)
 
+    function ENT:Think() -- periodic jingle noise if there's a gift meant for you out there
+        local curTime = CurTime()
+
+        if curTime >= self.LastGifteeJingleCheck + self.GifteeJingleCheckFreq then
+            self.LastGifteeJingleCheck = curTime + math.random(-5, 3)
+
+            local ply = LocalPlayer()
+            if ply == self:GetGiftee() then
+                LANG.ShowStyledMsg("Someone left you a present!", LANG.GetStyle(nil, MSG_MSTACK_PLAIN))
+                local bellSFX = math.random() < 0.33 and "bells1" or "bells2"
+                self:EmitSound(sounds[bellSFX], SNDLVL_180dB, math.random(95, 105), 100)
+            end
+        end
+    end
+
     hook.Add("TTT2RenderMarkerVisionInfo", HOOK_GIFTWRAP_MARKER_UI, function(mvData)
         local ent = mvData:GetEntity()
         local mvObject = mvData:GetMarkerVisionObject()
 
-        if string.sub(mvObject:GetIdentifier(), 1, 21) == MARKER_UI_LABEL then
+        if mvObject:IsObjectFor(ent, MV_GIFTEE_LABEL) then
+            local dist = mvData:GetEntityDistance()
+            if dist < 150 then return end
+
+            mvData:AddIcon(giftIcon, COLOR_WHITE)
+            mvData:EnableText()
+            mvData:SetTitle("A gift just for you!")
+
+            mvData:AddDescriptionLine(LANG.GetParamTranslation("marker_vision_distance", {
+                distance = util.DistanceToString(dist, 1)
+            }))
+
+        elseif string.sub(mvObject:GetIdentifier(), 1, 21) == MV_TREE_LABEL then
             mvData:EnableText()
             mvData:SetTitle("Christmas Tree")
 
@@ -443,27 +527,41 @@ elseif CLIENT then
         -- picking up prop gift
         if ent:GetClass() == PROP_CLASS_NAME then
             if not ent:GetNotRetrievable() and tData:GetEntityDistance() <= 93.7 then
+                local giftee = ent:GetGiftee()
+                local isGiftee = not IsValid(giftee) or client == giftee
+                local knownDeadGiftee = utils.ConfirmedDead(client, giftee)
+                local isWrapper  = client:SteamID64() == ent:GetWrapperSID()
+
                 tData:EnableText()
                 tData:EnableOutline()
-                tData:SetOutlineColor(COLOR_GREEN) --TODO: should match gift color2
-                tData:SetTitle("Gift")
-                tData:SetKeyBinding("+use")
-                tData:SetSubtitle(LANG.GetParamTranslation("target_pickup", {
-                    usekey = Key("+use", "USE")
-                }))
+                tData:SetOutlineColor(UnpackColor(ent:GetGiftRibbonColor()))
+                tData:SetTitle(not isGiftee and ("Gift for "..giftee:Nick()) or "Gift")
 
-                if client:SteamID64() == ent:GetWrapperSID() then
+                if isGiftee or isWrapper or knownDeadGiftee then
+                    tData:SetKeyBinding("+use")
+                    tData:SetSubtitle(LANG.GetParamTranslation("target_pickup", {
+                        usekey = Key("+use", "USE")
+                    }))
+                end
+
+                if isWrapper then
                     tData:AddDescriptionLine("You wrapped this gift.")
                     tData:AddDescriptionLine(selfDescriptionLines[ent:GetDescriptionLine()])
 
-                -- works, but allows some innos to tell whether a gift is random free of risk which kinda blows
-                --elseif client:GetNWBool("OpenedRandomGift") and ent:GetIsRandomGift() and not dbg.Cvar:GetBool() then
-                --    tData:AddDescriptionLine("You already opened a random gift.")
-                --    tData:AddDescriptionLine("You can unwrap another one next round!")
-
                 else
-                    tData:AddDescriptionLine("Can also open with melee attack.")
-                    tData:AddDescriptionLine(normalDescriptionLines[ent:GetDescriptionLine()])
+                    if not isGiftee then
+                        tData:AddDescriptionLine("The gift tag reads \""..giftee:Nick().."\"")
+
+                        if knownDeadGiftee then
+                            tData:AddDescriptionLine(deadGifteeHintLines[ent:GetDescriptionLine()])
+                        else
+                            tData:AddDescriptionLine(gifteeHintLines[ent:GetDescriptionLine()])
+                        end
+
+                    else
+                        tData:AddDescriptionLine("Can also open with melee attack.")
+                        tData:AddDescriptionLine(normalDescriptionLines[ent:GetDescriptionLine()])
+                    end
                 end
             end
 

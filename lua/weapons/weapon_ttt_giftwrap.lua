@@ -383,6 +383,7 @@ function SWEP:SetupDataTables()
     self:NetworkVar("String", 1, "CachedDataLabel")
     self:NetworkVar("String", 2, "UnwrapNote")
     self:NetworkVar("Entity", 0, "StoredGift")
+    self:NetworkVar("Entity", 1, "Giftee")
 
     if CLIENT then
         self:NetworkVarNotify("StoredGift", function(name, old, new)
@@ -461,10 +462,16 @@ function SWEP:PrimaryAttack()
 
         else -- Try to open gift
             local ownerOpenedRandomGift = owner:GetNWBool("OpenedRandomGift")
+            local giftee = self:GetGiftee()
 
             -- Throw if not allowed due to opening a second random gift
             if ownerOpenedRandomGift and self:GetIsRandomGift() and not dbg.Cvar:GetBool() then
                 utils.NonSpamMessage(owner, "OpenAttempt", ERROR_ALREADY_OPENED)
+                self:Throw(owner)
+
+            -- Throw if not allowed due to not being giftee (failsafe)
+            elseif IsValid(giftee) and owner != giftee and not utils.ConfirmedDead(owner, giftee) then
+                if SERVER then notifyHasGiftee(owner, giftee) end
                 self:Throw(owner)
 
             else -- Open gift
@@ -659,7 +666,7 @@ if SERVER then
     }
 
     -- non-SWEP; for use in prop entity lua file
-    function SpawnGiftEnt(gifteePly, giftObj, spawnPos)
+    function SpawnGiftEnt(gifteePly, giftObj, spawnPos, isUndo)
         if not IsValid(giftObj) then return end
         if not utils.IsLivingPlayer(gifteePly) and not spawnPos then return end
 
@@ -723,13 +730,20 @@ if SERVER then
             net.Start(GIFTWRAP_HL_CHAT_MSG)
             net.WriteString("You unwrapped ")
             net.WriteString(giftDesc)
-            net.WriteString("!")
+
+            local intendedGiftee = giftObj:GetGiftee()
+            if not isUndo and IsValid(intendedGiftee) and gifteePly != intendedGiftee
+              and utils.ConfirmedDead(gifteePly, intendedGiftee) then
+                net.WriteString(" meant for "..intendedGiftee:Nick().." (RIP)!")
+            else
+                net.WriteString("!")
+            end
             net.Send(gifteePly)
 
             local unwrapNote = giftObj:GetUnwrapNote()
             dbg.Log("Unwrap note: '"..unwrapNote.."'")
 
-            if unwrapNote and unwrapNote != "" then
+            if not isUndo and unwrapNote and unwrapNote != "" then
                 timer.Simple(1, function()
                     net.Start(GIFTWRAP_HL_CHAT_MSG)
                     net.WriteString("A note was attached: \"")
@@ -781,11 +795,11 @@ if SERVER then
         util.Effect("Sparks", effectData)
     end
 
-    function SWEP:DropContents()
+    function SWEP:DropContents(isUndo)
         local owner = self:GetOwner()
 
         if IsValid(owner) and self:HasGift() then
-            SpawnGiftEnt(owner, self, nil)
+            SpawnGiftEnt(owner, self, nil, isUndo)
 
             dbg.Log("Dropped gift contents")
             self:SetWrapperSID("")
@@ -810,6 +824,7 @@ if SERVER then
         giftProp:SetGiftBoxColor(self:GetGiftBoxColor())
         giftProp:SetGiftRibbonColor(self:GetGiftRibbonColor())
         giftProp:SetUnwrapNote(self:GetUnwrapNote())
+        giftProp:SetGiftee(self:GetGiftee())
 
         return giftProp
     end
@@ -821,7 +836,7 @@ if SERVER then
             local giftData = GetCachedGiftData(self, owner)
 
             if not giftData:IsDropBlocked() then
-                self:DropContents()
+                self:DropContents(true)
             else
                 utils.NonSpamMessage(owner, "ReloadAttempt", "Undoing wrap for special entities is currently disabled as a precaution.")
             end
@@ -976,7 +991,7 @@ elseif CLIENT then
     function SWEP:UpdateMarkerVision(reason)
         if christmasTree then
             dbg.Log("Updating tree beacon... ("..reason..")")
-            local mvLabel = MARKER_UI_LABEL..self:EntIndex()
+            local mvLabel = MV_TREE_LABEL..self:EntIndex()
             local mv = christmasTree:GetMarkerVision(mvLabel)
 
             if mv then -- keep MV so long as still owned by wrapper
@@ -991,7 +1006,7 @@ elseif CLIENT then
                     treeBeacon:SetVisibleFor(VISIBLE_FOR_PLAYER)
                     treeBeacon:SetOwner(owner)
 
-                    christmasTree:CallOnRemove(MARKER_UI_LABEL, function(goneEnt)
+                    christmasTree:CallOnRemove(MV_TREE_LABEL, function(goneEnt)
                         goneEnt:RemoveMarkerVision(mvLabel)
                     end)
 

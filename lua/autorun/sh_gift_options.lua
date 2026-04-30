@@ -4,6 +4,7 @@ local dbg   = GW_DBG
 
 GIFTWRAP_DROP_CONT_MSG      = "TTT_GiftWrapCL_DropContentRequest"
 GIFTWRAP_RANDOM_GIFT_MSG    = "TTT_GiftWrapCL_RandomContentRequest"
+GIFTWRAP_UPDATE_GIFTEE_MSG  = "TTT_GiftWrapCL_UpdateGifteeMsg"
 GIFTWRAP_UPDATE_NOTE_MSG    = "TTT_GiftWrapCL_UpdateNoteMsg"
 GIFTWRAP_REMOVE_WRAPPER_MSG = "TTT_GiftWrapCL_DebugRemoveWrapperTag"
 GIFTWRAP_DBG_SELECT_MSG     = "TTT_GiftWrapCL_DebugSelectGiftLabel"
@@ -156,6 +157,7 @@ elseif SERVER then
     util.AddNetworkString(GIFTWRAP_CLOSE_DMS_MSG)
     util.AddNetworkString(GIFTWRAP_DROP_CONT_MSG)
     util.AddNetworkString(GIFTWRAP_RANDOM_GIFT_MSG)
+    util.AddNetworkString(GIFTWRAP_UPDATE_GIFTEE_MSG)
     util.AddNetworkString(GIFTWRAP_UPDATE_NOTE_MSG)
     util.AddNetworkString(GIFTWRAP_REMOVE_WRAPPER_MSG)
     util.AddNetworkString(GIFTWRAP_DBG_SELECT_MSG)
@@ -178,6 +180,22 @@ elseif SERVER then
             giftEnt:AutoWrap(newLabel, newData)
             ply:AddCredits(-1)
         end
+    end)
+
+    net.Receive(GIFTWRAP_UPDATE_GIFTEE_MSG, function(len, ply)
+        local giftEnt = net.ReadEntity()
+        local gifteeSID = net.ReadString()
+        if not IsValid(giftEnt) then return end
+
+        local gifteePly = player.GetBySteamID64(gifteeSID)
+        local isPlayer = IsValid(gifteePly)
+
+        if not isPlayer and gifteeSID != "any" then
+            dbg.Log("Rejected invalid giftee selection:", gifteeSID)
+            return
+        end
+
+        giftEnt:SetGiftee(isPlayer and gifteePly or NULL)
     end)
 
     net.Receive(GIFTWRAP_UPDATE_NOTE_MSG, function(len, ply)

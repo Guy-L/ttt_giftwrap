@@ -315,15 +315,40 @@ function GW_Utils.DumpAllModelPaths()
     GW_DBG.Log("Saved dump to all_models.txt.")
 end
 
+function GW_Utils.TL(label) --shorthand
+    return LANG.TryTranslation(label)
+end
 
+function GW_Utils.GetAvatar(sid, size)
+    if not size then size = "small" end
+    local avatarMat = draw.GetAvatarMaterial(sid, size)
+    local avatarTex = avatarMat:GetTexture("$basetexture")
+
+    if avatarMat and avatarTex -- only return valid avatars
+      and avatarMat:GetName() ~= "vgui/ttt/b-draw/icon_avatar_default"
+      and avatarMat:GetName() ~= "vgui/ttt/b-draw/icon_avatar_bot"
+      and not avatarTex:IsError()
+      and not avatarTex:IsErrorTexture() then
+        return avatarMat, avatarTex
+    end
+end
+
+function GW_Utils.ConfirmedDead(ply, other)
+    if not IsValid(ply) or not IsValid(other) then return false end
+    return not other:TTT2NETGetBool("player_was_active_in_round", false) -- spectator
+        or other:TTT2NETGetBool("body_found", false) -- confirmed dead
+        or (not other:Alive() and ply:GetSubRoleData().isOmniscientRole) -- omniscient player
+end
 
 GW_DBG.Log("Utils initialized.")
+
 
 -- multi-Lua defs I don't really want to make another file for
 -- TODO: probably also gate these behind utils table
 SWEP_CLASS_NAME = "weapon_ttt_giftwrap"
 PROP_CLASS_NAME = "prop_giftwrap_gift" -- needs to be "prop_" for prop disguiser to work
-MARKER_UI_LABEL = "giftwrap_gift_beacon_"
+MV_TREE_LABEL   = "giftwrap_gift_beacon_"
+MV_GIFTEE_LABEL = "giftwrap_giftee"
 
 GIFTWRAP_ICON   = "vgui/ttt/icon_giftwrap"
 WRAP_VIEWMODEL  = "models/ttt/giftwrap/v_giftwrap.mdl"
