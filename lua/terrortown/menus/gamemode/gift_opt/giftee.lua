@@ -40,5 +40,5 @@ function CLGAMEMODESUBMENU:Populate(parent)
     })
 
     right:SetUpdateOnType(true)
-    RemoveRunButton(right)
+    RemoveResetButton(right)
 end

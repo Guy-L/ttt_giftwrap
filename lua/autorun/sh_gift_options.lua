@@ -122,7 +122,7 @@ if CLIENT then
         end
     end
 
-    function RemoveRunButton(panel)
+    function RemoveResetButton(panel)
         local reset = panel:GetResetButton()
 
         if IsValid(reset) then
@@ -191,7 +191,7 @@ elseif SERVER then
     net.Receive(GIFTWRAP_REMOVE_WRAPPER_MSG, function(len, ply)
         local giftEnt = net.ReadEntity()
         if not IsValid(giftEnt) then return end
-        if not dbg.Cvar:GetBool() then return end
+        if not dbg.AllowDebugMenu() then return end
 
         giftEnt:SetWrapperSID("WORLD")
     end)
@@ -200,7 +200,7 @@ elseif SERVER then
         local giftEnt = net.ReadEntity()
         local giftLabel = net.ReadString()
         if not IsValid(giftEnt) then return end
-        if not dbg.Cvar:GetBool() then return end
+        if not dbg.AllowDebugMenu() then return end
 
         local giftData = GetGiftDataFromLabel(giftLabel)
         if giftData then

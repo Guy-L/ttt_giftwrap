@@ -125,6 +125,10 @@ function GW_DBG.Profile(checkpointName)
     GW_DBG.profileLast = os.clock()
 end
 
+function GW_DBG.AllowDebugMenu()
+    return GW_DBG.Cvar:GetBool() or GetGlobalBool("ttt2_deathmatch_active", false)
+end
+
 -----------------------------------------------------
 --------------------- Utils -------------------------
 -----------------------------------------------------

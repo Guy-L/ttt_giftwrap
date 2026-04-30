@@ -6,7 +6,7 @@ local utils = GW_Utils
 local dbg   = GW_DBG
 
 function CLGAMEMODESUBMENU:ShouldShow()
-    return dbg.Cvar:GetBool() or GetGlobalBool("ttt2_deathmatch_active", false)
+    return dbg.AllowDebugMenu()
 end
 
 function CLGAMEMODESUBMENU:Populate(parent)
@@ -60,10 +60,12 @@ function CLGAMEMODESUBMENU:Populate(parent)
             end
         end
     })
-    RemoveRunButton(labelSelect)
+    RemoveResetButton(labelSelect)
 
     if gwRef:HasGift() then
-        labelSelect:SetEnabled(false)
-        labelSelect:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_full"))
+        for _, el in ipairs(labelSelect:GetParent():GetChildren()) do
+            el:SetEnabled(false)
+            el:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_full"))
+        end
     end
 end
