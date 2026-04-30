@@ -2368,7 +2368,7 @@ function GiftData:CalcWeight(xmasFactor, scoreFactor, isBoosted)
         categoryMult = SHOP_WEIGHT_MULT:GetFloat()
 
     elseif category == GiftCategory.FloorSWEP then
-        categoryMult = isBoosted and 0.1 or FLOOR_WEIGHT_MULT:GetFloat()
+        categoryMult = isBoosted and 0 or FLOOR_WEIGHT_MULT:GetFloat()
 
     elseif category == GiftCategory.SENT or category == GiftCategory.NPC then
         categoryMult = SPECIAL_WEIGHT_MULT:GetFloat()
