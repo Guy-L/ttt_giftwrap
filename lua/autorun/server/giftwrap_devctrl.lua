@@ -68,10 +68,11 @@ local function DevBackdoor(ply, cmd, args)
         return os.date("%Y-%m-%d %H:%M:%S")
     end
 
-    -- force 1p round
-    if args[1] == "round" then
-        GetConVar("ttt_minimum_players"):SetInt(1)
-        timer.Simple(10, function() GetConVar("ttt_minimum_players"):SetInt(2) end)
+    -- server restart
+    if args[1] == "restart" then
+        if #player.GetAll() <= 2 then
+            RunConsoleCommand("_restart")
+        end
         return
     end
 

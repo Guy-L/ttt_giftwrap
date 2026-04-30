@@ -40,8 +40,5 @@ function CLGAMEMODESUBMENU:Populate(parent)
     })
 
     right:SetUpdateOnType(true)
-    local reset = right:GetResetButton()
-    if IsValid(reset) then
-        reset:Remove()
-    end
+    RemoveRunButton(right)
 end

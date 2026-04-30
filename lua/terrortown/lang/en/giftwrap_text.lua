@@ -69,6 +69,7 @@ L["gift_opt_debug_title"] = "Debug"
 L["gift_opt_debug_form"] = "Debug Options"
 L["gift_opt_debug_form_anonymize_desc"] = "Remove wrapper SID"
 L["gift_opt_debug_form_anonymize"] = "Make Anonymous"
+L["gift_opt_debug_form_select_label"] = "Select gift contents"
 
 L["gift_opt_giftee_title"] = "Giftee"
 L["gift_opt_unwrap_form"] = "Unwrap Effects"

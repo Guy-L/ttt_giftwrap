@@ -475,7 +475,7 @@ local giftDataCatalog = {
         category = GiftCategory.SENT, identifier = "christmas_present",
         can_be_random_gift = true,
         factor_rarity = 0.8, factor_quality = 4,
-        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Large,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Paper,    attrib_feel = GiftFeel.Jolly,
         special_setup = "snuffles_present_setup"
     },
@@ -1206,6 +1206,12 @@ local giftDataCatalog = {
     },
 }
 
+
+
+-------------------------------
+-- Catalog-related public utils
+-------------------------------
+
 -- defined explicitly for use by other addons
 function NewGiftData(tbl)
     local newGift = GiftData.New(tbl)
@@ -1225,6 +1231,39 @@ end
 
 function UpdateCatalog(label, giftData)
     giftDataCatalog[label] = giftData
+end
+
+function GetSpawnableGiftNames(ply)
+    local names = {}
+    for label, _ in pairs(giftDataCatalog) do
+        local giftEntry = giftDataCatalog[label]
+
+        if giftEntry:IsSpawnable(ply) then
+            table.insert(names, giftDataCatalog[label].name)
+        end
+    end
+
+    return names
+end
+
+function GetGiftByName(name)
+    for label, _ in pairs(giftDataCatalog) do
+        local giftEntry = giftDataCatalog[label]
+
+        if giftEntry.name == name then
+            return label, giftEntry
+        end
+    end
+end
+
+function GetGiftDataFromLabel(giftLabel)
+    if not giftLabel then return nil end
+
+    for label, giftData in pairs(giftDataCatalog) do
+        if label == giftLabel then
+            return giftData
+        end
+    end
 end
 
 GunType = {
@@ -2546,16 +2585,6 @@ function GiftData:GetVisuals()
 
     return nil
 end
-end
-
-function GetGiftDataFromLabel(giftLabel)
-    if not giftLabel then return nil end
-
-    for label, giftData in pairs(giftDataCatalog) do
-        if label == giftLabel then
-            return giftData
-        end
-    end
 end
 
 local giftSurfaceTypeProps = {

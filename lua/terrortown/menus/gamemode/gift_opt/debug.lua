@@ -40,4 +40,30 @@ function CLGAMEMODESUBMENU:Populate(parent)
         anonBtn:SetEnabled(false)
         anonBtn:SetTooltip(LANG.TryTranslation("gift_opt_change_form_drop_error_none"))
     end
+
+    ---
+    labelSelectVal = nil
+    local labelSelect = debugForm:MakeComboBox({
+        label = "gift_opt_debug_form_select_label",
+        choices = GetSpawnableGiftNames(LocalPlayer()),
+        enableRun = true,
+        OnChange = function(val)
+            labelSelectVal = GetGiftByName(val)
+        end,
+        OnClickRun = function(slf)
+            if labelSelectVal then
+                net.Start(GIFTWRAP_DBG_SELECT_MSG)
+                net.WriteEntity(gwRef)
+                net.WriteString(labelSelectVal)
+                net.SendToServer()
+                HELPSCRN._gwOptMenu:Close()
+            end
+        end
+    })
+    RemoveRunButton(labelSelect)
+
+    if gwRef:HasGift() then
+        labelSelect:SetEnabled(false)
+        labelSelect:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_full"))
+    end
 end

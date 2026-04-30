@@ -6,6 +6,7 @@ GIFTWRAP_DROP_CONT_MSG      = "TTT_GiftWrapCL_DropContentRequest"
 GIFTWRAP_RANDOM_GIFT_MSG    = "TTT_GiftWrapCL_RandomContentRequest"
 GIFTWRAP_UPDATE_NOTE_MSG    = "TTT_GiftWrapCL_UpdateNoteMsg"
 GIFTWRAP_REMOVE_WRAPPER_MSG = "TTT_GiftWrapCL_DebugRemoveWrapperTag"
+GIFTWRAP_DBG_SELECT_MSG     = "TTT_GiftWrapCL_DebugSelectGiftLabel"
 
 local GIFTWRAP_CLEAR_BUY_MSG = "TTT_GiftWrapSV_ClearGiftBoughtFlag"
 local GIFTWRAP_CLOSE_DMS_MSG = "TTT_GiftWrapSV_CloseDeathMatchShop"
@@ -121,6 +122,14 @@ if CLIENT then
         end
     end
 
+    function RemoveRunButton(panel)
+        local reset = panel:GetResetButton()
+
+        if IsValid(reset) then
+            reset:Remove()
+        end
+    end
+
     net.Receive(GIFTWRAP_CLEAR_BUY_MSG, function()
         local equipmentName = net.ReadString()
         local ply = LocalPlayer()
@@ -149,6 +158,7 @@ elseif SERVER then
     util.AddNetworkString(GIFTWRAP_RANDOM_GIFT_MSG)
     util.AddNetworkString(GIFTWRAP_UPDATE_NOTE_MSG)
     util.AddNetworkString(GIFTWRAP_REMOVE_WRAPPER_MSG)
+    util.AddNetworkString(GIFTWRAP_DBG_SELECT_MSG)
     util.AddNetworkString(GIFTWRAP_IN_OPTS_MSG)
 
     net.Receive(GIFTWRAP_DROP_CONT_MSG, function(len, ply)
@@ -184,6 +194,20 @@ elseif SERVER then
         if not dbg.Cvar:GetBool() then return end
 
         giftEnt:SetWrapperSID("WORLD")
+    end)
+
+    net.Receive(GIFTWRAP_DBG_SELECT_MSG, function(len, ply)
+        local giftEnt = net.ReadEntity()
+        local giftLabel = net.ReadString()
+        if not IsValid(giftEnt) then return end
+        if not dbg.Cvar:GetBool() then return end
+
+        local giftData = GetGiftDataFromLabel(giftLabel)
+        if giftData then
+            giftEnt:AutoWrap(giftLabel, giftData)
+        else
+            dbg.Log("(Debug) Invalid label received for wrapping: "..giftLabel)
+        end
     end)
 
     net.Receive(GIFTWRAP_IN_OPTS_MSG, function(len, ply)
