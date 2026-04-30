@@ -330,6 +330,7 @@ WRAP_VIEWMODEL  = "models/ttt/giftwrap/v_giftwrap.mdl"
 WRAP_WORLDMODEL = "models/ttt/giftwrap/w_giftwrap.mdl"
 GIFT_VIEWMODEL  = "models/ttt/gift/v_gift.mdl"
 GIFT_WORLDMODEL = "models/ttt/gift/w_gift.mdl"
+GIFT_PROPMODEL  = "models/ttt/gift/prop_gift.mdl"
 SNUFFLE_TREE_MODEL = "models/props_snowville/tree_pine_small.mdl"
 
 ERROR_ALREADY_OPENED = "You already opened a random gift this round!"

@@ -575,7 +575,7 @@ function SWEP:Throw(owner, force)
             throwVel = throwVel * (force + 150*giftData.attrib_size)
 
             phys:SetVelocity(throwVel)
-            phys:AddAngleVelocity(Vector(500, 0, 0))
+            phys:AddAngleVelocity(Vector(0, 0, 500))
         end
 
         self:Remove()

@@ -20,7 +20,7 @@ ENT.Purpose = "Gift from TTT2 Gift Wrap. Holds a random trinket!"
 ENT.Category = "Utility"
 ENT.Spawnable = true -- for sandbox ig
 ENT.Author = "Guy"
-ENT.Model = GIFT_WORLDMODEL --purely for Contents menu rendering
+ENT.Model = GIFT_PROPMODEL --purely for Contents menu rendering
 
 local sounds = {
     bells1 = Sound("giftwrap/tf2_nm_bells1.wav"),
@@ -49,7 +49,7 @@ local selfDescriptionLines = {
 function ENT:Initialize()
     dbg.Log("(prop) Initializing gift entity")
 
-    self:SetModel(GIFT_WORLDMODEL)
+    self:SetModel(GIFT_PROPMODEL)
     self:SetSolid(SOLID_VPHYSICS)
     self:SetMoveType(MOVETYPE_VPHYSICS)
     self:PhysicsInit(SOLID_VPHYSICS)
@@ -64,7 +64,7 @@ function ENT:Initialize()
     if SERVER then
         self:PrecacheGibs()
 
-        self:SetAngles(Angle(90, math.random(0, 360), 0))
+        self:SetAngles(Angle(0, math.random(0, 360), 0))
         self.LastUprightCheck = CurTime()
         self.UprightCheckFreq = 2
         self:UpdateScale(scale)
@@ -152,7 +152,6 @@ function ENT:RefreshPhysics()
 end
 
 function ENT:SetupDataTables()
-    self:NetworkVar("Float", 0, "GroundPitch")
     self:NetworkVar("Int", 0, "DescriptionLine")
     self:NetworkVar("Int", 1, "GiftBoxColor")
     self:NetworkVar("Int", 2, "GiftRibbonColor")
@@ -165,19 +164,6 @@ function ENT:SetupDataTables()
     self:NetworkVar("String", 2, "UnwrapNote")
 
     self:NetworkVar("Entity", 0, "StoredGift")
-
-    self:NetworkVarNotify("GroundPitch", function(ent, name, old, new)
-        local giftAngles = self:GetAngles()
-        giftAngles.pitch = new + 170
-        self:SetAngles(giftAngles)
-
-        local giftPos = self:GetPos()
-        local mins, maxs = ent:GetModelBounds()
-        local height = (maxs.z - mins.z) * self:GetGiftScale()
-        self:SetPos(giftPos + Vector(0, 0, height))
-
-        self:RefreshPhysics()
-    end)
 end
 
 
@@ -214,13 +200,25 @@ if SERVER then
             if not vel then return end
 
             if vel:Length() < 0.1 then
-                local groundAngle = self:GetGroundAngle()
+                local startPos = self:GetPos()
+                local tr = util.TraceLine({
+                    start = startPos,
+                    endpos = startPos - Vector(0, 0, 100),
+                    filter = self
+                })
+                if not tr.Hit then return end
+                local dot = self:GetUp():Dot(tr.HitNormal)
 
-                if groundAngle then
-                    local pitchDiff = self:GetAngles().pitch - groundAngle.pitch + 190
-                    if math.abs(pitchDiff) > 30 then
-                        self:SetGroundPitch(groundAngle.pitch)
-                    end
+                if dot < 0.9 then
+                    local ang = tr.HitNormal:Angle()
+                    ang:RotateAroundAxis(ang:Right(), -90)
+                    self:SetAngles(ang)
+
+                    local mins, maxs = self:GetModelBounds()
+                    local height = math.abs(maxs.z - mins.z) * self:GetGiftScale()
+
+                    self:SetPos(self:GetPos() + Vector(0, 0, height))
+                    self:RefreshPhysics()
                 end
             end
         end
