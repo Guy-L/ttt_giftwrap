@@ -1118,6 +1118,15 @@ local giftDataCatalog = {
 
     ----------------------------------------------------------------------
     -- Items
+    amaterasu = GiftData.New {
+        name     = "Amaterasu",       desc       = "Naruto-branded contacts",
+        category = GiftCategory.Item, identifier = "amaterasu_name",
+        can_be_random_gift = true,
+        factor_rarity = 4, factor_quality = -8,
+        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Small,
+        attrib_smell = GiftSmell.Ash,       attrib_feel = GiftFeel.Magical,
+        special_setup = "amaterasu_setup",
+    },
     blue_bull = GiftData.New {
         name     = "Blue Bull",       desc       = "wings",
         category = GiftCategory.Item, identifier = "item_ttt_blue_bull",
@@ -1142,7 +1151,7 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Earthy,    attrib_feel = GiftFeel.Magical,
     },
     disguiser = GiftData.New {
-        name     = "Disguiser",       desc       = "a cloak of ambiguity",
+        name     = "Disguiser",       desc       = "a poorly crafted disguise kit",
         category = GiftCategory.Item, identifier = "item_ttt_disguiser",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Beeping,     attrib_size = GiftSize.Normal,
@@ -1152,7 +1161,7 @@ local giftDataCatalog = {
         name     = "Flatline Detector", desc       = "a corpse radar",
         category = GiftCategory.Item,   identifier = "item_ttt_corpseradar",
         can_be_random_gift = true,
-        factor_rarity = 5, factor_quality = 4,
+        factor_rarity = 2, factor_quality = 4,
         attrib_sound = GiftSound.Beeping, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Rotten,  attrib_feel = GiftFeel.Electric,
     },
@@ -2255,6 +2264,14 @@ function GiftData:ApplyPostUnwrapAdjustments(giftEnt, giftee)
 
         local angle_vel = self.up_angvel or -500
         phys:AddAngleVelocity(Vector(0, angle_vel, 0))
+    end
+end
+
+function GiftData:ApplyPostGiftPurchaseAdjustments(giftee)
+    if self.special_setup then
+        if self.special_setup == "amaterasu_setup" then
+            giftee:SetNWBool("TTTAmaterasu", false)
+        end
     end
 end
 

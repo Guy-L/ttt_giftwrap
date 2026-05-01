@@ -243,8 +243,11 @@ elseif SERVER then
         if not equip then return false end
 
         if isItem then
-            giftEnt:AutoWrap(GetItemGiftData(equipmentName))
+            local newLabel, newData = GetItemGiftData(equipmentName)
+            giftEnt:AutoWrap(newLabel, newData)
             ply:RemoveEquipmentItem(equip)
+            newData:ApplyPostGiftPurchaseAdjustments(ply)
+
         else
             giftEnt:AutoWrap(GetSWEPGiftData(equipmentName))
             equip:Remove()
