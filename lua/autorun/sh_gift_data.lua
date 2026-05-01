@@ -1124,7 +1124,7 @@ local giftDataCatalog = {
         can_be_random_gift = true,
         factor_rarity = 4, factor_quality = -8,
         attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Ash,       attrib_feel = GiftFeel.Magical,
+        attrib_smell = GiftSmell.Ash,       attrib_feel = GiftFeel.Cursed,
         special_setup = "amaterasu_setup",
     },
     blue_bull = GiftData.New {
@@ -2251,6 +2251,10 @@ function GiftData:ApplyPostUnwrapAdjustments(giftEnt, giftee)
             --else
             --    giftEnt:WearHat(giftee)
             --end
+
+        elseif self.special_setup == "amaterasu_setup" then
+            giftee:SetNWBool("TTTAmaterasu", true)
+            SetGlobalBool("TTTAmaterasuBought", true)
         end
     end
 

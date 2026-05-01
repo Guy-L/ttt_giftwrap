@@ -386,7 +386,7 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Entity", 1, "Giftee")
 
     if CLIENT then
-        self:NetworkVarNotify("StoredGift", function(name, old, new)
+        self:NetworkVarNotify("StoredGift", function(ent, name, old, new)
             timer.Simple(0.1, function() -- value isn't changed yet
                 if not IsValid(self) then return end
                 self:UpdateUI("storage update")
@@ -401,10 +401,10 @@ function SWEP:SetupDataTables()
             end)
         end)
 
-        local function UpdateUIAndMenu(name, old, new)
+        local function UpdateUIAndMenu(ent, name, old, new)
             timer.Simple(0.1, function()
                 if IsValid(self) then
-                    self:UpdateUI("isRandom/wrapper update")
+                    self:UpdateUI(name.." update")
                     UpdateGiftContentMenu()
                 end
             end)
@@ -413,7 +413,7 @@ function SWEP:SetupDataTables()
         self:NetworkVarNotify("IsRandomGift", UpdateUIAndMenu)
         self:NetworkVarNotify("WrapperSID", UpdateUIAndMenu)
 
-        local function InvalidateVMColor(name, old, new)
+        local function InvalidateVMColor(ent, name, old, new)
             local ply = LocalPlayer()
             if not IsValid(ply) then return end
             ply:GetViewModel()._gwColorsApplied = false
@@ -707,6 +707,7 @@ if SERVER then
 
         else -- for particle position later
             spawnPos = gifteePly:GetShootPos()
+            giftData:ApplyPostUnwrapAdjustments(nil, gifteePly)
         end
 
         -- Chat Notif
