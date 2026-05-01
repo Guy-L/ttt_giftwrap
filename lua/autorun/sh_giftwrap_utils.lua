@@ -340,6 +340,33 @@ function GW_Utils.ConfirmedDead(ply, other)
         or (not other:Alive() and ply:GetSubRoleData().isOmniscientRole) -- omniscient player
 end
 
+function GW_Utils.EnterStasis(ent)
+    ent:SetNoDraw(true)
+    ent:SetNotSolid(true)
+
+    local minPos, maxPos = game.GetWorld():GetCollisionBounds()
+    ent:SetPos(maxPos)
+
+    local phys = ent:GetPhysicsObject()
+    if IsValid(phys) then
+        phys:EnableMotion(false)
+        phys:Sleep()
+    end
+end
+
+function GW_Utils.ExitStasis(ent, pos)
+    ent:SetNoDraw(false)
+    ent:SetNotSolid(false)
+    ent:SetPos(pos)
+
+    ent:PhysWake()
+    local phys = ent:GetPhysicsObject()
+    if IsValid(phys) then
+        phys:EnableMotion(true)
+        phys:Wake()
+    end
+end
+
 GW_DBG.Log("Utils initialized.")
 
 

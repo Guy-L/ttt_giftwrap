@@ -324,10 +324,11 @@ function SWEP:Initialize() --on buy
 end
 
 function SWEP:UpdateModel(reason)
-    dbg.Log("Updating model... ("..reason..")")
+    local hasGiftNow = self:HasGift()
+    dbg.Log("Updating model... ("..(hasGiftNow and "-> Gift" or "Wrap").." model; "..reason..")")
     local vmChange = false
 
-    if not self:HasGift() then
+    if not hasGiftNow then
         if self.ViewModel ~= WRAP_VIEWMODEL then vmChange = true end
         self.ViewModel  = WRAP_VIEWMODEL
         self.WorldModel = WRAP_WORLDMODEL
@@ -341,7 +342,7 @@ function SWEP:UpdateModel(reason)
     end
 
     if CLIENT then
-        if self:HasGift() then
+        if hasGiftNow then
             SetGiftColors(self, self:GetGiftBoxColor(), self:GetGiftRibbonColor())
         else
             ClearGiftColors(self)
@@ -349,15 +350,17 @@ function SWEP:UpdateModel(reason)
     end
 
     if vmChange then
+        dbg.Log(" => Attempting to change viewmodel")
         local owner = self:GetOwner()
 
         -- note: the GetViewModel function existence check is for Doppelganger lol
-        if IsValid(owner) and owner.GetViewModel then 
+        if IsValid(owner) and owner.GetViewModel then
             self:SetModel(self.ViewModel)
             self:ResetSequenceInfo()
             local vm = owner:GetViewModel()
 
             if IsValid(vm) then
+                dbg.Log(" => Changing to "..self.ViewModel)
                 vm:SetModel(self.ViewModel)
                 vm:ResetSequenceInfo()
             end
@@ -448,7 +451,9 @@ function SWEP:PrimaryAttack()
             if SERVER then
                 owner:SetAnimation(PLAYER_ATTACK1)
                 timer.Simple(0.2, function()
-                    self:Wrap(hitEnt)
+                    if IsValid(hitEnt) then
+                        self:Wrap(hitEnt)
+                    end
                 end)
             end
         else
@@ -696,13 +701,7 @@ if SERVER then
             end
 
             -- Plop back into world
-            giftEnt:SetNoDraw(false)
-            giftEnt:SetNotSolid(false)
-            giftEnt:SetPos(spawnPos)
-            giftEnt:PhysWake()
-            local giftPhys = giftEnt:GetPhysicsObject()
-            if IsValid(giftPhys) then giftPhys:Wake() end
-
+            utils.ExitStasis(giftEnt, spawnPos)
             giftData:ApplyPostUnwrapAdjustments(giftEnt, gifteePly)
 
         else -- for particle position later
@@ -855,9 +854,7 @@ if SERVER then
             owner:ChatPrint(wrapCheckRet)
 
         else
-            ent:SetNoDraw(true)
-            ent:SetNotSolid(true)
-
+            utils.EnterStasis(ent)
             self:SetWrapperSID(owner:SteamID64())
             self:SetStoredGift(ent)
 
@@ -874,7 +871,7 @@ if SERVER then
                 if IsValid(self) and IsValid(owner) then
                     local invGiftWrap = utils.GetInventoryGiftwrap(owner)
 
-                    if invGiftWrap and invGiftWrap:HasGift() then
+                    if invGiftWrap and invGiftWrap:HasGift() and invGiftWrap:GetStoredGift() == ent then
                         owner:ChatPrint("The gift somehow disappeared, leaving the wrapping paper behind.")
                     end
                 end
