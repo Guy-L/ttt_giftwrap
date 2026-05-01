@@ -1216,13 +1216,18 @@ local giftDataCatalog = {
 function NewGiftData(tbl)
     local newGift = GiftData.New(tbl)
 
-    -- client-side furnish with client-only SWEP info
+    -- client-side furnish with client-only SWEP/Item info
     if CLIENT and newGift.placeholderEquip then
         local swep = weapons.GetStored(newGift.identifier)
+        local item = items.GetStored(newGift.identifier)
 
         if swep then
-            if swep.PrintName then newGift.name = swep.PrintName end
-            if swep.desc then newGift.desc = LANG.TryTranslation(swep.desc) end
+            if swep.PrintName then newGift.name = utils.TL(swep.PrintName) end
+            if swep.desc then newGift.desc = utils.TL(swep.desc) end
+
+        elseif item then
+            if item.PrintName then newGift.name = utils.TL(item.PrintName) end
+            if item.desc then newGift.desc = utils.TL(item.desc) end
         end
     end
 
@@ -2808,6 +2813,7 @@ function GetItemGiftData(itemID)
         desc     = item.desc,
         category = GiftCategory.Item,
         identifier = itemID,
+        attrib_size = GiftSize.Small,
         placeholderEquip = true
     }
 

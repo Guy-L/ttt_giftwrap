@@ -579,7 +579,7 @@ function SWEP:Throw(owner, force)
             if not force then force = 800 end
             local throwVel = owner:GetAimVector()
             --throwVel.z = 0.3 -- hardlock trajectory vertically
-            throwVel = throwVel * (force + 150*giftData.attrib_size)
+            throwVel = throwVel * (force + 150*(giftData.attrib_size or 1))
 
             phys:SetVelocity(throwVel)
             phys:AddAngleVelocity(Vector(0, 0, 500))
