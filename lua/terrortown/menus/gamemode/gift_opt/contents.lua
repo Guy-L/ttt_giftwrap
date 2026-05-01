@@ -80,6 +80,46 @@ function SetModelImage(dImage, ent, giftData)
     end
 end
 
+function CreateStatusTable(parent, statusTable)
+    parent:SetWide(200)
+    local rowTall = 40
+
+    for i, status in ipairs(statusTable) do
+        local row = vgui.Create("DPanel", parent)
+        row:Dock(TOP)
+        row:DockMargin(0, 0, 0, 6)
+        row:SetTall(rowTall)
+        row.Paint = nil
+
+        -- LEFT: icon container
+        local iconPanel = vgui.Create("DPanel", row)
+        iconPanel:Dock(LEFT)
+        iconPanel:SetWide(rowTall)
+        iconPanel.Paint = nil
+
+        local icon = vgui.Create("DImage", iconPanel)
+        icon:SetImage(status.icon)
+        icon:SetSize(24, 24)
+
+        icon.PerformLayout = function(self)
+            local pw, ph = self:GetParent():GetSize()
+            self:SetPos((pw - self:GetWide()) / 2, (ph - self:GetTall()) / 2)
+        end
+
+        -- RIGHT: multiline text container
+        local textPanel = vgui.Create("DPanel", row)
+        textPanel:Dock(FILL)
+        textPanel.Paint = nil
+
+        local label = vgui.Create("DLabel", textPanel)
+        label:Dock(FILL)
+        label:SetText(utils.TL(status.text))
+        label:SetWrap(true)
+        label:SetFont("HudHintTextLarge")
+        label:SetContentAlignment(4)
+    end
+end
+
 function CreateCurrentContentsBox(storedEnt, giftData, parent)
     local curContents = vgui.Create("DPanel", parent)
     curContents:SetPaintBackground(true)
@@ -127,7 +167,18 @@ function CreateCurrentContentsBox(storedEnt, giftData, parent)
     SetModelImage(contentImg, storedEnt, giftData)
     contentImg:SetKeepAspect(true)
 
-    -- RIGHT: info text container
+    -- RIGHT: status container
+    local statusPanel = vgui.Create("DPanel", curContents)
+    statusPanel:Dock(RIGHT)
+    statusPanel:DockPadding(5, 10, 10, 10)
+    statusPanel:SetWide(0)
+
+    local statusTable = giftData and giftData:GetStatusTable(storedEnt) or {}
+    if #statusTable > 0 then
+        CreateStatusTable(statusPanel, statusTable)
+    end
+
+    -- MIDDLE: info text container
     local textPanel = vgui.Create("DPanel", curContents)
     textPanel:Dock(FILL)
     textPanel:DockPadding(5, 10, 10, 10)

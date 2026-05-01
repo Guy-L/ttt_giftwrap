@@ -54,6 +54,17 @@ function GW_DBG.InspectUI(el, ind, depthLimit)
     end
 end
 
+function GW_DBG.HighlightUI(el)
+    local highlight = Color(200, 90, 95, 255)
+
+    el:SetPaintBackground(true)
+    el:SetBackgroundColor(highlight)
+    el.Paint = function(self, w, h)
+        surface.SetDrawColor(highlight)
+        surface.DrawRect(0, 0, w, h)
+    end
+end
+
 local function ReconstructMsg(...)
         --reconstruct string for server relay
     local parts = {}
@@ -340,30 +351,42 @@ function GW_Utils.ConfirmedDead(ply, other)
         or (not other:Alive() and ply:GetSubRoleData().isOmniscientRole) -- omniscient player
 end
 
-function GW_Utils.EnterStasis(ent)
-    ent:SetNoDraw(true)
-    ent:SetNotSolid(true)
+if SERVER then
+    function GW_Utils.EnterStasis(ent)
+        ent:SetNoDraw(true)
+        ent:SetNotSolid(true)
 
-    local minPos, maxPos = game.GetWorld():GetCollisionBounds()
-    ent:SetPos(maxPos)
+        local minPos, maxPos = game.GetWorld():GetCollisionBounds()
+        ent:SetPos(maxPos)
 
-    local phys = ent:GetPhysicsObject()
-    if IsValid(phys) then
-        phys:EnableMotion(false)
-        phys:Sleep()
+        local phys = ent:GetPhysicsObject()
+        if IsValid(phys) then
+            phys:EnableMotion(false)
+            phys:Sleep()
+        end
+
+        if ent:IsOnFire() then
+            ent:Extinguish()
+            ent:SetNWBool("GWStoredOnFire", true)
+        end
     end
-end
 
-function GW_Utils.ExitStasis(ent, pos)
-    ent:SetNoDraw(false)
-    ent:SetNotSolid(false)
-    ent:SetPos(pos)
+    function GW_Utils.ExitStasis(ent, pos)
+        ent:SetNoDraw(false)
+        ent:SetNotSolid(false)
+        ent:SetPos(pos)
 
-    ent:PhysWake()
-    local phys = ent:GetPhysicsObject()
-    if IsValid(phys) then
-        phys:EnableMotion(true)
-        phys:Wake()
+        ent:PhysWake()
+        local phys = ent:GetPhysicsObject()
+        if IsValid(phys) then
+            phys:EnableMotion(true)
+            phys:Wake()
+        end
+
+        if ent:GetNWBool("GWStoredOnFire") then
+            ent:Ignite(60, 100)
+            ent:SetNWBool("GWStoredOnFire", true)
+        end
     end
 end
 

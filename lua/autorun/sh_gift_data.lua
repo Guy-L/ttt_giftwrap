@@ -1896,7 +1896,7 @@ local noSmell = {"It doesn't really have a smell...", "It doesn't smell like any
 local noSound = {"It doesn't make a distinct sound...", "It sounds generic...", "You can't make out a clear sound..."}
 local noFeel =  {"Doesn't have a distinct feel to it...", "It feels pretty normal...", "Just holding it doesn't tell you much...", "It feels... indescribable."}
 
-function GiftData:Inspect()
+function GiftData:Inspect(giftEnt)
     if not self.lastQualifierID then
         self.lastQualifierID = math.random(#qualifiers)
     end
@@ -1924,8 +1924,13 @@ function GiftData:Inspect()
         end
 
     else -- feel
-        if self.attrib_feel then
-            return "It feels "..qualifier, self.attrib_feel, "..."
+        local feel = self.attrib_feel
+        if IsValid(giftEnt) and giftEnt:GetNWBool("GWStoredOnFire") then
+            feel = GiftFeel.Hot
+        end
+
+        if feel then
+            return "It feels "..qualifier, feel, "..."
         else
             return noFeel[math.random(#noFeel)], "", ""
         end
@@ -2532,66 +2537,80 @@ end
 -- For things we can derive only server-side from gift data
 -- and might want later (ply can be any player)
 if SERVER then
-function GiftData:Furnish(ply)
-    if not self.cachedModel and self.category == GiftCategory.SENT then
-        local sent = scripted_ents.GetStored(self.identifier)
+    function GiftData:Furnish(ply)
+        if not self.cachedModel and self.category == GiftCategory.SENT then
+            local sent = scripted_ents.GetStored(self.identifier)
 
-        if sent.Model then
-            self.cachedModel = sent.Model
-            return self
-        elseif sent.t and sent.t.Model then
-            self.cachedModel = sent.t.Model
-            return self
+            if sent.Model then
+                self.cachedModel = sent.Model
+                return self
+            elseif sent.t and sent.t.Model then
+                self.cachedModel = sent.t.Model
+                return self
+            end
         end
-    end
 
-    if not self.cachedModel and (self.category == GiftCategory.NPC or self.category == GiftCategory.SENT) then
-        local previewEnt = ents.Create(self.identifier)
+        if not self.cachedModel and (self.category == GiftCategory.NPC or self.category == GiftCategory.SENT) then
+            local previewEnt = ents.Create(self.identifier)
 
-        if previewEnt.SetThrower then previewEnt:SetThrower(ply) end
-        if previewEnt.SetOriginator then previewEnt:SetOriginator(ply) end
+            if previewEnt.SetThrower then previewEnt:SetThrower(ply) end
+            if previewEnt.SetOriginator then previewEnt:SetOriginator(ply) end
 
-        if IsValid(previewEnt) then
-            if previewEnt.Initialize then previewEnt:Initialize()
-            else previewEnt:Spawn() end
-            self.cachedModel = previewEnt:GetModel()
-            previewEnt:Remove()
+            if IsValid(previewEnt) then
+                if previewEnt.Initialize then previewEnt:Initialize()
+                else previewEnt:Spawn() end
+                self.cachedModel = previewEnt:GetModel()
+                previewEnt:Remove()
+            end
         end
+
+        return self
     end
 
-    return self
-end
-end
+elseif CLIENT then
+    function GiftData:GetVisuals()
+        local category = self.category
 
-if CLIENT then
-function GiftData:GetVisuals()
-    local category = self.category
+        if category == GiftCategory.PhysProp then
+            return self.identifier
 
-    if category == GiftCategory.PhysProp then
-        return self.identifier
+        elseif category == GiftCategory.SENT then
+            local sent = scripted_ents.GetStored(self.identifier)
+            return sent.t.Model and sent.t.Model or self.cachedModel
 
-    elseif category == GiftCategory.SENT then
-        local sent = scripted_ents.GetStored(self.identifier)
-        return sent.t.Model and sent.t.Model or self.cachedModel
+        elseif category == GiftCategory.NPC then
+            return self.cachedModel --cached server-side (can't retrieve client-side afaik)
 
-    elseif category == GiftCategory.NPC then
-        return self.cachedModel --cached server-side (can't retrieve client-side afaik)
+        elseif category == GiftCategory.FloorSWEP or category == GiftCategory.WorldSWEP then
+            local swep = weapons.GetStored(self.identifier)
+            return swep.WorldModel
 
-    elseif category == GiftCategory.FloorSWEP or category == GiftCategory.WorldSWEP then
-        local swep = weapons.GetStored(self.identifier)
-        return swep.WorldModel
+        elseif category == GiftCategory.AutoEquipSWEP then
+            local swep = weapons.GetStored(self.identifier)
+            return swep.material, true
 
-    elseif category == GiftCategory.AutoEquipSWEP then
-        local swep = weapons.GetStored(self.identifier)
-        return swep.material, true
+        elseif category == GiftCategory.Item then
+            local item = items.GetStored(self.identifier)
+            return item.material, true
+        end
 
-    elseif category == GiftCategory.Item then
-        local item = items.GetStored(self.identifier)
-        return item.material, true
+        return nil
     end
 
-    return nil
-end
+    function GiftData:GetStatusTable(storedEnt)
+        local statusTable = {}
+
+        if IsValid(storedEnt) then
+            if storedEnt:GetNWBool("GWStoredOnFire") then
+                table.insert(statusTable, {
+                    icon = "vgui/ttt/menu_icon_fire",
+                    text = "gift_status_fire"
+                })
+            end
+        end
+
+        return statusTable
+    end
 end
 
 local giftSurfaceTypeProps = {

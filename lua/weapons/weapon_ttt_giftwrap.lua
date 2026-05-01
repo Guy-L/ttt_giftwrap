@@ -521,7 +521,7 @@ function SWEP:SecondaryAttack()
             end)
 
             local cachedData = GetCachedGiftData(self, owner)
-            local firstPart, secondPart, thirdPart = cachedData:Inspect()
+            local firstPart, secondPart, thirdPart = cachedData:Inspect(self:GetStoredGift())
 
             net.Start(GIFTWRAP_HL_CHAT_MSG)
             net.WriteString(firstPart)
