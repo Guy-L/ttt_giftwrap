@@ -79,4 +79,5 @@ L["gift_opt_giftee_form_any"] = "Anyone"
 L["gift_opt_unwrap_form"] = "Unwrap Effects"
 L["gift_opt_unwrap_form_note"] = "Leave them a note!"
 
+L["gift_status_type"] = "Type"
 L["gift_status_fire"] = "On fire!"

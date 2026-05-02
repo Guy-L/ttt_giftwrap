@@ -2,10 +2,15 @@ include("sh_giftwrap_utils.lua")
 local utils = GW_Utils
 local dbg   = GW_DBG
 
-local PROP_WEIGHT_MULT    = CreateConVar("ttt2_giftwrap_prop_weight", "1.25", GW_CVAR_FLAGS, "Weight multiplier for props when picking random gift.", 0, 5)
-local FLOOR_WEIGHT_MULT   = CreateConVar("ttt2_giftwrap_floor_weight", "1",   GW_CVAR_FLAGS, "Weight multiplier for floor items when picking random gift.", 0, 5)
-local SHOP_WEIGHT_MULT    = CreateConVar("ttt2_giftwrap_shop_weight", "0.5",  GW_CVAR_FLAGS, "Weight multiplier for shop items when picking random gift.", 0, 5)
-local SPECIAL_WEIGHT_MULT = CreateConVar("ttt2_giftwrap_special_weight", "1", GW_CVAR_FLAGS, "Weight multiplier for special entities (SENTs & NPCs) when picking random gift.", 0, 5)
+local PROP_WEIGHT_NAME    = "ttt2_giftwrap_prop_weight"
+local FLOOR_WEIGHT_NAME   = "ttt2_giftwrap_floor_weight"
+local SHOP_WEIGHT_NAME    = "ttt2_giftwrap_shop_weight"
+local SPECIAL_WEIGHT_NAME = "ttt2_giftwrap_special_weight"
+
+local PROP_WEIGHT_MULT    = CreateConVar(PROP_WEIGHT_NAME, "1.25", GW_CVAR_FLAGS, "Weight multiplier for props when picking random gift.", 0, 5)
+local FLOOR_WEIGHT_MULT   = CreateConVar(FLOOR_WEIGHT_NAME, "1",   GW_CVAR_FLAGS, "Weight multiplier for floor items when picking random gift.", 0, 5)
+local SHOP_WEIGHT_MULT    = CreateConVar(SHOP_WEIGHT_NAME, "0.5",  GW_CVAR_FLAGS, "Weight multiplier for shop items when picking random gift.", 0, 5)
+local SPECIAL_WEIGHT_MULT = CreateConVar(SPECIAL_WEIGHT_NAME, "1", GW_CVAR_FLAGS, "Weight multiplier for special entities (SENTs & NPCs) when picking random gift.", 0, 5)
 
 local PLACEHOLDER_DATA_REMOVE    = "GiftWrap_RemoveGiftData"
 local CLUTTERBOMB_LIGHT_FIX_HOOK = "GiftWrap_ClutterbombLightFix"
@@ -21,13 +26,15 @@ local SCORE_PARA_MAX  = 30
 local SCORE_INTERCEPT = -5
 
 GiftCategory = {
-    PhysProp      = "PhysProp",
-    SENT          = "SENT",
-    NPC           = "NPC",
-    FloorSWEP     = "FloorSWEP",
-    WorldSWEP     = "WorldSWEP",
-    AutoEquipSWEP = "AutoEquipSWEP",
-    Item          = "Item",
+    PhysProp      = {id=1, text="Prop",           icon="vgui/ttt/menu/icon_box",      weight=PROP_WEIGHT_NAME},
+    SENT          = {id=2, text="Special Entity", icon="vgui/ttt/menu/icon_sparkles", weight=SPECIAL_WEIGHT_NAME},
+    NPC           = {id=3, text="NPC",            icon="vgui/ttt/menu/icon_headcrab", weight=SPECIAL_WEIGHT_NAME},
+    FloorSWEP     = {id=4, text="Floor Weapon",   icon="vgui/ttt/menu/icon_gun",      weight=FLOOR_WEIGHT_NAME},
+    WorldSWEP     = {id=5, text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME},
+    AutoEquipSWEP = {id=6, text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME},
+    Item          = {id=7, text="Shop Item",      icon="vgui/ttt/menu/icon_bottle",   weight=SHOP_WEIGHT_NAME},
+    Ammo          = {id=8, text="Ammo Box",       icon="vgui/ttt/menu/icon_ammo",     weight=FLOOR_WEIGHT_NAME},
+    Unknown       = {id=9, text="Unknown",        icon="vgui/ttt/menu/icon_question", weight=SPECIAL_WEIGHT_NAME},
 }
 
 GiftSound = {
@@ -1225,6 +1232,14 @@ local giftDataCatalog = {
 function NewGiftData(tbl)
     local newGift = GiftData.New(tbl)
 
+    -- correct references to static tables for identity checks
+    for category, data in pairs(GiftCategory) do
+        if data.id == tbl.category.id then
+            newGift.category = data
+            break
+        end
+    end
+
     -- client-side furnish with client-only SWEP/Item info
     if CLIENT and newGift.placeholderEquip then
         local swep = weapons.GetStored(newGift.identifier)
@@ -1973,7 +1988,7 @@ function GiftData:IsSpawnable(giftee)
     if category == GiftCategory.PhysProp then
         return util.IsValidModel(identifier)
 
-    elseif category == GiftCategory.SENT then
+    elseif category == GiftCategory.SENT or category == GiftCategory.Ammo then
         return scripted_ents.GetStored(identifier) ~= nil
 
     elseif category == GiftCategory.NPC then
@@ -1983,13 +1998,13 @@ function GiftData:IsSpawnable(giftee)
       or category == GiftCategory.FloorSWEP then
         return weapons.GetStored(identifier) ~= nil
 
-    elseif category == GiftCategory.AutoEquipSWEP and gifteeAlive then
-        return weapons.GetStored(identifier) ~= nil
+    elseif category == GiftCategory.AutoEquipSWEP then
+        return gifteeAlive and weapons.GetStored(identifier) ~= nil
           and not giftee:HasWeapon(identifier)
           and giftee:CanCarryType(WEPS.TypeForWeapon(identifier))
 
-    elseif category == GiftCategory.Item and gifteeAlive then
-        return items.GetStored(identifier) ~= nil
+    elseif category == GiftCategory.Item then
+        return gifteeAlive and items.GetStored(identifier) ~= nil
           and (self.can_get_multiple or not giftee:HasEquipmentItem(self.identifier))
     end
 
@@ -1997,7 +2012,7 @@ function GiftData:IsSpawnable(giftee)
 end
 
 function GiftData:IsDropBlocked()
-    return self.category == GiftCategory.SENT or self.category == GiftCategory.NPC
+    return self.category == GiftCategory.SENT or self.category == GiftCategory.NPC or self.category == GiftCategory.Unknown
 end
 
 function GiftData:ApplyOnWrapAdjustments(giftEnt)
@@ -2335,8 +2350,8 @@ function GiftData:Spawn(giftee)
             giftEnt:Spawn()
             return giftEnt
 
-        -- SENT / NPC / FloorSWEP / WorldSWEP
-        elseif category == GiftCategory.SENT or category == GiftCategory.NPC
+        -- SENT / NPC / FloorSWEP / WorldSWEP / Ammo
+        elseif category == GiftCategory.SENT or category == GiftCategory.NPC or category == GiftCategory.Ammo
           or category == GiftCategory.WorldSWEP or category == GiftCategory.FloorSWEP then
             local giftEnt = ents.Create(identifier)
 
@@ -2387,22 +2402,9 @@ function GiftData:CalcWeight(xmasFactor, scoreFactor, isBoosted)
     if not xmasFactor then xmasFactor = -XMAS_SUB end
     if not scoreFactor then scoreFactor = 0 end
 
-    local category = self.category
-    local categoryMult = 1
-
-    if category == GiftCategory.PhysProp then
-        categoryMult = PROP_WEIGHT_MULT:GetFloat()
-
-    elseif category == GiftCategory.WorldSWEP
-      or category == GiftCategory.AutoEquipSWEP
-      or category == GiftCategory.Item then
-        categoryMult = SHOP_WEIGHT_MULT:GetFloat()
-
-    elseif category == GiftCategory.FloorSWEP then
-        categoryMult = isBoosted and 0 or FLOOR_WEIGHT_MULT:GetFloat()
-
-    elseif category == GiftCategory.SENT or category == GiftCategory.NPC then
-        categoryMult = SPECIAL_WEIGHT_MULT:GetFloat()
+    local categoryMult = GetConVar(self.category.weight):GetFloat()
+    if self.category == GiftCategory.FloorSWEP and isBoosted then
+        categoryMult = 0
     end
 
     local scaledQuality = self.factor_quality / QUALITY_MAX
@@ -2410,7 +2412,7 @@ function GiftData:CalcWeight(xmasFactor, scoreFactor, isBoosted)
     return math.max(0, categoryMult * (qualityFactor / self.factor_rarity))
 end
 
-function GetTotalWeight(xmasFactor, scoreFactor)
+function GetTotalWeight(xmasFactor, scoreFactor, isBoosted)
     if not xmasFactor or not scoreFactor then
         xmasFactor, scoreFactor = CalcQualityFactors()
     end
@@ -2419,14 +2421,14 @@ function GetTotalWeight(xmasFactor, scoreFactor)
     local count = 0
 
     for label, giftData in pairs(giftDataCatalog) do
-        total = total + giftData:CalcWeight(xmasFactor, scoreFactor)
+        total = total + giftData:CalcWeight(xmasFactor, scoreFactor, isBoosted)
         count = count + 1
     end
 
     return total, count
 end
 
-function GetPerGiftWeightBreakdown(xmasFactor, scoreFactor)
+function GetPerGiftWeightBreakdown(xmasFactor, scoreFactor, isBoosted)
     if not xmasFactor or not scoreFactor then
         xmasFactor, scoreFactor = CalcQualityFactors()
     end
@@ -2435,13 +2437,13 @@ function GetPerGiftWeightBreakdown(xmasFactor, scoreFactor)
 
     for label, giftData in pairs(giftDataCatalog) do
         breakdown[label.."_spawnable"] = giftData:IsSpawnable(LocalPlayer())
-        breakdown[label.."_weight"]    = giftData:CalcWeight(xmasFactor, scoreFactor)
+        breakdown[label.."_weight"]    = giftData:CalcWeight(xmasFactor, scoreFactor, isBoosted)
     end
 
     return breakdown
 end
 
-function GetCategoryWeightBreakdown(xmasFactor, scoreFactor)
+function GetCategoryWeightBreakdown(xmasFactor, scoreFactor, isBoosted)
     if not xmasFactor or not scoreFactor then
         xmasFactor, scoreFactor = CalcQualityFactors()
     end
@@ -2458,26 +2460,27 @@ function GetCategoryWeightBreakdown(xmasFactor, scoreFactor)
 
     for label, giftData in pairs(giftDataCatalog) do
         if giftData.can_be_random_gift then
-            local category = giftData.category
-            local giftWeight = giftData:CalcWeight(xmasFactor, scoreFactor)
+            local categoryWeight = giftData.category.weight
+            local giftWeight = giftData:CalcWeight(xmasFactor, scoreFactor, isBoosted)
 
-            if category == GiftCategory.PhysProp then
+            if categoryWeight == PROP_WEIGHT_NAME then
                 breakdown.propCnt = breakdown.propCnt + 1
                 breakdown.propWeight = breakdown.propWeight + giftWeight
 
-            elseif category == GiftCategory.WorldSWEP
-              or category == GiftCategory.AutoEquipSWEP
-              or category == GiftCategory.Item then
+            elseif categoryWeight == SHOP_WEIGHT_NAME then
                 breakdown.shopCnt = breakdown.shopCnt + 1
                 breakdown.shopWeight = breakdown.shopWeight + giftWeight
 
-            elseif category == GiftCategory.FloorSWEP then
+            elseif categoryWeight == FLOOR_WEIGHT_NAME then
                 breakdown.floorCnt = breakdown.floorCnt + 1
                 breakdown.floorWeight = breakdown.floorWeight + giftWeight
 
-            elseif category == GiftCategory.SENT or category == GiftCategory.NPC then
+            elseif categoryWeight == SPECIAL_WEIGHT_NAME then
                 breakdown.SENTCnt = breakdown.SENTCnt + 1
                 breakdown.SENTWeight = breakdown.SENTWeight + giftWeight
+
+            else
+                dbg.Log("(Warning) Unknown category cvar:", categoryWeight)
             end
         end
     end
@@ -2574,7 +2577,7 @@ elseif CLIENT then
         if category == GiftCategory.PhysProp then
             return self.identifier
 
-        elseif category == GiftCategory.SENT then
+        elseif category == GiftCategory.SENT or category == GiftCategory.Ammo then
             local sent = scripted_ents.GetStored(self.identifier)
             return sent.t.Model and sent.t.Model or self.cachedModel
 
@@ -2600,10 +2603,16 @@ elseif CLIENT then
     function GiftData:GetStatusTable(storedEnt)
         local statusTable = {}
 
+        table.insert(statusTable, {
+            icon = self.category.icon,
+            text = self.category.text,
+            subtext = "gift_status_type",
+        })
+
         if IsValid(storedEnt) then
             if storedEnt:GetNWBool("GWStoredOnFire") then
                 table.insert(statusTable, {
-                    icon = "vgui/ttt/menu_icon_fire",
+                    icon = "vgui/ttt/menu/icon_fire",
                     text = "gift_status_fire"
                 })
             end
@@ -2688,9 +2697,10 @@ local giftSurfaceProps = {
 
 function GetEntGiftData(ent)
     local entIdentifier = ent:GetClass()
+    local entModel = ent:GetModel()
 
     if string.find(entIdentifier, "prop_physics", nil, true) then
-        entIdentifier = ent:GetModel()
+        entIdentifier = entModel
     end
 
     for label, giftData in pairs(giftDataCatalog) do
@@ -2701,7 +2711,7 @@ function GetEntGiftData(ent)
 
     -- Generating placeholder data from entity attributes
     dbg.Log("Could not find gift data for "..tostring(ent).."; generating placeholder...")
-    dbg.Log("=> Model path: ", ent:GetModel())
+    dbg.Log("=> Model path: ", entModel)
     local placeholderData = GiftData.New({})
     local placeholderLabel = "gift_ent_"..tostring(ent:EntIndex())
     placeholderData.identifier = entIdentifier
@@ -2709,6 +2719,26 @@ function GetEntGiftData(ent)
     placeholderData.autoGen = true
     if weapons.GetStored(entIdentifier) or items.GetStored(entIdentifier) then
         placeholderData.placeholderEquip = true
+    end
+
+    -- Detect category
+    if entIdentifier == entModel then
+        placeholderData.category = GiftCategory.PhysProp
+
+    elseif ent.Base == "base_ammo_ttt" then
+        placeholderData.category = GiftCategory.Ammo
+
+    elseif list.Get("NPC")[entIdentifier] then
+        placeholderData.category = GiftCategory.NPC
+
+    elseif weapons.GetStored(entIdentifier) then
+        placeholderData.category = ent.AutoSpawnable and GiftCategory.FloorSWEP or GiftCategory.WorldSWEP
+
+    elseif scripted_ents.GetStored(entIdentifier) then
+        placeholderData.category = GiftCategory.SENT
+
+    else
+        placeholderData.category = GiftCategory.Unknown
     end
 
     -- Find & set name if available
@@ -2726,7 +2756,7 @@ function GetEntGiftData(ent)
     end
 
     if name == "gift" then
-        placeholderData.name = string.match(string.StripExtension(ent:GetModel()), "[^/\\]+$")
+        placeholderData.name = string.match(string.StripExtension(entModel), "[^/\\]+$")
         placeholderData.desc = "a " .. name
 
     else

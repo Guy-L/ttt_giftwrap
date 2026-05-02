@@ -1,6 +1,6 @@
 CLGAMEMODESUBMENU.base = "base_gamemodesubmenu"
 CLGAMEMODESUBMENU.title = "gift_opt_giftee_title"
-CLGAMEMODESUBMENU.icon = Material("vgui/ttt/menu_icon_label")
+CLGAMEMODESUBMENU.icon = Material("vgui/ttt/menu/icon_label")
 CLGAMEMODESUBMENU.priority = 98
 local utils = GW_Utils
 local dbg   = GW_DBG
@@ -72,7 +72,7 @@ function CLGAMEMODESUBMENU:Populate(parent)
             local optName = el:GetText()
 
             if optName == gifteeFormAnyName then
-                el:SetIcon("vgui/ttt/menu_icon_globe")
+                el:SetIcon("vgui/ttt/menu/icon_globe")
 
             else
                 for _, ply in ipairs(player.GetAll()) do

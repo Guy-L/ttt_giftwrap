@@ -1,6 +1,6 @@
 CLGAMEMODESUBMENU.base = "base_gamemodesubmenu"
 CLGAMEMODESUBMENU.title = "gift_opt_appearance_title"
-CLGAMEMODESUBMENU.icon = Material("vgui/ttt/menu_icon_gift")
+CLGAMEMODESUBMENU.icon = Material("vgui/ttt/menu/icon_gift")
 CLGAMEMODESUBMENU.priority = 99
 local utils = GW_Utils
 local dbg   = GW_DBG

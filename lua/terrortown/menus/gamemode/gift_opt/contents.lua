@@ -1,7 +1,7 @@
 --- @ignore
 CLGAMEMODESUBMENU.base  = "base_gamemodesubmenu"
 CLGAMEMODESUBMENU.title = "gift_opt_contents_title"
-CLGAMEMODESUBMENU.icon = Material("vgui/ttt/menu_icon_box_hole")
+CLGAMEMODESUBMENU.icon = Material("vgui/ttt/menu/icon_box_hole")
 CLGAMEMODESUBMENU.priority = 100
 local utils = GW_Utils
 local dbg   = GW_DBG
@@ -81,7 +81,7 @@ function SetModelImage(dImage, ent, giftData)
 end
 
 function CreateStatusTable(parent, statusTable)
-    parent:SetWide(200)
+    parent:SetWide(175)
     local rowTall = 40
 
     for i, status in ipairs(statusTable) do
@@ -111,12 +111,48 @@ function CreateStatusTable(parent, statusTable)
         textPanel:Dock(FILL)
         textPanel.Paint = nil
 
+        local hasSubtext = status.subtext and status.subtext ~= ""
+
         local label = vgui.Create("DLabel", textPanel)
-        label:Dock(FILL)
         label:SetText(utils.TL(status.text))
         label:SetWrap(true)
         label:SetFont("HudHintTextLarge")
         label:SetContentAlignment(4)
+        label:SizeToContentsY()
+
+        local subLabel
+        local spacing = 1 -- adjust this
+
+        if hasSubtext then
+            subLabel = vgui.Create("DLabel", textPanel)
+            subLabel:SetText(utils.TL(status.subtext))
+            subLabel:SetWrap(true)
+            subLabel:SetFont("DermaDefault")
+            subLabel:SetContentAlignment(4)
+            subLabel:SetTextColor(curcont_graytext)
+            subLabel:SizeToContentsY()
+        end
+
+        textPanel.PerformLayout = function(self, w, h)
+            label:SetWide(w)
+            label:SizeToContentsY()
+
+            local totalH = label:GetTall()
+
+            if subLabel then
+                subLabel:SetWide(w)
+                subLabel:SizeToContentsY()
+                totalH = totalH + spacing + subLabel:GetTall()
+            end
+
+            local y = (h - totalH) * 0.5
+
+            label:SetPos(0, y)
+
+            if subLabel then
+                subLabel:SetPos(0, y + label:GetTall() + spacing)
+            end
+        end
     end
 end
 

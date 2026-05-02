@@ -460,7 +460,7 @@ if SERVER then
 ----------------------------------
 elseif CLIENT then
     local matTreeIcon = Material("vgui/ttt/marker_vision/c4")
-    local giftIcon = Material("vgui/ttt/menu_icon_gift")
+    local giftIcon = Material("vgui/ttt/menu/icon_gift")
 
     net.Receive(TREE_FOUND_MSG, function()
         christmasTree = net.ReadEntity()
