@@ -207,7 +207,7 @@ local giftDataCatalog = {
         name     = "Companion Doll (Big)", desc       = "a room-sized plush doll",
         category = GiftCategory.PhysProp,  identifier = "models/maxofs2d/companion_doll_big.mdl",
         can_be_random_gift = true,
-        factor_rarity = 5, factor_quality = 4,
+        factor_rarity = 3, factor_quality = 4,
         attrib_sound = GiftSound.None,   attrib_size = GiftSize.Max,
         attrib_smell = GiftSmell.Cotton, attrib_feel = GiftFeel.Massive,
     },
@@ -217,6 +217,15 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Squishy,
+    },
+    explosive_barrel = GiftData.New {
+        name     = "Explosive Barrel",    desc       = "an explosive barrel",
+        category = GiftCategory.PhysProp, identifier = "models/props_c17/oildrum001_explosive.mdl",
+        can_be_random_gift = true,
+        factor_rarity = 3, factor_quality = -9,
+        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Oily,     attrib_feel = GiftFeel.Round,
+        special_setup = "explo_barrel_setup"
     },
     goober = GiftData.New {
         name     = "Goober",              desc       = "a goober",
@@ -318,7 +327,7 @@ local giftDataCatalog = {
         name     = "Watermelon",          desc       = "a watermelon",
         category = GiftCategory.PhysProp, identifier = "models/props_junk/watermelon01.mdl",
         can_be_random_gift = true,
-        factor_rarity = 1, factor_quality = -2,
+        factor_rarity = 3, factor_quality = -2,
         attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Round,
     },
@@ -1510,6 +1519,7 @@ local deployableSWEPs = {
 
     giftwrap = {name = "Gift Wrap", desc = "another gift",
                SENT_id = PROP_CLASS_NAME, SWEP_id = SWEP_CLASS_NAME,
+               SENT_name = "Wrapped Gift",
                SENT_setup = "gift_setup", SWEP_setup = "giftwrap_desc",
                SENT_random = true, SENT_rarity = 0.8, SENT_quality = 2,
                SWEP_random = true, SWEP_rarity = 2,   SWEP_quality = 4,
@@ -1803,11 +1813,12 @@ local deployableSWEPs = {
 
 for label, data in pairs(deployableSWEPs) do
     -- add SENT entry
+    local SENTName     = data.SENT_name or "Live "..data.name
     local SENTCategory = data.SENT_category or GiftCategory.SENT
 
     UpdateCatalog(label, GiftData.New {
-        name     = "Live "..data.name, desc       = data.desc,
-        category = SENTCategory,       identifier = data.SENT_id,
+        name     = SENTName,     desc       = data.desc,
+        category = SENTCategory, identifier = data.SENT_id,
         can_be_random_gift = data.SENT_random,
         factor_rarity  = data.SENT_random and data.SENT_rarity or nil,
         factor_quality = data.SENT_random and data.SENT_quality or nil,
@@ -1927,7 +1938,7 @@ local noSmell = {"It doesn't really have a smell...", "It doesn't smell like any
 local noSound = {"It doesn't make a distinct sound...", "It sounds generic...", "You can't make out a clear sound..."}
 local noFeel =  {"Doesn't have a distinct feel to it...", "It feels pretty normal...", "Just holding it doesn't tell you much...", "It feels... indescribable."}
 
-function GiftData:Inspect(giftEnt)
+function GiftData:Inspect(giftObj)
     if not self.lastQualifierID then
         self.lastQualifierID = math.random(#qualifiers)
     end
@@ -1956,7 +1967,7 @@ function GiftData:Inspect(giftEnt)
 
     else -- feel
         local feel = self.attrib_feel
-        if IsValid(giftEnt) and giftEnt:GetNWBool("GWStoredOnFire") then
+        if IsValid(giftObj) and giftObj:GetIsContentsOnFire() then
             feel = GiftFeel.Hot
         end
 
@@ -2031,22 +2042,22 @@ function GiftData:IsDropBlocked()
     return self.category == GiftCategory.SENT or self.category == GiftCategory.NPC or self.category == GiftCategory.Unknown
 end
 
-function GiftData:ApplyOnWrapAdjustments(giftEnt)
+function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
     if self.break_constraints then
-        constraint.RemoveAll(giftEnt)
+        constraint.RemoveAll(wrappedEnt)
     end
 
     if self.special_setup then
-        if self.special_setup == "grenade" and giftEnt.SetExplodeTime then
-            giftEnt.storedExplodeTime = giftEnt:GetExplodeTime() - CurTime()
-            giftEnt:SetExplodeTime(CurTime() + 1e9)
+        if self.special_setup == "grenade" and wrappedEnt.SetExplodeTime then
+            wrappedEnt.storedExplodeTime = wrappedEnt:GetExplodeTime() - CurTime()
+            wrappedEnt:SetExplodeTime(CurTime() + 1e9)
 
-        elseif self.special_setup == "grenade_auto" and giftEnt.Explode then
-            giftEnt.storedExplode = giftEnt.Explode
-            giftEnt.Explode = function(s) end
+        elseif self.special_setup == "grenade_auto" and wrappedEnt.Explode then
+            wrappedEnt.storedExplode = wrappedEnt.Explode
+            wrappedEnt.Explode = function(s) end
 
         elseif self.special_setup == "bunger_setup" then
-            local bungerChild = utils.GetEntChildAt(giftEnt, 1)
+            local bungerChild = utils.GetEntChildAt(wrappedEnt, 1)
 
             if IsValid(bungerChild) then
                 bungerChild:SetNoDraw(true)
@@ -2056,56 +2067,69 @@ function GiftData:ApplyOnWrapAdjustments(giftEnt)
             local curTime = CurTime()
             local minFuse = self.explosion_delay or 2.5
 
-            giftEnt.storedFuse = math.max(minFuse, 5 - (curTime - giftEnt.SpawnTime))
-            giftEnt.SpawnTime = curTime + 1e9
+            wrappedEnt.storedFuse = math.max(minFuse, 5 - (curTime - wrappedEnt.SpawnTime))
+            wrappedEnt.SpawnTime = curTime + 1e9
 
-            local trail = utils.GetEntChildAt(giftEnt, 1)
+            local trail = utils.GetEntChildAt(wrappedEnt, 1)
             if IsValid(trail) then
                 trail:Remove()
             end
 
         elseif self.special_setup == "moon_grenade_setup" then
-            timer.Remove(giftEnt.FuseID)
+            timer.Remove(wrappedEnt.FuseID)
+        end
+    end
+
+    if wrappedEnt:IsOnFire() then
+        wrappedEnt:Extinguish()
+        giftObj:SetIsContentsOnFire(true)
+    end
+end
+
+function GiftData:ApplyOnAutoWrapAdjustments(giftObj)
+    if self.special_setup == "explo_barrel_setup" then
+        if math.random() < 0.6 then
+            giftObj:SetIsContentsOnFire(true)
         end
     end
 end
 
-function GiftData:ApplyPreSpawnAdjustments(giftEnt, giftee)
+function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
     if self.adjAngle then
-        giftEnt:SetAngles(self.adjAngle)
+        wrappedEnt:SetAngles(self.adjAngle)
     end
 
     if self.set_owner then
-        giftEnt:SetOwner(giftee)
+        wrappedEnt:SetOwner(giftee)
         -- alternatives used by various addons
-        giftEnt.Owner = giftee
-        giftEnt.owner = giftee
+        wrappedEnt.Owner = giftee
+        wrappedEnt.owner = giftee
     end
 
     if self.set_thrower then
-        if giftEnt.SetThrower then giftEnt:SetThrower(giftee) end
-        if giftEnt.SetOriginator then giftEnt:SetOriginator(giftee) end
+        if wrappedEnt.SetThrower then wrappedEnt:SetThrower(giftee) end
+        if wrappedEnt.SetOriginator then wrappedEnt:SetOriginator(giftee) end
     end
 
     if self.special_setup then
         if self.special_setup == "barnacle_setup" then
              -- required to have its final position set properly before being spawned/activated
-            giftEnt:SetPos(giftee:GetPos() + Vector(0, 0, 100))
+            wrappedEnt:SetPos(giftee:GetPos() + Vector(0, 0, 100))
 
         elseif self.special_setup == "bouncy_ball_setup" then
-            giftEnt:SetBallSize(math.random(20,40))
+            wrappedEnt:SetBallSize(math.random(20,40))
 
         elseif self.special_setup == "shield_deployer_setup" then
-            giftEnt.shieldDeployAngleYaw = giftee:GetEyeTrace().Normal:Angle().yaw
+            wrappedEnt.shieldDeployAngleYaw = giftee:GetEyeTrace().Normal:Angle().yaw
 
         elseif self.special_setup == "fan_setup" then
-            giftEnt:SetNWString("fanName", "ttt_fan")
-            giftEnt:SetNWInt("health", TTT_FAN.CVARS.fan_health)
+            wrappedEnt:SetNWString("fanName", "ttt_fan")
+            wrappedEnt:SetNWInt("health", TTT_FAN.CVARS.fan_health)
 
         elseif self.special_setup == "gift_setup" then
-            giftEnt:SetIsRandomGift(true)
-            giftEnt:SetWrapperSID("WORLD")
-            RollGiftColors(giftEnt)
+            wrappedEnt:SetIsRandomGift(true)
+            wrappedEnt:SetWrapperSID("WORLD")
+            RollGiftColors(wrappedEnt)
 
         elseif self.special_setup == "snuffles_present_setup" then
             local presentModels = {
@@ -2114,48 +2138,48 @@ function GiftData:ApplyPreSpawnAdjustments(giftEnt, giftee)
                 "models/katharsmodels/present/type-2/big/present3.mdl"
             }
 
-            giftEnt.Model = presentModels[math.random(#presentModels)]
+            wrappedEnt.Model = presentModels[math.random(#presentModels)]
 
         elseif self.special_setup == "bunger_setup" then
             -- copied from bunger addon
-            giftEnt:SetNPCState(2)
-            giftEnt:SetNoDraw(true)
-            giftEnt:SetHealth(500) -- half as much
+            wrappedEnt:SetNPCState(2)
+            wrappedEnt:SetNoDraw(true)
+            wrappedEnt:SetHealth(500) -- half as much
 
             local bunger = ents.Create("prop_dynamic")
             bunger:SetModel("models/betterbunger.mdl")
-            bunger:SetPos(giftEnt:GetPos())
+            bunger:SetPos(wrappedEnt:GetPos())
             bunger:SetAngles(Angle(0,270,0))
-            bunger:SetParent(giftEnt)
+            bunger:SetParent(wrappedEnt)
             bunger:SetModelScale(2,0) -- for cute
 
         elseif self.special_setup == "slam_setup" then
-            giftEnt:SetPlacer(giftee)
+            wrappedEnt:SetPlacer(giftee)
 
         elseif self.special_setup == "moon_grenade_setup" then
-            giftEnt.GrenadeOwner = giftee
+            wrappedEnt.GrenadeOwner = giftee
 
         elseif self.special_setup == "moonball_setup" then
             local skindex = math.random(0, 18) -- awesome var name from the original addon
-            giftEnt:SetSkin(skindex)
-            giftEnt:SetMoonballSkin(skindex)
-            giftEnt:SetNWEntity("MoonballOwner", giftee)
+            wrappedEnt:SetSkin(skindex)
+            wrappedEnt:SetMoonballSkin(skindex)
+            wrappedEnt:SetNWEntity("MoonballOwner", giftee)
 
             -- note: colliding with one will create an error, and I believe that error is part of the original addon
             --       (no weapon named "weapon_ttt_moonball" exists to give a player)
             -- TODO look into it more?
 
         elseif self.special_setup == "pog_setup" then
-            giftEnt.gift_pot = true
+            wrappedEnt.gift_pot = true
 
         elseif self.special_setup == "pog_shard_setup" then
             local gifteeRole = giftee:GetSubRole()
             local gifteeRoleData = utils.GetSubRoleData(gifteeRole)
 
             if not subRoleData or not subRoleData:IsShoppingRole() then
-                giftEnt.Role = ROLE_DETECTIVE
+                wrappedEnt.Role = ROLE_DETECTIVE
             else
-                giftEnt.Role = gifteeRole
+                wrappedEnt.Role = gifteeRole
             end
 
         elseif self.special_setup == "pap_setup" then
@@ -2174,118 +2198,132 @@ function GiftData:ApplyPreSpawnAdjustments(giftEnt, giftee)
             end)
 
         elseif self.special_setup == "sopd_setup" then
-            giftEnt:SetGrabbedFromCorpse(true)
+            wrappedEnt:SetGrabbedFromCorpse(true)
 
         end
     end
 end
 
-function GiftData:ApplyPostUnwrapAdjustments(giftEnt, giftee)
+function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj)
     if self.move_to_giftee then
-        giftEnt:SetPos(giftee:GetPos())
+        wrappedEnt:SetPos(giftee:GetPos())
     end
 
     if self.stick_to_ground then
-        local phys = giftEnt:GetPhysicsObject()
+        local phys = wrappedEnt:GetPhysicsObject()
         if IsValid(phys) then
             phys:EnableMotion(self.keep_motion == true)
         end
 
-        if not giftEnt:IsOnGround() then
-            local giftCenter = utils.GetEntCenter(giftEnt)
+        if not wrappedEnt:IsOnGround() then
+            local giftCenter = utils.GetEntCenter(wrappedEnt)
 
             local groundTr = util.TraceLine({
                 start  = giftCenter + Vector(0, 0, 100),
                 endpos = giftCenter - Vector(0,0,1000),
-                filter = giftEnt,
+                filter = wrappedEnt,
                 mask   = MASK_NPCWORLDSTATIC,
             })
 
             if groundTr.Hit then
-                giftEnt:SetPos(groundTr.HitPos)
-                giftEnt:SetAngles(groundTr.HitNormal:Angle() + Angle(90, 0, 0))
+                wrappedEnt:SetPos(groundTr.HitPos)
+                wrappedEnt:SetAngles(groundTr.HitNormal:Angle() + Angle(90, 0, 0))
             end
+        end
+    end
+
+    if giftObj:GetIsContentsOnFire() then
+        wrappedEnt:Ignite(60, 100)
+        giftObj:SetIsContentsOnFire(false)
+
+        local wrapper = utils.GetWrapper(giftObj)
+        if self.special_setup == "explo_barrel_setup" and wrapper then
+            local dmg = DamageInfo()
+            dmg:SetDamage(0)
+            dmg:SetAttacker(wrapper)
+            wrappedEnt:TakeDamageInfo(dmg)
+            wrappedEnt:SetHealth(math.min(wrappedEnt:Health() + 6, wrappedEnt:GetMaxHealth()))
         end
     end
 
     if self.special_setup then
         if self.special_setup == "barnacle_setup" then
-            giftEnt:SetPos(giftee:GetPos() + Vector(0, 0, 100))
-            giftEnt:SetDamageOwner(giftee)
-            giftEnt:Activate()
-            giftEnt:SetHealth(30)
+            wrappedEnt:SetPos(giftee:GetPos() + Vector(0, 0, 100))
+            wrappedEnt:SetDamageOwner(giftee)
+            wrappedEnt:Activate()
+            wrappedEnt:SetHealth(30)
             giftee:ChatPrint("NOTE: You CAN shoot it to escape!")
 
         elseif self.special_setup == "grenade" then
-            local storedExplodeTime = giftEnt.storedExplodeTime or 1.5
+            local storedExplodeTime = wrappedEnt.storedExplodeTime or 1.5
             local addedTime = self.explosion_delay or 1.5
-            giftEnt:SetDetonateTimer(storedExplodeTime + addedTime)
+            wrappedEnt:SetDetonateTimer(storedExplodeTime + addedTime)
 
-            if giftEnt.GetThrower and not IsValid(giftEnt:GetThrower()) then
-                giftEnt:SetThrower(giftee)
+            if wrappedEnt.GetThrower and not IsValid(wrappedEnt:GetThrower()) then
+                wrappedEnt:SetThrower(giftee)
             end
 
-        elseif self.special_setup == "grenade_auto" and giftEnt.storedExplode then
+        elseif self.special_setup == "grenade_auto" and wrappedEnt.storedExplode then
             local fuse = self.explosion_delay or 2
-            giftEnt.Explode = giftEnt.storedExplode
+            wrappedEnt.Explode = wrappedEnt.storedExplode
 
             timer.Simple(fuse, function()
-                if IsValid(giftEnt) then
-                    giftEnt:Explode()
+                if IsValid(wrappedEnt) then
+                    wrappedEnt:Explode()
                 end
             end)
 
         elseif self.special_setup == "bunger_setup" then
-            local bungerChildren = giftEnt:GetChildren()
+            local bungerChildren = wrappedEnt:GetChildren()
             if #bungerChildren <= 0 then return end
             local bungerChild = bungerChildren[1]
 
             if IsValid(bungerChild) then
                 bungerChild:SetNoDraw(false)
-                giftEnt:SetNoDraw(true)
+                wrappedEnt:SetNoDraw(true)
             end
 
         elseif self.special_setup == "timed_molotov_setup" then
-            if giftEnt.storedFuse then
-                giftEnt.SpawnTime = CurTime() - giftEnt.storedFuse
+            if wrappedEnt.storedFuse then
+                wrappedEnt.SpawnTime = CurTime() - wrappedEnt.storedFuse
             else
-                giftEnt.SpawnTime = CurTime() - 1 -- 4s fuse
+                wrappedEnt.SpawnTime = CurTime() - 1 -- 4s fuse
             end
 
-            local trail = utils.GetEntChildAt(giftEnt, 1)
+            local trail = utils.GetEntChildAt(wrappedEnt, 1)
             if not IsValid(trail) then
                 trail = ents.Create("env_fire_trail")
-                trail:SetPos(giftEnt:GetPos())
-                trail:SetParent(giftEnt)
+                trail:SetPos(wrappedEnt:GetPos())
+                trail:SetParent(wrappedEnt)
                 trail:Spawn()
                 trail:Activate()
             end
 
         elseif self.special_setup == "moon_grenade_setup" then
-            timer.Simple(math.max(1.5, giftEnt.FuseTime), function()
-                giftEnt:DoBoom() -- dirty but im lazy rn
+            timer.Simple(math.max(1.5, wrappedEnt.FuseTime), function()
+                wrappedEnt:DoBoom() -- dirty but im lazy rn
             end)
 
-        elseif self.special_setup == "pog_setup" and giftEnt.gift_pot then
-            giftEnt:SetRole(giftee:GetSubRole())
-            giftEnt.gift_pot = false -- don't redo this on re-wrap
+        elseif self.special_setup == "pog_setup" and wrappedEnt.gift_pot then
+            wrappedEnt:SetRole(giftee:GetSubRole())
+            wrappedEnt.gift_pot = false -- don't redo this on re-wrap
 
         elseif self.special_setup == "sandwich_setup" then
             giftee:ChatPrint("Grab it while it's still fresh! (5 seconds)")
-            timer.Simple(5, function() giftEnt:OnDrop() end)
+            timer.Simple(5, function() wrappedEnt:OnDrop() end)
 
         elseif self.special_setup == "shellmet_setup" then
             -- commented out: making the shellmet spawn auto-equipped
             --if giftee:HasEquipmentItem("item_ttt2_shellmet") then
                 -- lifted from addon
-                giftEnt:SetBeingWorn(false)
-                giftEnt:SetUseType(SIMPLE_USE)
-                giftEnt:PhysicsInit(SOLID_VPHYSICS)
-                giftEnt:SetSolid(SOLID_VPHYSICS)
-                giftEnt:SetMoveType(MOVETYPE_VPHYSICS)
+                wrappedEnt:SetBeingWorn(false)
+                wrappedEnt:SetUseType(SIMPLE_USE)
+                wrappedEnt:PhysicsInit(SOLID_VPHYSICS)
+                wrappedEnt:SetSolid(SOLID_VPHYSICS)
+                wrappedEnt:SetMoveType(MOVETYPE_VPHYSICS)
 
             --else
-            --    giftEnt:WearHat(giftee)
+            --    wrappedEnt:WearHat(giftee)
             --end
 
         elseif self.special_setup == "amaterasu_setup" then
@@ -2299,7 +2337,7 @@ function GiftData:ApplyPostUnwrapAdjustments(giftEnt, giftee)
         local upMax = self.up_max or upMin
         local upAmt = math.Rand(upMin, upMax)
 
-        local phys = giftEnt:GetPhysicsObject()
+        local phys = wrappedEnt:GetPhysicsObject()
         phys:SetVelocity(utils.GetRandomUpwardsVel(upAmt) * self.up_vel)
 
         local angle_vel = self.up_angvel or -500
@@ -2315,10 +2353,10 @@ function GiftData:ApplyPostGiftPurchaseAdjustments(giftee)
     end
 end
 
-function GiftData:GetDesc(giftEnt, giftee)
+function GiftData:GetDesc(wrappedEnt, giftee)
     if self.special_setup then
         if self.special_setup == "giftwrap_desc" then
-            if giftEnt.HasGift and giftEnt:HasGift() then
+            if wrappedEnt.HasGift and wrappedEnt:HasGift() then
                 return "another gift"
             else
                 return "more wrapping paper"
@@ -2341,16 +2379,6 @@ function GiftData:GetDesc(giftEnt, giftee)
     end
 
     return self.desc
-end
-
-function GiftData:GetName()
-    if self.special_setup then
-        if self.special_setup == "gift_setup" then
-            return "Wrapped Gift"
-        end
-    end
-
-    return self.name
 end
 
 function GiftData:Spawn(giftee)
@@ -2616,7 +2644,7 @@ elseif CLIENT then
         return nil
     end
 
-    function GiftData:GetStatusTable(storedEnt)
+    function GiftData:GetStatusTable(giftObj)
         local statusTable = {}
 
         table.insert(statusTable, {
@@ -2625,8 +2653,8 @@ elseif CLIENT then
             subtext = "gift_status_type",
         })
 
-        if IsValid(storedEnt) then
-            if storedEnt:GetNWBool("GWStoredOnFire") then
+        if IsValid(giftObj) then
+            if giftObj:GetIsContentsOnFire() then
                 table.insert(statusTable, {
                     icon = "vgui/ttt/menu/icon_fire",
                     text = "gift_status_fire"

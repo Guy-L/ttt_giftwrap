@@ -378,16 +378,9 @@ function SWEP:UpdateModel(reason)
 end
 
 function SWEP:SetupDataTables()
-    self:NetworkVar("Bool", 0, "IsOpening")
-    self:NetworkVar("Bool", 1, "IsShaking")
-    self:NetworkVar("Bool", 2, "IsRandomGift")
-    self:NetworkVar("Int", 0, "GiftBoxColor")
-    self:NetworkVar("Int", 1, "GiftRibbonColor")
-    self:NetworkVar("String", 0, "WrapperSID")
-    self:NetworkVar("String", 1, "CachedDataLabel")
-    self:NetworkVar("String", 2, "UnwrapNote")
-    self:NetworkVar("Entity", 0, "StoredGift")
-    self:NetworkVar("Entity", 1, "Giftee")
+    local boolCnt, intCnt, stringCnt, entCnt = utils.SetupSharedTable(self)
+    self:NetworkVar("Bool", boolCnt, "IsOpening")
+    self:NetworkVar("Bool", boolCnt+1, "IsShaking")
 
     if CLIENT then
         self:NetworkVarNotify("StoredGift", function(ent, name, old, new)
@@ -522,7 +515,7 @@ function SWEP:SecondaryAttack()
             end)
 
             local cachedData = GetCachedGiftData(self, owner)
-            local firstPart, secondPart, thirdPart = cachedData:Inspect(self:GetStoredGift())
+            local firstPart, secondPart, thirdPart = cachedData:Inspect(self)
 
             net.Start(GIFTWRAP_HL_CHAT_MSG)
             net.WriteString(firstPart)
@@ -637,6 +630,7 @@ if SERVER then
         else -- random gift
             if not (cachedData and cachedData:IsSpawnable(giftee)) then  -- cache random gift data
                 local newLabel, newData = GetRandomGiftData(giftee)
+                newData:ApplyOnAutoWrapAdjustments(giftObj)
                 giftObj:SetCachedDataLabel(newLabel)
 
                 dbg.Log("Requesting random gift data; cached new", newLabel)
@@ -703,7 +697,7 @@ if SERVER then
 
             -- Plop back into world
             utils.ExitStasis(giftEnt, spawnPos)
-            giftData:ApplyPostUnwrapAdjustments(giftEnt, gifteePly)
+            giftData:ApplyPostUnwrapAdjustments(giftEnt, gifteePly, giftObj)
 
         else -- for particle position later
             spawnPos = gifteePly:GetShootPos()
@@ -757,7 +751,7 @@ if SERVER then
         else
             net.Start(GIFTWRAP_HL_CHAT_MSG)
             net.WriteString("You were meant to unwrap ")
-            net.WriteString(giftDesc .. " (" .. giftData:GetName() ..")")
+            net.WriteString(giftDesc .. " (" .. giftData.name ..")")
             net.WriteString(", but it couldn't be spawned.")
             net.Send(gifteePly)
             return
@@ -812,20 +806,10 @@ if SERVER then
 
     function SWEP:MakePropCopy(notRetrievable)
         if not self:HasGift(storedGift) then return nil end
-
-        -- note: yeah, you could technically save from having to do that
-        --       by having the prop hold a reference to the SWEP and not deleting it
-        --       but it's messy either way and this works!
         local giftProp = ents.Create(PROP_CLASS_NAME)
-        giftProp:SetIsRandomGift(self:GetIsRandomGift())
-        giftProp:SetWrapperSID(self:GetWrapperSID())
-        giftProp:SetStoredGift(self:GetStoredGift())
-        giftProp:SetCachedDataLabel(self:GetCachedDataLabel())
+
+        utils.TransferNetVars(self, giftProp)
         giftProp:SetNotRetrievable(notRetrievable)
-        giftProp:SetGiftBoxColor(self:GetGiftBoxColor())
-        giftProp:SetGiftRibbonColor(self:GetGiftRibbonColor())
-        giftProp:SetUnwrapNote(self:GetUnwrapNote())
-        giftProp:SetGiftee(self:GetGiftee())
 
         return giftProp
     end
@@ -861,7 +845,7 @@ if SERVER then
 
             local newLabel, newData = GetEntGiftData(ent)
             self:SetCachedDataLabel(newLabel)
-            newData:ApplyOnWrapAdjustments(ent)
+            newData:ApplyOnWrapAdjustments(ent, self)
 
             net.Start(GIFTWRAP_GIFT_DATA_MSG)
             net.WriteString(newLabel)
@@ -888,6 +872,7 @@ if SERVER then
         self:SetCachedDataLabel(label)
         self:SetWrapperSID(owner:SteamID64())
         self:SetIsRandomGift(true)
+        data:ApplyOnAutoWrapAdjustments(self)
 
         -- Note: I have no clue why I need to do this for the colors
         --       to update properly and I hate it (TODO clean up?)

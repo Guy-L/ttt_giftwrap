@@ -159,7 +159,9 @@ function CreateStatusTable(parent, statusTable)
     end
 end
 
-function CreateCurrentContentsBox(storedEnt, giftData, parent)
+function CreateCurrentContentsBox(giftEnt, giftData, parent)
+    local storedEnt = giftEnt:GetStoredGift()
+
     local curContents = vgui.Create("DPanel", parent)
     curContents:SetPaintBackground(true)
     curContents:SetBackgroundColor(curcont_bg)
@@ -212,7 +214,7 @@ function CreateCurrentContentsBox(storedEnt, giftData, parent)
     statusPanel:DockPadding(5, 10, 10, 10)
     statusPanel:SetWide(0)
 
-    local statusTable = giftData and giftData:GetStatusTable(storedEnt) or {}
+    local statusTable = giftData and giftData:GetStatusTable(giftEnt) or {}
     if #statusTable > 0 then
         CreateStatusTable(statusPanel, statusTable)
     end
@@ -226,7 +228,7 @@ function CreateCurrentContentsBox(storedEnt, giftData, parent)
     local name = vgui.Create("DLabel", textPanel)
     name:Dock(TOP)
     name:SetFont("DermaLarge")
-    name:SetText(giftData and giftData:GetName() or "Nothing yet")
+    name:SetText(giftData and giftData.name or "Nothing yet")
     name:SetTall(30)
 
     if giftData and giftData.placeholderEquip then
@@ -254,7 +256,7 @@ function CreateCurrentContentsBox(storedEnt, giftData, parent)
             AttributeLine(textPanel, "sounds", giftData.attrib_sound and giftData.attrib_sound.desc or nil, "It doesn't make a distinct sound")
             AttributeLine(textPanel, "smells", giftData.attrib_smell, "It doesn't smell like anything")
 
-            if storedEnt:GetNWBool("GWStoredOnFire") then --will need to come up with a better system for attribute overrides..
+            if giftEnt:GetIsContentsOnFire() then --will need to come up with a better system for attribute overrides..
                 AttributeLine(textPanel, "feels",  GiftFeel.Hot, nil, color_yellow)
             else
                 AttributeLine(textPanel, "feels",  giftData.attrib_feel, "Just holding it doesn't tell you much")
@@ -323,9 +325,8 @@ function CLGAMEMODESUBMENU:Populate(parent)
 
     -----------------------------------------------
     -- Current Contents ---------------------------
-    local giftEnt  = gwRef:GetStoredGift()
     local giftData = GetGiftDataFromLabel(gwRef:GetCachedDataLabel())
-    CreateCurrentContentsBox(giftEnt, giftData, parent)
+    CreateCurrentContentsBox(gwRef, giftData, parent)
 
     ------------------------------------------------
     ---- Change Contents ---------------------------

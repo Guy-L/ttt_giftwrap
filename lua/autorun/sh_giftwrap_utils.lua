@@ -364,11 +364,6 @@ if SERVER then
             phys:EnableMotion(false)
             phys:Sleep()
         end
-
-        if ent:IsOnFire() then
-            ent:Extinguish()
-            ent:SetNWBool("GWStoredOnFire", true)
-        end
     end
 
     function GW_Utils.ExitStasis(ent, pos)
@@ -382,11 +377,55 @@ if SERVER then
             phys:EnableMotion(true)
             phys:Wake()
         end
+    end
+end
 
-        if ent:GetNWBool("GWStoredOnFire") then
-            ent:Ignite(60, 100)
-            ent:SetNWBool("GWStoredOnFire", true)
+function GW_Utils.GetWrapper(giftEnt)
+    if not IsValid(giftEnt) then return nil end
+    return player.GetBySteamID64(giftEnt:GetWrapperSID())
+end
+
+GW_Utils.sharedNetTable = {
+    { type = "Bool",   name = "IsRandomGift" },
+    { type = "Bool",   name = "IsContentsOnFire" },
+    { type = "Int",    name = "GiftBoxColor" },
+    { type = "Int",    name = "GiftRibbonColor" },
+    { type = "String", name = "WrapperSID" },
+    { type = "String", name = "CachedDataLabel" },
+    { type = "String", name = "UnwrapNote" },
+    { type = "Entity", name = "StoredGift" },
+    { type = "Entity", name = "Giftee" },
+}
+
+-- must be called in SetupDataTables
+function GW_Utils.SetupSharedTable(giftEnt)
+    local boolCnt, intCnt, stringCnt, entCnt = 0, 0, 0, 0
+
+    for _, var in ipairs(GW_Utils.sharedNetTable) do
+        if var.type == "Bool" then
+            giftEnt:NetworkVar(var.type, boolCnt, var.name)
+            boolCnt = boolCnt + 1
+
+        elseif var.type == "Int" then
+            giftEnt:NetworkVar(var.type, intCnt, var.name)
+            intCnt = intCnt + 1
+
+        elseif var.type == "String" then
+            giftEnt:NetworkVar(var.type, stringCnt, var.name)
+            stringCnt = stringCnt + 1
+
+        elseif var.type == "Entity" then
+            giftEnt:NetworkVar(var.type, entCnt, var.name)
+            entCnt = entCnt + 1
         end
+    end
+
+    return boolCnt, intCnt, stringCnt, entCnt
+end
+
+function GW_Utils.TransferNetVars(fromGift, toGift)
+    for _, var in ipairs(GW_Utils.sharedNetTable) do
+        toGift["Set"..var.name](toGift, fromGift["Get"..var.name](fromGift))
     end
 end
 

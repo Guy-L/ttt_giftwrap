@@ -192,19 +192,9 @@ function ENT:RefreshPhysics()
 end
 
 function ENT:SetupDataTables()
-    self:NetworkVar("Int", 0, "DescriptionLine")
-    self:NetworkVar("Int", 1, "GiftBoxColor")
-    self:NetworkVar("Int", 2, "GiftRibbonColor")
-
-    self:NetworkVar("Bool", 0, "NotRetrievable")
-    self:NetworkVar("Bool", 1, "IsRandomGift")
-
-    self:NetworkVar("String", 0, "WrapperSID")
-    self:NetworkVar("String", 1, "CachedDataLabel")
-    self:NetworkVar("String", 2, "UnwrapNote")
-
-    self:NetworkVar("Entity", 0, "StoredGift")
-    self:NetworkVar("Entity", 1, "Giftee")
+    local boolCnt, intCnt, stringCnt, entCnt = utils.SetupSharedTable(self)
+    self:NetworkVar("Bool", boolCnt, "NotRetrievable")
+    self:NetworkVar("Int", intCnt, "DescriptionLine")
 end
 
 
@@ -300,15 +290,8 @@ if SERVER then
         local newGift = ents.Create(SWEP_CLASS_NAME)
 
         if IsValid(newGift) then
+            utils.TransferNetVars(self, newGift)
             newGift:SetClip1(-1)
-            newGift:SetIsRandomGift(self:GetIsRandomGift())
-            newGift:SetWrapperSID(self:GetWrapperSID())
-            newGift:SetStoredGift(self:GetStoredGift())
-            newGift:SetCachedDataLabel(self:GetCachedDataLabel())
-            newGift:SetGiftBoxColor(self:GetGiftBoxColor())
-            newGift:SetGiftRibbonColor(self:GetGiftRibbonColor())
-            newGift:SetUnwrapNote(self:GetUnwrapNote())
-            newGift:SetGiftee(self:GetGiftee())
 
             activator:PickupWeapon(newGift)
             activator:SelectWeapon(SWEP_CLASS_NAME)
