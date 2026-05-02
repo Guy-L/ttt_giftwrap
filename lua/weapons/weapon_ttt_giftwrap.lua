@@ -83,9 +83,8 @@ if SERVER then
             "; second gift chance:", GW_secondGiftChance, "; third gift chance:", GW_thirdGiftChance)
     end)
 
-    function GetWrapConstraint(ent)
+    function GetWrapConstraint(ent, wrapper)
         if not IsValid(ent) then return "Invalid object." end
-        if ent:IsWeapon() then return nil end
         if ent.Base == "base_ammo_ttt" then return nil end
         if ent.GetExplodeTime then return nil end
 
@@ -94,6 +93,17 @@ if SERVER then
 
         -- TODO: Remove temp and implement properly (player ragdolls + seekgulls, other things)
         if class == "prop_ragdoll" then return "Haven't figured out how to allow this yet!" end
+
+        -- weapon that's in an inventory check
+        if ent:IsWeapon() then
+            local entOwner = ent:GetOwner()
+
+            if entOwner:IsPlayer() then
+                return "Can't wrap; it already entered "..(entOwner == wrapper and "your" or "someone's").." inventory."
+            else
+                return nil
+            end
+        end
 
         local override_classes = {
             "ttt_chicken",
@@ -437,8 +447,7 @@ function SWEP:PrimaryAttack()
         local hitEnt = tr.Entity
         dbg.Log("GiftWrap Primary hit entity:", hitEnt)
 
-        if tr.HitNonWorld and IsValid(hitEnt) 
-          and owner:GetShootPos():Distance(tr.HitPos) <= 150 then
+        if tr.HitNonWorld and IsValid(hitEnt) and owner:GetShootPos():Distance(tr.HitPos) <= 150 then
             self:SendWeaponAnim(ACT_VM_HITCENTER)
             self:EmitSound(sounds["wrapping"], 75, math.random(90, 110))
 
@@ -833,7 +842,7 @@ if SERVER then
         local owner = self:GetOwner()
         if not IsValid(owner) then return end
 
-        local wrapCheckRet = GetWrapConstraint(ent)
+        local wrapCheckRet = GetWrapConstraint(ent, owner)
 
         if wrapCheckRet then
             owner:ChatPrint(wrapCheckRet)
