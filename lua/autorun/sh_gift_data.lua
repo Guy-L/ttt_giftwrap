@@ -132,6 +132,7 @@ GiftFeel = {
     Sturdy        = "sturdy",
     Formless      = "formless", -- pretty much unused (though not a good item descriptor)
     Round         = "round",
+    Box           = "boxy", -- new, underused
     Squishy       = "squishy",
     Alive         = "agitated",
     Moving        = "like it's moving", -- underused (3)
@@ -213,8 +214,7 @@ local giftDataCatalog = {
     dead_bunger = GiftData.New {
         name     = "Dead Bunger",         desc       = "a friendly Bunger",
         category = GiftCategory.PhysProp, identifier = "models/betterbunger.mdl",
-        can_be_random_gift = true,
-        factor_rarity = 1, factor_quality = 2,
+        can_be_random_gift = false,
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Squishy,
     },
@@ -1895,8 +1895,24 @@ for label, data in pairs(perks) do
     })
 end
 
+-- to populate the list with ammo boxes
+local ammoBoxes = {
+    ammo_357      = {name="Rifle"},
+    ammo_pistol   = {name="Pistol", size = GiftSize.Large},
+    ammo_revolver = {name="Deagle"},
+    ammo_smg1     = {name="SMG",    size = GiftSize.Larger},
+    box_buckshot  = {name="Shotgun"},
+}
 
-
+for label, data in pairs(ammoBoxes) do
+    UpdateCatalog(label, GiftData.New {
+        name     = data.name.." Ammo", desc       = "an ammo box",
+        category = GiftCategory.Ammo,  identifier = "item_"..label.."_ttt",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic,  attrib_size = data.size or GiftSize.Normal,
+        attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Box
+    })
+end
 
 ---------------------------------------------------------------------
 ---------------------------------------------------------------------
