@@ -11,6 +11,9 @@ local curcont_bg = Color(90, 90, 95, 255)
 local curcont_graytext = Color(150, 150, 150)
 local curcont_pad = 20
 
+local color_white = Color(255, 255, 255)
+local color_yellow = Color(255, 255, 150)
+
 local queuedSpawnIcons = {}
 local lastRequestingImg = nil
 
@@ -250,12 +253,18 @@ function CreateCurrentContentsBox(storedEnt, giftData, parent)
         if giftData then
             AttributeLine(textPanel, "sounds", giftData.attrib_sound and giftData.attrib_sound.desc or nil, "It doesn't make a distinct sound")
             AttributeLine(textPanel, "smells", giftData.attrib_smell, "It doesn't smell like anything")
-            AttributeLine(textPanel, "feels",  giftData.attrib_feel, "Just holding it doesn't tell you much")
+
+            if storedEnt:GetNWBool("GWStoredOnFire") then --will need to come up with a better system for attribute overrides..
+                AttributeLine(textPanel, "feels",  GiftFeel.Hot, nil, color_yellow)
+            else
+                AttributeLine(textPanel, "feels",  giftData.attrib_feel, "Just holding it doesn't tell you much")
+            end
         end
     end
 end
 
-function FancyLine(parent, leftGrayText, whiteText, rightGrayText)
+function FancyLine(parent, leftGrayText, whiteText, rightGrayText, highlightColor)
+    if not highlightColor then highlightColor = color_white end
     local line = vgui.Create("DPanel", parent)
     line:Dock(TOP)
 
@@ -269,7 +278,7 @@ function FancyLine(parent, leftGrayText, whiteText, rightGrayText)
         local whitePart = vgui.Create("DLabel", line)
         whitePart:Dock(LEFT)
         whitePart:SetText(whiteText)
-        whitePart:SetTextColor(color_white)
+        whitePart:SetTextColor(highlightColor)
         whitePart:SizeToContents()
     end
 
@@ -285,13 +294,13 @@ function FancyLine(parent, leftGrayText, whiteText, rightGrayText)
     return line
 end
 
-function AttributeLine(parent, verb, value, placeholder)
+function AttributeLine(parent, verb, value, placeholder, highlightColor)
     local attrLine
 
     if value then
-        attrLine = FancyLine(parent, "→ It "..verb.." ", value, "...")
+        attrLine = FancyLine(parent, "→ It "..verb.." ", value, "...", highlightColor)
     else
-        attrLine = FancyLine(parent, "→ "..placeholder.."...")
+        attrLine = FancyLine(parent, "→ "..placeholder.."...", highlightColor)
     end
 
     attrLine:SizeToContentsY()

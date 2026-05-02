@@ -2,6 +2,7 @@ include("sh_giftwrap_utils.lua")
 local utils = GW_Utils
 local dbg   = GW_DBG
 
+local HOOK_GIFTWRAP_TRANSMIT = "TTT_GiftWrapCL_ReRenderGift"
 GIFTWRAP_UPDATE_COLOR_MSG = "TTT_GiftWrapCL_UpdateColorMsg"
 GIFTWRAP_REROLL_COLOR_MSG = "TTT_GiftWrapCL_RerollColorMsg"
 GIFTWRAP_SYNC_COLORS_MSG  = "TTT_GiftWrapSV_UpdateColorMixers"
@@ -75,6 +76,13 @@ if CLIENT then
         ent:SetSubMaterial(0, "")
         ent:SetSubMaterial(1, "")
     end
+
+    -- gift leaving PVS makes it lose its materials, so we re-sync
+    hook.Add("NotifyShouldTransmit", HOOK_GIFTWRAP_TRANSMIT, function(ent, shouldTransmit)
+        if ent:GetClass() == PROP_CLASS_NAME and ent.GetGiftBoxColor and shouldTransmit then
+            SyncGiftColors(ent)
+        end
+    end)
 
 
 elseif SERVER then

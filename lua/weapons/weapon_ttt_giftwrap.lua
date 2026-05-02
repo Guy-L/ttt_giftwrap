@@ -133,6 +133,7 @@ if SERVER then
             "ttt_thrownflashbang",
             "ent_fortnitestructure", -- blocked later (affixed)
             --"ent_ttt_fan", -- TODO: bugged (wind remains), need ownership check
+            --"ttt_flame", --TODO: bugged
             --"sent_greendemon_box", --TODO: bugged (ui remains), needs ownership check, possible balance issue
             --"sent_greendemon", --TODO: bugged
             "ttt_hat_deerstalker",
