@@ -25,6 +25,9 @@ ENT.Model = GIFT_PROPMODEL --purely for Contents menu rendering
 local sounds = {
     bells1 = Sound("giftwrap/tf2_nm_bells1.wav"),
     bells2 = Sound("giftwrap/tf2_nm_bells2.wav"),
+    bounce1 = Sound("physics/metal/paintcan_impact_soft1.wav"),
+    bounce2 = Sound("physics/metal/paintcan_impact_soft2.wav"),
+    bounce3 = Sound("physics/metal/paintcan_impact_soft3.wav"),
 }
 
 -- note: due to lazy design, all of these arrays must be of equal length
@@ -87,6 +90,7 @@ function ENT:Initialize()
         self.LastUprightCheck = CurTime()
         self.UprightCheckFreq = 2
         self:UpdateScale(scale)
+        self._LastBounce = 0
 
         self:SetDescriptionLine(math.random(#normalDescriptionLines))
 
@@ -218,41 +222,101 @@ if SERVER then
         end
     end
 
-    function ENT:Think() -- readjust angle if fallen on its side
+    function ENT:HandleClipbrushCollision(curTime) -- (inspired by corv's Teleport Grenade code)
+        local vel     = self:GetVelocity()
+        local curPos  = self:GetPos()
+        self._LastPos = self._LastPos or curPos
+
+        local filter = { self }
+        for _, ply in ipairs(player.GetAll()) do
+            table.insert(filter, ply)
+        end
+
+        local tr = util.TraceHull({
+            start       = self._LastPos,
+            endpos      = curPos,
+            mask        = MASK_PLAYERSOLID,
+            ignoreworld = false,
+            filter      = filter
+        })
+
+        --debugoverlay.Line(self._LastPos, curPos, 3, Color(255,0,0), true)
+        --if tr.Hit then print(tr.Hit, tr.Entity) end
+
+        if tr.Hit and tr.HitPos and not tr.StartSolid and not tr.AllSolid
+          and vel:Dot(tr.HitNormal) < 0 and curTime >= self._LastBounce + 0.1 then
+            local speed = vel:Length()
+            local phys = self:GetPhysicsObject()
+
+            local incoming = tr.HitPos - self._LastPos
+            incoming:Normalize()
+
+            self:SetPos(tr.HitPos + incoming)
+            phys:SetVelocity(incoming * speed * -1)
+
+            -- un-magneto prop
+            if phys:HasGameFlag(FVPHYSICS_PLAYER_HELD) then
+                for _, magneto in ipairs(ents.FindByClass("weapon_zm_carry")) do
+                    if magneto:GetCarryTarget() == self then
+                        magneto:Drop()
+                        timer.Simple(0, function() phys:SetVelocity(incoming * speed * -1) end)
+                        break
+                    end
+                end
+            end
+
+            local bounceVol   = math.max(0.1, speed/720)
+            local bouncePitch = math.max(30, -12*self:GetGiftScale() + 130)
+
+            dbg.Log("Playing bounce sound w/ vol "..bounceVol.."% (speed: "..speed..") & pitch "..bouncePitch.."% (scale: "..self:GetGiftScale()..")")
+            self:EmitSound(sounds["bounce"..math.random(3)], 75, bouncePitch, bounceVol)
+            self._LastBounce = curTime
+        end
+
+        self._LastPos = curPos
+    end
+
+    function ENT:UprightCheck() -- Readjust angle if fallen on its side
+        local phys = self:GetPhysicsObject()
+        if not IsValid(phys) then return end
+        if phys:HasGameFlag(FVPHYSICS_PLAYER_HELD) then return end
+
+        local vel = phys:GetVelocity()
+        if not vel then return end
+
+        if vel:Length() < 0.1 then
+            local startPos = self:GetPos()
+            local tr = util.TraceLine({
+                start = startPos,
+                endpos = startPos - Vector(0, 0, 100),
+                filter = self
+            })
+            if not tr.Hit then return end
+            local dot = self:GetUp():Dot(tr.HitNormal)
+
+            if dot < 0.9 then
+                local ang = tr.HitNormal:Angle()
+                ang:RotateAroundAxis(ang:Right(), -90)
+                self:SetAngles(ang)
+
+                local mins, maxs = self:GetModelBounds()
+                local height = math.abs(maxs.z - mins.z) * self:GetGiftScale()
+
+                self:SetPos(self:GetPos() + Vector(0, 0, height))
+                self:RefreshPhysics()
+            end
+        end
+    end
+
+    function ENT:Think()
         local curTime = CurTime()
 
         if curTime >= self.LastUprightCheck + self.UprightCheckFreq then
             self.LastUprightCheck = curTime
-
-            local phys = self:GetPhysicsObject()
-            if not IsValid(phys) then return end
-
-            local vel = phys:GetVelocity()
-            if not vel then return end
-
-            if vel:Length() < 0.1 then
-                local startPos = self:GetPos()
-                local tr = util.TraceLine({
-                    start = startPos,
-                    endpos = startPos - Vector(0, 0, 100),
-                    filter = self
-                })
-                if not tr.Hit then return end
-                local dot = self:GetUp():Dot(tr.HitNormal)
-
-                if dot < 0.9 then
-                    local ang = tr.HitNormal:Angle()
-                    ang:RotateAroundAxis(ang:Right(), -90)
-                    self:SetAngles(ang)
-
-                    local mins, maxs = self:GetModelBounds()
-                    local height = math.abs(maxs.z - mins.z) * self:GetGiftScale()
-
-                    self:SetPos(self:GetPos() + Vector(0, 0, height))
-                    self:RefreshPhysics()
-                end
-            end
+            self:UprightCheck()
         end
+
+        self:HandleClipbrushCollision(curTime)
     end
 
     function notifyHasGiftee(ply, giftee)
@@ -433,7 +497,6 @@ if SERVER then
     hook.Add("TTTBeginRound", HOOK_ROUND_START_TIME, function()
         utils.RoundStartTime = CurTime()
     end)
-
 
 
 

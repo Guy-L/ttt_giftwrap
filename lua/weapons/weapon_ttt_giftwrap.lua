@@ -579,7 +579,10 @@ function SWEP:Throw(owner, force)
         local giftData = GetCachedGiftData(self, owner)
         local giftProp = self:MakePropCopy(false)
         if not IsValid(giftProp) then return end
-        giftProp:SetPos(owner:GetShootPos())
+
+        local spawnPos = owner:GetShootPos()
+        giftProp._LastPos = spawnPos
+        giftProp:SetPos(spawnPos)
         giftProp:Spawn()
 
         local phys = giftProp:GetPhysicsObject()
