@@ -364,6 +364,13 @@ if SERVER then
             phys:EnableMotion(false)
             phys:Sleep()
         end
+
+        -- hide connected map ropes so stasis pos doesn't show
+        -- (other types may still be broken, will fix as I find them)
+        for _, rope in ipairs(GW_Utils.FindConnectedRopes(ent)) do
+            rope._storedWidth = rope:GetKeyValues()["Width"]
+            rope:SetKeyValue("Width", "0")
+        end
     end
 
     function GW_Utils.ExitStasis(ent, pos)
@@ -377,6 +384,41 @@ if SERVER then
             phys:EnableMotion(true)
             phys:Wake()
         end
+
+        for _, rope in ipairs(GW_Utils.FindConnectedRopes(ent)) do
+            if rope._storedWidth then
+                rope:SetKeyValue("Width", tostring(rope._storedWidth))
+            end
+        end
+    end
+
+    function GW_Utils.FindConnectedRopes(ent)
+        local ropes = {}
+
+        local worldRopes = {}
+        for _, e in ipairs(ents.GetAll()) do
+            local c = e:GetClass()
+
+            if c == "keyframe_rope" or c == "move_rope" then
+                table.insert(worldRopes, e) -- equivalent types as per the source docs
+            end
+        end
+
+        -- there's probably a better way to do this...
+        for _, rope in ipairs(worldRopes) do
+            if rope:GetParent() == ent then
+                table.insert(ropes, rope)
+
+                -- find connected endpoint
+                for _, endPt in ipairs(worldRopes) do
+                    if endPt:GetInternalVariable("m_hEndPoint") == rope then
+                        table.insert(ropes, endPt)
+                    end
+                end
+            end
+        end
+
+        return ropes
     end
 end
 

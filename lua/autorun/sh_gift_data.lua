@@ -2743,7 +2743,7 @@ function GetEntGiftData(ent)
     local entIdentifier = ent:GetClass()
     local entModel = ent:GetModel()
 
-    if string.find(entIdentifier, "prop_physics", nil, true) then
+    if string.find(entIdentifier, "prop_physics", nil, true) or entIdentifier == "func_physbox" then
         entIdentifier = entModel
     end
 
