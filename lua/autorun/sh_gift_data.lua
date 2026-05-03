@@ -26,15 +26,16 @@ local SCORE_PARA_MAX  = 30
 local SCORE_INTERCEPT = -5
 
 GiftCategory = {
-    PhysProp      = {id=1, text="Prop",           icon="vgui/ttt/menu/icon_box",      weight=PROP_WEIGHT_NAME},
-    SENT          = {id=2, text="Special Entity", icon="vgui/ttt/menu/icon_sparkles", weight=SPECIAL_WEIGHT_NAME},
-    NPC           = {id=3, text="NPC",            icon="vgui/ttt/menu/icon_headcrab", weight=SPECIAL_WEIGHT_NAME},
-    FloorSWEP     = {id=4, text="Floor Weapon",   icon="vgui/ttt/menu/icon_gun",      weight=FLOOR_WEIGHT_NAME},
-    WorldSWEP     = {id=5, text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME},
-    AutoEquipSWEP = {id=6, text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME},
-    Item          = {id=7, text="Shop Item",      icon="vgui/ttt/menu/icon_bottle",   weight=SHOP_WEIGHT_NAME},
-    Ammo          = {id=8, text="Ammo Box",       icon="vgui/ttt/menu/icon_ammo",     weight=FLOOR_WEIGHT_NAME},
-    Unknown       = {id=9, text="Unknown",        icon="vgui/ttt/menu/icon_question", weight=SPECIAL_WEIGHT_NAME},
+    PhysProp      = {id=1,  text="Prop",           icon="vgui/ttt/menu/icon_box",      weight=PROP_WEIGHT_NAME},
+    SENT          = {id=2,  text="Special Entity", icon="vgui/ttt/menu/icon_sparkles", weight=SPECIAL_WEIGHT_NAME},
+    NPC           = {id=3,  text="NPC",            icon="vgui/ttt/menu/icon_headcrab", weight=SPECIAL_WEIGHT_NAME},
+    FloorSWEP     = {id=4,  text="Floor Weapon",   icon="vgui/ttt/menu/icon_gun",      weight=FLOOR_WEIGHT_NAME},
+    WorldSWEP     = {id=5,  text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME},
+    AutoEquipSWEP = {id=6,  text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME},
+    Item          = {id=7,  text="Shop Item",      icon="vgui/ttt/menu/icon_bottle",   weight=SHOP_WEIGHT_NAME},
+    Ammo          = {id=8,  text="Ammo Box",       icon="vgui/ttt/menu/icon_ammo",     weight=FLOOR_WEIGHT_NAME},
+    Vehicle       = {id=9,  text="Vehicle",        icon="vgui/ttt/menu/icon_car",      weight=SPECIAL_WEIGHT_NAME},
+    Unknown       = {id=10, text="Unknown",        icon="vgui/ttt/menu/icon_question", weight=SPECIAL_WEIGHT_NAME},
 }
 
 GiftSound = {
@@ -2781,6 +2782,9 @@ function GetEntGiftData(ent)
     elseif scripted_ents.GetStored(entIdentifier) then
         placeholderData.category = GiftCategory.SENT
 
+    elseif ent:IsVehicle() then
+        placeholderData.category = GiftCategory.Vehicle
+
     else
         placeholderData.category = GiftCategory.Unknown
     end
@@ -2804,8 +2808,8 @@ function GetEntGiftData(ent)
         placeholderData.desc = "a " .. name
 
     else
-        placeholderData.name = name
-        placeholderData.desc = "a " .. name
+        placeholderData.name = name:gsub("^%l", string.upper)
+        placeholderData.desc = "a " .. placeholderData.name
     end
 
     -- Set sound/smell/feel from material

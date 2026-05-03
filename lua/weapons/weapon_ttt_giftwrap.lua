@@ -193,7 +193,7 @@ if SERVER then
         end
 
         -- weight check
-        if phys:GetMass() > 600 then
+        if phys:GetMass() > 700 then
             dbg.Log("Tried wrapping "..class.." with mass "..phys:GetMass())
             return "It's too heavy, and you don't have enough wrapping paper."
         end
@@ -697,7 +697,8 @@ if SERVER then
 
                 local hitPos = tr.HitPos
                 if gifteePly:EyePos():Distance(hitPos) > 80 then --clamp
-                    hitPos = gifteePly:EyePos() + gifteePly:GetAimVector() * 80
+                    local scaleFactor = (giftData.attrib_size-3 or 0) * 12
+                    hitPos = gifteePly:EyePos() + gifteePly:GetAimVector() * (80 + scaleFactor)
                 end
 
                 -- Maximum extent along the hit normal (how far it sticks out in that direction)
@@ -845,6 +846,10 @@ if SERVER then
         dbg.Log("Wrap attempt on:", ent)
         local owner = self:GetOwner()
         if not IsValid(owner) then return end
+
+         -- check one layer up the parenting chain (useful for vehicles)
+        local moveParent = ent:GetMoveParent()
+        if IsValid(moveParent) then ent = moveParent end
 
         local wrapCheckRet = GetWrapConstraint(ent, owner)
 
