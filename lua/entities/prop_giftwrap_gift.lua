@@ -110,8 +110,8 @@ function ENT:Initialize()
     elseif CLIENT then
         self:UpdateScale()
         SyncGiftColors(self)
-        self.LastGifteeJingleCheck = CurTime() + math.random(1, 10)
         self.GifteeJingleCheckFreq = 20
+        self.LastGifteeJingleCheck = CurTime() - (self.GifteeJingleCheckFreq - math.random(3, 5))
 
         self._spawning = true -- bs to make sync work on real servers
         timer.Simple(1, function() self._spawning = false end)
@@ -519,7 +519,7 @@ elseif CLIENT then
             self.LastGifteeJingleCheck = curTime + math.random(-5, 3)
 
             local ply = LocalPlayer()
-            if ply == self:GetGiftee() then
+            if ply == self:GetGiftee() and ply:Alive() then
                 LANG.ShowStyledMsg("Someone left you a present!", LANG.GetStyle(nil, MSG_MSTACK_PLAIN))
                 local bellSFX = math.random() < 0.33 and "bells1" or "bells2"
                 self:EmitSound(sounds[bellSFX], SNDLVL_180dB, math.random(95, 105), 100)

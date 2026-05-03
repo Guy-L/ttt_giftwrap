@@ -67,7 +67,7 @@ GiftSound = {
 }
 
 GiftSize = {
-    Mini     = 0.5,
+    Mini     = 0.6,
     Small    = 0.8,
     Normal   = 1,
     Large    = 1.5,
