@@ -155,6 +155,7 @@ if SERVER then
             "ttt_knife_proj",
             "item_lethal_company_landmine", -- blocked later (affixed)
             "matryoshka", -- blocked later (affixed) (breaching charge)
+            "npc_metropolice", -- wraps SuperCop, should be PaP only
             "ttt_minecraft_arrow", -- TODO: bugged, can't be selected
             "sent_molotov_timed",
             "sent_molotov",
@@ -851,7 +852,7 @@ if SERVER then
             owner:ChatPrint(wrapCheckRet)
 
         else
-            utils.EnterStasis(ent)
+            utils.EnterStasis(self, ent)
             self:SetWrapperSID(owner:SteamID64())
             self:SetStoredGift(ent)
 

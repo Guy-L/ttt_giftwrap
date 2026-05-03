@@ -311,6 +311,12 @@ if SERVER then
     function ENT:Think()
         local curTime = CurTime()
 
+        -- prevent updates from gifts currently wrapped in other gifts
+        if IsValid(self:GetNWEntity("WrappedByGift")) then
+            self._LastPos = nil
+            return
+        end
+
         if curTime >= self.LastUprightCheck + self.UprightCheckFreq then
             self.LastUprightCheck = curTime
             self:UprightCheck()

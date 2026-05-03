@@ -140,6 +140,26 @@ function GW_DBG.AllowDebugMenu()
     return GW_DBG.Cvar:GetBool() or GetGlobalBool("ttt2_deathmatch_active", false)
 end
 
+function GW_DBG.GoToGift(i) -- meant for local testing
+    local gifts = ents.FindByClass(PROP_CLASS_NAME)
+    PrintTable(gifts)
+
+    if i ~= nil then
+        player.GetAll()[1]:SetPos(gifts[i]:GetPos())
+    end
+end
+
+function GW_DBG.NearbyEnts(radius, pattern, showTable) -- meant for local testing
+    for _, ent in ipairs(ents.FindInSphere(player.GetAll()[1]:GetPos(), radius)) do
+        local class = ent:GetClass()
+
+        if not pattern or string.find(class, pattern, nil, true) then
+            print(ent, class, ent:GetPos())
+            if showTable then PrintTable(ent:GetSaveTable(true)) end
+        end
+    end
+end
+
 -----------------------------------------------------
 --------------------- Utils -------------------------
 -----------------------------------------------------
@@ -352,9 +372,13 @@ function GW_Utils.ConfirmedDead(ply, other)
 end
 
 if SERVER then
-    function GW_Utils.EnterStasis(ent)
+    function GW_Utils.EnterStasis(giftObj, ent)
         ent:SetNoDraw(true)
         ent:SetNotSolid(true)
+
+        ent:SetNWEntity("WrappedByGift", giftObj)
+        ent._GWStoredColGroup = ent:GetCollisionGroup()
+        ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 
         local minPos, maxPos = game.GetWorld():GetCollisionBounds()
         ent:SetPos(maxPos)
@@ -363,6 +387,7 @@ if SERVER then
         if IsValid(phys) then
             phys:EnableMotion(false)
             phys:Sleep()
+            phys:SetPos(maxPos)
         end
 
         -- hide connected map ropes so stasis pos doesn't show
@@ -374,15 +399,25 @@ if SERVER then
     end
 
     function GW_Utils.ExitStasis(ent, pos)
+        ent:SetPos(pos)
         ent:SetNoDraw(false)
         ent:SetNotSolid(false)
-        ent:SetPos(pos)
 
-        ent:PhysWake()
+        ent:SetNWEntity("WrappedByGift", nil)
+        ent:SetCollisionGroup(ent._GWStoredColGroup)
+
         local phys = ent:GetPhysicsObject()
         if IsValid(phys) then
-            phys:EnableMotion(true)
-            phys:Wake()
+            phys:SetPos(pos)
+
+            -- give things with move children a few extra ticks to propagate their new position
+            -- before restarting physics (otherwise things like vehicles go flying off randomly)
+            timer.Simple(#ent:GetChildren() > 0 and 0.25 or 0, function()
+                if IsValid(phys) then
+                    phys:EnableMotion(true)
+                    phys:Wake()
+                end
+            end)
         end
 
         for _, rope in ipairs(GW_Utils.FindConnectedRopes(ent)) do
@@ -468,6 +503,11 @@ end
 function GW_Utils.TransferNetVars(fromGift, toGift)
     for _, var in ipairs(GW_Utils.sharedNetTable) do
         toGift["Set"..var.name](toGift, fromGift["Get"..var.name](fromGift))
+    end
+
+    local wrappedEnt = fromGift:GetStoredGift()
+    if IsValid(wrappedEnt) then
+        wrappedEnt:SetNWEntity("WrappedByGift", toGift)
     end
 end
 
