@@ -154,10 +154,30 @@ function GW_DBG.NearbyEnts(radius, pattern, showTable) -- meant for local testin
         local class = ent:GetClass()
 
         if not pattern or string.find(class, pattern, nil, true) then
-            print(ent, class, ent:GetPos())
+            print(ent, class, ent:GetPos(), ent:GetModel())
             if showTable then PrintTable(ent:GetSaveTable(true)) end
         end
     end
+end
+
+function GW_DBG.InspectDamage(target, dmgInfo)
+    GW_DBG.Log(target, dmgInfo)
+    GW_DBG.Log("=> AmmoType", dmgInfo:GetAmmoType())
+    GW_DBG.Log("=> Attacker", dmgInfo:GetAttacker())
+    GW_DBG.Log("=> BaseDamage", dmgInfo:GetBaseDamage())
+    GW_DBG.Log("=> Damage", dmgInfo:GetDamage())
+    GW_DBG.Log("=> DamageBonus", dmgInfo:GetDamageBonus())
+    GW_DBG.Log("=> DamageCustom", dmgInfo:GetDamageCustom())
+    GW_DBG.Log("=> DamageForce", dmgInfo:GetDamageForce())
+    GW_DBG.Log("=> DamagePosition", dmgInfo:GetDamagePosition())
+    GW_DBG.Log("=> DamageType", dmgInfo:GetDamageType())
+    GW_DBG.Log("=> Inflictor", dmgInfo:GetInflictor())
+    GW_DBG.Log("=> MaxDamage", dmgInfo:GetMaxDamage())
+    GW_DBG.Log("=> ReportedPosition", dmgInfo:GetReportedPosition())
+    GW_DBG.Log("=> Weapon", dmgInfo:GetWeapon())
+    GW_DBG.Log("=> IsBulletDamage", dmgInfo:IsBulletDamage())
+    GW_DBG.Log("=> IsExplosionDamage", dmgInfo:IsExplosionDamage())
+    GW_DBG.Log("=> IsFallDamage", dmgInfo:IsFallDamage())
 end
 
 -----------------------------------------------------
@@ -398,13 +418,15 @@ if SERVER then
         end
     end
 
-    function GW_Utils.ExitStasis(ent, pos)
+    function GW_Utils.ExitStasis(ent, pos, stabilize)
         ent:SetPos(pos)
         ent:SetNoDraw(false)
         ent:SetNotSolid(false)
 
         ent:SetNWEntity("WrappedByGift", nil)
-        ent:SetCollisionGroup(ent._GWStoredColGroup)
+        if ent._GWStoredColGroup then
+            ent:SetCollisionGroup(ent._GWStoredColGroup)
+        end
 
         local phys = ent:GetPhysicsObject()
         if IsValid(phys) then
@@ -412,7 +434,7 @@ if SERVER then
 
             -- give things with move children a few extra ticks to propagate their new position
             -- before restarting physics (otherwise things like vehicles go flying off randomly)
-            timer.Simple(#ent:GetChildren() > 0 and 0.25 or 0, function()
+            timer.Simple(stabilize and 0.25 or 0, function()
                 if IsValid(phys) then
                     phys:EnableMotion(true)
                     phys:Wake()

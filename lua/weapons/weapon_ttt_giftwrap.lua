@@ -710,7 +710,8 @@ if SERVER then
             end
 
             -- Plop back into world
-            utils.ExitStasis(giftEnt, spawnPos)
+            local doStabilize = #giftEnt:GetChildren() > 0 or giftData.category == GiftCategory.Vehicle
+            utils.ExitStasis(giftEnt, spawnPos, doStabilize)
             giftData:ApplyPostUnwrapAdjustments(giftEnt, gifteePly, giftObj)
 
         else -- for particle position later

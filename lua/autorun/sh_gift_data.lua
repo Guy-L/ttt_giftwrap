@@ -15,6 +15,7 @@ local SPECIAL_WEIGHT_MULT = CreateConVar(SPECIAL_WEIGHT_NAME, "1", GW_CVAR_FLAGS
 local PLACEHOLDER_DATA_REMOVE    = "GiftWrap_RemoveGiftData"
 local CLUTTERBOMB_LIGHT_FIX_HOOK = "GiftWrap_ClutterbombLightFix"
 local INIT_FIXES_HOOK            = "GiftWrap_InitialFixesSetup"
+local PLAYER_USE_HOOK            = "GiftWrapSV_InternalVehicleSeatFix"
 
 -- cf. excel sheet in addon resources (GitHub)
 local QUALITY_MAX  = 10
@@ -134,6 +135,7 @@ GiftFeel = {
     Formless      = "formless", -- pretty much unused (though not a good item descriptor)
     Round         = "round",
     Box           = "boxy", -- new, underused
+    Fragile       = "fragile", -- new, underused
     Squishy       = "squishy",
     Alive         = "agitated",
     Moving        = "like it's moving", -- underused (3)
@@ -504,6 +506,69 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Glass,  attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Earthy, attrib_feel = GiftFeel.Cursed,
         special_setup = "pog_shard_setup", up_vel = 400, up_min = 0, up_max = 2,
+    },
+
+    ----------------------------------------------------------------------
+    -- Vehicles
+    airboat = GiftData.New {
+        name     = "Airboat",            desc       = "an airboat",
+        category = GiftCategory.Vehicle, identifier = "models/airboat.mdl",
+        entity_class   = "prop_vehicle_airboat",
+        vehicle_script = "scripts/vehicles/airboat.txt",
+        can_be_random_gift = true,
+        factor_rarity = 3, factor_quality = 10,
+        attrib_sound = GiftSound.Revving, attrib_size = GiftSize.Max,
+        attrib_smell = GiftSmell.Rusty,   attrib_feel = GiftFeel.Heavy,
+    },
+    buggy = GiftData.New {
+        name     = "Buggy",              desc       = "a buggy",
+        category = GiftCategory.Vehicle, identifier = "models/buggy.mdl",
+        entity_class   = "prop_vehicle_jeep",
+        vehicle_script = "scripts/vehicles/jeep_test.txt",
+        extra_seats = {
+            { pos = Vector(15, -38, 19), angle = Angle(0, 0, 0), type="jeep" }
+        },
+        can_be_random_gift = true,
+        factor_rarity = 2, factor_quality = 8,
+        attrib_sound = GiftSound.Revving, attrib_size = GiftSize.Max,
+        attrib_smell = GiftSmell.Leather, attrib_feel = GiftFeel.Fragile,
+    },
+    golf_cart = GiftData.New {
+        name     = "Golf Cart",          desc       = "a golf cart",
+        category = GiftCategory.Vehicle, identifier = "models/caddy.mdl",
+        entity_class   = "prop_vehicle_jeep",
+        vehicle_script = "scripts/vehicles/caddy.txt",
+        extra_seats = {
+            { pos = Vector(13, -9, 36), angle = Angle(0, 0, 0), type="jeep" },
+            { pos = Vector(4, -36, 33.6), angle = Angle(0, 180, 0), type="airboat" }
+        },
+        can_be_random_gift = true,
+        factor_rarity = 2, factor_quality = 10,
+        attrib_sound = GiftSound.Revving, attrib_size = GiftSize.Max,
+        attrib_smell = GiftSmell.Rusty,   attrib_feel = GiftFeel.Heavy,
+    },
+
+    ----------------------------------------------------------------------
+    -- Vehicle Seats
+    airboat_seat = GiftData.New {
+        name     = "Airboat Seat",       desc       = "a seat",
+        category = GiftCategory.Vehicle, identifier = "models/nova/airboat_seat.mdl",
+        entity_class   = "prop_vehicle_prisoner_pod",
+        vehicle_script = "scripts/vehicles/prisoner_pod.txt",
+        can_be_random_gift = true,
+        factor_rarity = 1, factor_quality = -2,
+        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Leather, attrib_feel = GiftFeel.Soft,
+    },
+    jeep_seat = GiftData.New {
+        name     = "Jeep Seat",          desc       = "a booster seat",
+        category = GiftCategory.Vehicle, identifier = "models/nova/jeep_seat.mdl",
+        entity_class   = "prop_vehicle_prisoner_pod",
+        vehicle_script = "scripts/vehicles/prisoner_pod.txt",
+        can_be_random_gift = true,
+        factor_rarity = 1, factor_quality = -1,
+        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Leather, attrib_feel = GiftFeel.Soft,
     },
 
     ----------------------------------------------------------------------
@@ -2013,7 +2078,7 @@ function GiftData:IsSpawnable(giftee)
     local category   = self.category
     local identifier = self.identifier
 
-    if category == GiftCategory.PhysProp then
+    if category == GiftCategory.PhysProp or category == GiftCategory.Vehicle then
         return util.IsValidModel(identifier)
 
     elseif category == GiftCategory.SENT or category == GiftCategory.Ammo then
@@ -2040,7 +2105,10 @@ function GiftData:IsSpawnable(giftee)
 end
 
 function GiftData:IsDropBlocked()
-    return self.category == GiftCategory.SENT or self.category == GiftCategory.NPC or self.category == GiftCategory.Unknown
+    return self.category == GiftCategory.SENT
+      or self.category == GiftCategory.NPC
+      --or self.category == GiftCategory.Vehicle
+      or self.category == GiftCategory.Unknown
 end
 
 function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
@@ -2110,6 +2178,27 @@ function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
     if self.set_thrower then
         if wrappedEnt.SetThrower then wrappedEnt:SetThrower(giftee) end
         if wrappedEnt.SetOriginator then wrappedEnt:SetOriginator(giftee) end
+    end
+
+    -- Vehicle stuff
+    if self.vehicle_script then
+        wrappedEnt:SetKeyValue("vehiclescript", self.vehicle_script)
+    end
+
+    if self.extra_seats then
+        wrappedEnt.FixInternalSeats = true
+
+        for _, seatData in ipairs(self.extra_seats) do
+            local seatMeta = giftDataCatalog[seatData.type.."_seat"]
+            local seat = seatMeta:Spawn(giftee)
+
+            seat:SetKeyValue("vehiclescript", seatMeta.vehicle_script)
+            utils.ExitStasis(seat, wrappedEnt:GetPos() + seatData.pos)
+
+            seat:SetParent(wrappedEnt)
+            seat:SetAngles(seatData.angle)
+            --seat:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
+        end
     end
 
     if self.special_setup then
@@ -2233,7 +2322,7 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj)
         end
     end
 
-    if giftObj:GetIsContentsOnFire() then
+    if IsValid(giftObj) and giftObj:GetIsContentsOnFire() then
         wrappedEnt:Ignite(60, 100)
         giftObj:SetIsContentsOnFire(false)
 
@@ -2387,12 +2476,20 @@ function GiftData:Spawn(giftee)
         local category   = self.category
         local identifier = self.identifier
 
-        if category == GiftCategory.PhysProp then -- PhysProp
-            local giftEnt = ents.Create("prop_physics")
+        -- PhysProp / Vehicle
+        if category == GiftCategory.PhysProp or category == GiftCategory.Vehicle then
+            local giftEnt = ents.Create(self.entity_class or "prop_physics")
 
             giftEnt:SetModel(identifier)
             self:ApplyPreSpawnAdjustments(giftEnt, giftee)
             giftEnt:Spawn()
+
+            local phys = giftEnt:GetPhysicsObject()
+            if IsValid(phys) then
+                phys:EnableMotion(false)
+                phys:Sleep()
+            end
+
             return giftEnt
 
         -- SENT / NPC / FloorSWEP / WorldSWEP / Ammo
@@ -2619,7 +2716,7 @@ elseif CLIENT then
     function GiftData:GetVisuals()
         local category = self.category
 
-        if category == GiftCategory.PhysProp then
+        if category == GiftCategory.PhysProp or category == GiftCategory.Vehicle then
             return self.identifier
 
         elseif category == GiftCategory.SENT or category == GiftCategory.Ammo then
@@ -2744,7 +2841,9 @@ function GetEntGiftData(ent)
     local entIdentifier = ent:GetClass()
     local entModel = ent:GetModel()
 
-    if string.find(entIdentifier, "prop_physics", nil, true) or entIdentifier == "func_physbox" then
+    if string.find(entIdentifier, "prop_physics", nil, true)
+      or string.StartsWith(entIdentifier, "prop_vehicle")
+      or entIdentifier == "func_physbox" then
         entIdentifier = entModel
     end
 
@@ -2999,9 +3098,38 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             end
         end
     end
+
+    -- Fix seats inside of vehicles being inaccessible even if main seat occupied (opt-in)
+    hook.Add("PlayerUse", PLAYER_USE_HOOK, function(ply, ent)
+        if IsValid(ent) and ent:IsVehicle() and ent.FixInternalSeats and IsValid(ent:GetDriver()) then
+            local eyePos = ply:EyePos()
+
+            local tr = util.TraceLine({
+                start  = eyePos,
+                endpos = eyePos + ply:EyeAngles():Forward() * 80,
+                filter = function(ent)
+                    return (IsValid(ent) and ent:IsVehicle() and not ent.FixInternalSeats)
+                end
+            })
+
+            if IsValid(tr.Entity) then
+                --ply:EnterVehicle(tr.Entity) --instant
+                tr.Entity:Use(ply)
+            end
+        end
+    end)
 end)
+
 
 if SERVER then
     local initTotalWeight, initGiftCount = GetTotalWeight()
     dbg.Log("Gift data loaded ("..initGiftCount.." gifts, totalling "..initTotalWeight.." weight).")
+    --dbg.Inspect(GetCategoryWeightBreakdown())
+
+    -- precache prop/vehicle models (can add other types if needed)
+    for label, data in pairs(giftDataCatalog) do
+        if data.category == GiftCategory.PhysProp or data.category == GiftCategory.Vehicle then
+            util.PrecacheModel(data.identifier)
+        end
+    end
 end
