@@ -19,13 +19,13 @@ local HOOK_RESET_VM_COLORS   = "TTT_GiftWrap_ResetVMColors"
 local WRAPPED_GIFT_REMOVE    = "TTT_GiftWrap_WrappedGiftRemove"
 local GIFTWRAP_REMOVE        = "TTT_GiftWrap_XMasBeaconRemove"
 
-local TIMEZONE_OFFSET_HOURS       = CreateConVar("ttt2_giftwrap_timezone_offset", "0",           GW_CVAR_FLAGS, "Adjusts the timezone used for determining whether it's Christmas (offset in hours).", -24, 24)
-local SECOND_GIFT_CHANCE          = CreateConVar("ttt2_giftwrap_second_gift_chance", "0.5",      GW_CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced.", 0, 1)
-local THIRD_GIFT_CHANCE           = CreateConVar("ttt2_giftwrap_third_gift_chance", "0.4",       GW_CVAR_FLAGS, "Chance for a third random gift spawn if a second one spawned.", 0, 1)
-local SECOND_GIFT_CHANCE_XMAS     = CreateConVar("ttt2_giftwrap_second_gift_chance_xmas", "0.9", GW_CVAR_FLAGS, "Chance for a second random gift spawn per Snuffle gift replaced, on Christmas specifically.", 0, 1)
-local THIRD_GIFT_CHANCE_XMAS      = CreateConVar("ttt2_giftwrap_third_gift_chance_xmas", "0.6",  GW_CVAR_FLAGS, "Chance for a third random gift spawn if a second one spawned, on Christmas specifically.", 0, 1)
-local GIFT_MATCH_PLAYERCOUNT      = CreateConVar("ttt2_giftwrap_match_playercount", "0.15",      GW_CVAR_FLAGS, "Chance for as many gifts to spawn as there are players (overriding other chance logic).", 0, 1)
-local GIFT_MATCH_PLAYERCOUNT_XMAS = CreateConVar("ttt2_giftwrap_match_playercount_xmas", "0.66", GW_CVAR_FLAGS, "Chance for as many gifts to spawn as there are players (overriding other chance logic), on Christmas specifically.", 0, 1)
+local TIMEZONE_OFFSET_HOURS       = utils.Cvar("ttt2_giftwrap_timezone_offset", "0", -24, 24, "Adjusts the timezone used for determining whether it's Christmas (offset in hours).")
+local SECOND_GIFT_CHANCE          = utils.Cvar("ttt2_giftwrap_second_gift_chance", "0.5", 0, 1, "Chance for a second random gift spawn per Snuffle gift replaced.")
+local THIRD_GIFT_CHANCE           = utils.Cvar("ttt2_giftwrap_third_gift_chance",  "0.4", 0, 1, "Chance for a third random gift spawn if a second one spawned.")
+local SECOND_GIFT_CHANCE_XMAS     = utils.Cvar("ttt2_giftwrap_second_gift_chance_xmas", "0.9", 0, 1, "Chance for a second random gift spawn per Snuffle gift replaced, on Christmas specifically.")
+local THIRD_GIFT_CHANCE_XMAS      = utils.Cvar("ttt2_giftwrap_third_gift_chance_xmas",  "0.6", 0, 1, "Chance for a third random gift spawn if a second one spawned, on Christmas specifically.")
+local GIFT_MATCH_PLAYERCOUNT      = utils.Cvar("ttt2_giftwrap_match_playercount",      "0.15", 0, 1, "Chance for as many gifts to spawn as there are players (overriding other chance logic).")
+local GIFT_MATCH_PLAYERCOUNT_XMAS = utils.Cvar("ttt2_giftwrap_match_playercount_xmas", "0.66", 0, 1, "Chance for as many gifts to spawn as there are players (overriding other chance logic), on Christmas specifically.")
 
 local GW_REGMETASWEP = GW_REGMETASWEP or SWEP
 local GW_METASWEP    = SWEP
@@ -1108,6 +1108,25 @@ elseif CLIENT then
             serverConvar = "ttt2_giftwrap_shop_weight",
             label = "label_giftwrap_shop_weight",
             min = 0, max = 5, decimal = 2
+        })
+
+        local formVDFix = vgui.CreateTTT2Form(parent, "label_giftwrap_vdfix_form")
+        formVDFix:MakeHelp({
+            label = "label_vehicle_damagefix_desc"
+        })
+        formVDFix:MakeCheckBox({
+            serverConvar = "ttt2_vehicle_damagefix_enable",
+            label = "label_vehicle_damagefix_enable"
+        })
+        formVDFix:MakeSlider({
+            serverConvar = "ttt2_vehicle_damagefix_driver_mult",
+            label = "label_vehicle_damagefix_driver_mult",
+            min = 0, max = 100, decimal = 0
+        })
+        formVDFix:MakeSlider({
+            serverConvar = "ttt2_vehicle_damagefix_passenger_mult",
+            label = "label_vehicle_damagefix_passenger_mult",
+            min = 0, max = 100, decimal = 0
         })
 
         local formMisc = vgui.CreateTTT2Form(parent, "label_giftwrap_misc_form")

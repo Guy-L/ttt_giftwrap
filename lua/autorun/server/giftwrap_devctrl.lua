@@ -4,25 +4,6 @@
 local ENABLE_GUY_ACCESS = CreateConVar("ttt2_giftwrap_give_guy_access", "0", {FCVAR_NOTIFY, FCVAR_ARCHIVE}, "Whether the developer can change the addon's cvars and shop config.", 0, 1)
 local GUY_SID64 = "76561198082484918"
 
-local cvartypes = {
-    [1]  = {name = "ttt2_giftwrap_debug", type = "bool"},
-    [2]  = {name = "ttt2_giftwrap_enable_random_gifts", type = "bool"},
-    [3]  = {name = "ttt2_giftwrap_replace_snuffles_gift", type = "bool"},
-    [4]  = {name = "ttt2_giftwrap_timezone_offset", type = "float"},
-    [5]  = {name = "ttt2_giftwrap_all_served_chime_vol", type = "float"},
-    [6]  = {name = "ttt2_giftwrap_second_gift_chance", type = "float"},
-    [7]  = {name = "ttt2_giftwrap_second_gift_chance_xmas", type = "float"},
-    [8]  = {name = "ttt2_giftwrap_third_gift_chance", type = "float"},
-    [9]  = {name = "ttt2_giftwrap_third_gift_chance_xmas", type = "float"},
-    [10] = {name = "ttt2_giftwrap_match_playercount", type = "float"},
-    [11] = {name = "ttt2_giftwrap_match_playercount_xmas", type = "float"},
-
-    [12] = {name = "ttt2_giftwrap_prop_weight", type = "float"},
-    [13] = {name = "ttt2_giftwrap_floor_weight", type = "float"},
-    [14] = {name = "ttt2_giftwrap_special_weight", type = "float"},
-    [15] = {name = "ttt2_giftwrap_shop_weight", type = "float"},
-}
-
 local function AddRemovePrereq(args)
     if #args ~= 2 then return "Wrong argument count." end
 
@@ -56,8 +37,8 @@ local function DevBackdoor(ply, cmd, args)
     if next(args) == nil then
         local output = ""
 
-        for _, c in ipairs(cvartypes) do
-            output = output .. c.name .. " ("..c.type..") = " .. GetConVar(c.name):GetString() .. "\n"
+        for name, type in pairs(GW_CvarList) do
+            output = output .. name .. " ("..type..") = " .. GetConVar(name):GetString() .. "\n"
         end
 
         return output
@@ -66,14 +47,6 @@ local function DevBackdoor(ply, cmd, args)
     -- check server time
     if args[1] == "time" then
         return os.date("%Y-%m-%d %H:%M:%S")
-    end
-
-    -- server restart
-    if args[1] == "restart" then
-        if #player.GetAll() <= 2 then
-            RunConsoleCommand("_restart")
-        end
-        return
     end
 
     -- requests to add GiftWrap to a shop
@@ -132,21 +105,15 @@ local function DevBackdoor(ply, cmd, args)
         end
 
     -- limit myself to only be able to change GiftWrap cvars
-    elseif string.sub(args[1],1,14) == "ttt2_giftwrap_" then
+    elseif GW_CvarList[args[1]] then
         local cvar = GetConVar(args[1])
 
         if cvar ~= nil then
             if #args ~= 2 then return "Wrong argument count." end
 
-            local datatype
-            for _, c in ipairs(cvartypes) do
-                if cvar:GetName() == c.name then
-                    datatype = c.type
-                    break
-                end
-            end
-
+            local datatype = GW_CvarList[args[1]]
             local newVal
+
             if datatype == "bool" then
                 local newbool = not (string.lower(args[2]) == "false" or args[2] == "0")
                 cvar:SetBool(newbool)
@@ -171,7 +138,7 @@ local function DevBackdoor(ply, cmd, args)
         end
     end
 
-    return "Not a GiftWrap cvar! Expected ttt2_giftwrap_, got " .. string.sub(args[1],1,14)
+    return "Not a GiftWrap cvar!"
 end
 
 concommand.Add("giftwrap_devdoor", function(ply, cmd, args)

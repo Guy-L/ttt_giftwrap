@@ -32,6 +32,15 @@ L["label_giftwrap_floor_weight"] = "Weight multiplier for floor SWEP gifts."
 L["label_giftwrap_special_weight"] = "Weight multiplier for special entity & event gifts."
 L["label_giftwrap_shop_weight"] = "Weight multiplier for shop SWEP gifts."
 
+L["label_giftwrap_vdfix_form"] = "Vehicle Damage Fix"
+L["label_vehicle_damagefix_desc"] = [[Gift Wrap packages a general fix for cases of vehicle riders being functionally invincible:
+ • Driver: Without the fix, damage dealt to any part of the vehicle other than the driver's seat is divided by 10000.
+ • Passenger: Without the fix, damage dealt to any part of the vehicle is not carried over to passengers in non-driver seats.
+The below slider allow you to select the damage multiplier (from a weapon's base damage) when fixing damage for drivers and for passengers.]]
+L["label_vehicle_damagefix_enable"] = "Enable vehicle damage fix"
+L["label_vehicle_damagefix_driver_mult"] = "Driver damage multiplier (%)"
+L["label_vehicle_damagefix_passenger_mult"] = "Passenger damage multiplier (%)"
+
 L["label_giftwrap_misc_form"] = "Debugging & Miscellaneous"
 L["label_giftwrap_give_guy_access"] = "Allow author to change Gift Wrap convars & shop config"
 L["label_giftwrap_debug"] = "Enable debug mode (not recommended)"

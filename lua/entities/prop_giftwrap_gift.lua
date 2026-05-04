@@ -9,9 +9,9 @@ local TREE_FOUND_MSG            = "TTT_GiftWrapSV_TreeFoundMsg"
 local dbg   = GW_DBG
 local utils = GW_Utils
 
-local ENABLE_RANDOM         = CreateConVar("ttt2_giftwrap_enable_random_gifts", "1",    GW_CVAR_FLAGS, "Whether to spawn random gifts when Snuffles' YoWaddup Fixes presents are found.", 0, 1)
-local REPLACE_SNUFFLES_GIFT = CreateConVar("ttt2_giftwrap_replace_snuffles_gift", "1",  GW_CVAR_FLAGS, "Whether random gifts from Gift Wrap replace (rather than add to) naturally spawning gifts from Snuffles' YoWaddup General Fixes addon.", 0, 1)
-local FULL_XMAS_CHIME_VOL   = CreateConVar("ttt2_giftwrap_all_served_chime_vol", "80", GW_CVAR_FLAGS, "Volume of the chime sound effect that plays from YoWaddup Christmas trees when as many gifts spawn as there are players at round start.", 0, 100)
+local ENABLE_RANDOM         = utils.Cvar("ttt2_giftwrap_enable_random_gifts", "1", 0, 1, "Whether to spawn random gifts when Snuffles' YoWaddup Fixes presents are found.")
+local REPLACE_SNUFFLES_GIFT = utils.Cvar("ttt2_giftwrap_replace_snuffles_gift", "1", 0, 1, "Whether random gifts from Gift Wrap replace (rather than add to) naturally spawning gifts from Snuffles' YoWaddup General Fixes addon.")
+local FULL_XMAS_CHIME_VOL   = utils.Cvar("ttt2_giftwrap_all_served_chime_vol", "80", 0, 100, "Volume of the chime sound effect that plays from YoWaddup Christmas trees when as many gifts spawn as there are players at round start.")
 
 ENT.Type = "anim"
 ENT.PrintName = "Gift"

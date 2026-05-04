@@ -1,5 +1,4 @@
 GW_DBG = {}
-GW_DBG.Cvar = CreateConVar("ttt2_giftwrap_debug", 0, {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Enables addon debug prints for client & server (should not be enabled for real play).", 0, 1)
 
 function GW_DBG.Inspect(obj, noMeta)
     if not GW_DBG.Cvar:GetBool() then return end
@@ -533,6 +532,25 @@ function GW_Utils.TransferNetVars(fromGift, toGift)
     end
 end
 
+GW_CvarList = GW_CvarList or {}
+GW_Utils.CvarFlags = {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}
+
+function GW_Utils.Cvar(name, default, min, max, desc)
+    default = tonumber(default)
+    min = tonumber(min)
+    max = tonumber(max)
+    local cvar = CreateConVar(name, default, GW_Utils.CvarFlags, desc, min, max)
+
+    if min == 0 and max == 1 and (default == 0 or default == 1) then
+        GW_CvarList[name] = "bool"
+    else
+        GW_CvarList[name] = "float"
+    end
+
+    return cvar
+end
+
+GW_DBG.Cvar = GW_Utils.Cvar("ttt2_giftwrap_debug", 0, 0, 1, "Enables addon debug prints for client & server (should not be enabled for real play).")
 GW_DBG.Log("Utils initialized.")
 
 
@@ -553,5 +571,3 @@ SNUFFLE_TREE_MODEL = "models/props_snowville/tree_pine_small.mdl"
 
 ERROR_ALREADY_OPENED = "You already opened a random gift this round!"
 XMAS_DAY = 359
-
-GW_CVAR_FLAGS = {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}

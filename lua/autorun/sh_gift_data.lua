@@ -7,14 +7,15 @@ local FLOOR_WEIGHT_NAME   = "ttt2_giftwrap_floor_weight"
 local SHOP_WEIGHT_NAME    = "ttt2_giftwrap_shop_weight"
 local SPECIAL_WEIGHT_NAME = "ttt2_giftwrap_special_weight"
 
-local PROP_WEIGHT_MULT    = CreateConVar(PROP_WEIGHT_NAME, "1.25", GW_CVAR_FLAGS, "Weight multiplier for props when picking random gift.", 0, 5)
-local FLOOR_WEIGHT_MULT   = CreateConVar(FLOOR_WEIGHT_NAME, "1",   GW_CVAR_FLAGS, "Weight multiplier for floor items when picking random gift.", 0, 5)
-local SHOP_WEIGHT_MULT    = CreateConVar(SHOP_WEIGHT_NAME, "0.5",  GW_CVAR_FLAGS, "Weight multiplier for shop items when picking random gift.", 0, 5)
-local SPECIAL_WEIGHT_MULT = CreateConVar(SPECIAL_WEIGHT_NAME, "1", GW_CVAR_FLAGS, "Weight multiplier for special entities (SENTs & NPCs) when picking random gift.", 0, 5)
+local PROP_WEIGHT_MULT    = utils.Cvar(PROP_WEIGHT_NAME, "1.25", 0, 5, "Weight multiplier for props when picking random gift.")
+local FLOOR_WEIGHT_MULT   = utils.Cvar(FLOOR_WEIGHT_NAME, "1", 0, 5,   "Weight multiplier for floor items when picking random gift.")
+local SHOP_WEIGHT_MULT    = utils.Cvar(SHOP_WEIGHT_NAME, "0.5", 0, 5,  "Weight multiplier for shop items when picking random gift.")
+local SPECIAL_WEIGHT_MULT = utils.Cvar(SPECIAL_WEIGHT_NAME, "1", 0, 5, "Weight multiplier for special entities (SENTs & NPCs) when picking random gift.")
 
 local PLACEHOLDER_DATA_REMOVE    = "GiftWrap_RemoveGiftData"
 local CLUTTERBOMB_LIGHT_FIX_HOOK = "GiftWrap_ClutterbombLightFix"
 local INIT_FIXES_HOOK            = "GiftWrap_InitialFixesSetup"
+local ENT_TAKE_DAMAGE_HOOK       = "GiftWrapSV_VehicleOccupantsDamageFix"
 local PLAYER_USE_HOOK            = "GiftWrapSV_InternalVehicleSeatFix"
 
 -- cf. excel sheet in addon resources (GitHub)
@@ -3038,6 +3039,11 @@ function GetItemGiftData(itemID)
     return itemID, placeholderData
 end
 
+local VDFIX_ENABLE      = utils.Cvar("ttt2_vehicle_damagefix_enable", 1, 0, 1, "Whether to enable the fix for vehicle drivers/passengers being invincible.")
+local VDFIX_MULT_DRIVER = utils.Cvar("ttt2_vehicle_damagefix_driver_mult", 30, 0, 100, "Damage multiplier for driver when hitting other parts of vehicle (%).")
+local VDFIX_MULT_PASNGR = utils.Cvar("ttt2_vehicle_damagefix_passenger_mult", 20, 0, 100, "Damage multiplier for passengers when hitting any part of vehicle (%).")
+
+
 hook.Add("Initialize", INIT_FIXES_HOOK, function()
     -- Fix for invisible clutterbombs continuing their warning light effect
     hook.Remove("PreRender", "ClutterbombProj_DynamicLight")
@@ -3115,6 +3121,29 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             if IsValid(tr.Entity) then
                 --ply:EnterVehicle(tr.Entity) --instant
                 tr.Entity:Use(ply)
+            end
+        end
+    end)
+
+    -- Fix driver taking almost no damage & other riders being invincible
+    hook.Add("EntityTakeDamage", ENT_TAKE_DAMAGE_HOOK, function(target, dmgInfo)
+        if not VDFIX_ENABLE:GetBool() then return end
+        local dmg = dmgInfo:GetDamage()
+
+        if IsValid(target) and target:IsVehicle() then
+            if dmg < 0.01 then
+                dmg = math.floor(dmg * 10000 + 0.5)
+                dmgInfo:SetDamage(dmg * VDFIX_MULT_DRIVER:GetFloat()/100)
+            end
+
+            -- apply damage to passenger seats (one layer down)
+            for _, child in ipairs(target:GetChildren()) do
+                if IsValid(child) and child:IsVehicle() then
+                    local seatDmg = DamageInfo()
+                    seatDmg:SetDamage(dmg * VDFIX_MULT_PASNGR:GetFloat()/100)
+                    seatDmg:SetAttacker(dmgInfo:GetAttacker())
+                    child:TakeDamageInfo(seatDmg)
+                end
             end
         end
     end)
