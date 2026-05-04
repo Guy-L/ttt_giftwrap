@@ -517,7 +517,7 @@ local giftDataCatalog = {
         entity_class   = "prop_vehicle_airboat",
         vehicle_script = "scripts/vehicles/airboat.txt",
         can_be_random_gift = true,
-        factor_rarity = 3, factor_quality = 10,
+        factor_rarity = 5, factor_quality = 10,
         attrib_sound = GiftSound.Revving, attrib_size = GiftSize.Max,
         attrib_smell = GiftSmell.Rusty,   attrib_feel = GiftFeel.Heavy,
     },
@@ -530,7 +530,7 @@ local giftDataCatalog = {
             { pos = Vector(15, -38, 19), angle = Angle(0, 0, 0), type="jeep" }
         },
         can_be_random_gift = true,
-        factor_rarity = 2, factor_quality = 8,
+        factor_rarity = 3, factor_quality = 8,
         attrib_sound = GiftSound.Revving, attrib_size = GiftSize.Max,
         attrib_smell = GiftSmell.Leather, attrib_feel = GiftFeel.Fragile,
     },
@@ -544,7 +544,7 @@ local giftDataCatalog = {
             { pos = Vector(4, -36, 33.6), angle = Angle(0, 180, 0), type="airboat" }
         },
         can_be_random_gift = true,
-        factor_rarity = 2, factor_quality = 10,
+        factor_rarity = 3, factor_quality = 10,
         attrib_sound = GiftSound.Revving, attrib_size = GiftSize.Max,
         attrib_smell = GiftSmell.Rusty,   attrib_feel = GiftFeel.Heavy,
     },
@@ -2743,6 +2743,19 @@ elseif CLIENT then
         return nil
     end
 
+    local rarityStr = {
+        [1]  = "gift_status_rarity_common",
+        [2]  = "gift_status_rarity_uncommon",
+        [3]  = "gift_status_rarity_rare",
+        [4]  = "gift_status_rarity_very_rare",
+        [5]  = "gift_status_rarity_super_rare",
+        [6]  = "gift_status_rarity_super_rare",
+        [7]  = "gift_status_rarity_legendary",
+        [8]  = "gift_status_rarity_legendary",
+        [9]  = "gift_status_rarity_mythical",
+        [10] = "gift_status_rarity_mythical",
+    }
+
     function GiftData:GetStatusTable(giftObj)
         local statusTable = {}
 
@@ -2751,6 +2764,17 @@ elseif CLIENT then
             text = self.category.text,
             subtext = "gift_status_type",
         })
+
+        if self.can_be_random_gift then
+            local rarity = math.min(10, math.floor(self.factor_rarity + 0.5))
+
+            table.insert(statusTable, {
+                icon = "vgui/ttt/menu/icon_clover"..(rarity >= 3 and '4' or '3'),
+                text = rarityStr[rarity],
+                highlightText = (rarity >= 5),
+                subtext = "gift_status_rarity",
+            })
+        end
 
         if IsValid(giftObj) then
             if giftObj:GetIsContentsOnFire() then

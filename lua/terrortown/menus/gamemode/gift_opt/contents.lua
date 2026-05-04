@@ -114,17 +114,33 @@ function CreateStatusTable(parent, statusTable)
         textPanel:Dock(FILL)
         textPanel.Paint = nil
 
+        local mainText
         local hasSubtext = status.subtext and status.subtext ~= ""
 
-        local label = vgui.Create("DLabel", textPanel)
-        label:SetText(utils.TL(status.text))
-        label:SetWrap(true)
-        label:SetFont("HudHintTextLarge")
-        label:SetContentAlignment(4)
-        label:SizeToContentsY()
+        if status.text then
+            mainText = vgui.Create("DLabel", textPanel)
+            mainText:SetText(utils.TL(status.text))
+            mainText:SetWrap(true)
+            mainText:SetFont("HudHintTextLarge")
+
+            if status.highlightText then
+                mainText:SetTextColor(color_yellow)
+            end
+
+        elseif status.lines then
+            mainText = vgui.Create("DPanel", textPanel)
+            local heightAcc = 0
+
+            for _, line in ipairs(status.lines) do
+                local fl = FancyLine(mainText, line.left, line.main, line.right, line.hlColor)
+                heightAcc = heightAcc + fl:GetTall()
+            end
+
+            mainText:SetTall(heightAcc)
+        end
 
         local subLabel
-        local spacing = 1 -- adjust this
+        local spacing = 1
 
         if hasSubtext then
             subLabel = vgui.Create("DLabel", textPanel)
@@ -137,10 +153,10 @@ function CreateStatusTable(parent, statusTable)
         end
 
         textPanel.PerformLayout = function(self, w, h)
-            label:SetWide(w)
-            label:SizeToContentsY()
+            mainText:SetWide(w)
+            mainText:SizeToContentsY()
 
-            local totalH = label:GetTall()
+            local totalH = mainText:GetTall()
 
             if subLabel then
                 subLabel:SetWide(w)
@@ -150,10 +166,10 @@ function CreateStatusTable(parent, statusTable)
 
             local y = (h - totalH) * 0.5
 
-            label:SetPos(0, y)
+            mainText:SetPos(0, y)
 
             if subLabel then
-                subLabel:SetPos(0, y + label:GetTall() + spacing)
+                subLabel:SetPos(0, y + mainText:GetTall() + spacing)
             end
         end
     end
@@ -171,7 +187,7 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
     end
     curContents:Dock(TOP)
     curContents:DockMargin(curcont_pad, curcont_pad, curcont_pad, curcont_pad)
-    curContents:SetTall(giftData and 150 or 100)
+    curContents:SetTall(giftData and 175 or 100)
 
     -- HEADER
     local header = vgui.Create("DPanel", curContents)
@@ -265,21 +281,24 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
     end
 end
 
-function FancyLine(parent, leftGrayText, whiteText, rightGrayText, highlightColor)
+function FancyLine(parent, leftGrayText, mainText, rightGrayText, highlightColor, font)
     if not highlightColor then highlightColor = color_white end
+    if not font then font = "DermaDefault" end
     local line = vgui.Create("DPanel", parent)
     line:Dock(TOP)
 
     local leftPart = vgui.Create("DLabel", line)
     leftPart:Dock(LEFT)
     leftPart:SetText(leftGrayText)
+    leftPart:SetFont(font)
     leftPart:SetTextColor(curcont_graytext)
     leftPart:SizeToContents()
 
-    if whiteText then
+    if mainText then
         local whitePart = vgui.Create("DLabel", line)
         whitePart:Dock(LEFT)
-        whitePart:SetText(whiteText)
+        whitePart:SetText(mainText)
+        whitePart:SetFont(font)
         whitePart:SetTextColor(highlightColor)
         whitePart:SizeToContents()
     end
@@ -288,6 +307,7 @@ function FancyLine(parent, leftGrayText, whiteText, rightGrayText, highlightColo
         local rightPart = vgui.Create("DLabel", line)
         rightPart:Dock(LEFT)
         rightPart:SetText(rightGrayText)
+        rightPart:SetFont(font)
         rightPart:SetTextColor(curcont_graytext)
         rightPart:SizeToContents()
     end
