@@ -6,8 +6,9 @@ GIFTWRAP_DROP_CONT_MSG      = "TTT_GiftWrapCL_DropContentRequest"
 GIFTWRAP_RANDOM_GIFT_MSG    = "TTT_GiftWrapCL_RandomContentRequest"
 GIFTWRAP_UPDATE_GIFTEE_MSG  = "TTT_GiftWrapCL_UpdateGifteeMsg"
 GIFTWRAP_UPDATE_NOTE_MSG    = "TTT_GiftWrapCL_UpdateNoteMsg"
-GIFTWRAP_REMOVE_WRAPPER_MSG = "TTT_GiftWrapCL_DebugRemoveWrapperTag"
-GIFTWRAP_DBG_SELECT_MSG     = "TTT_GiftWrapCL_DebugSelectGiftLabel"
+GIFTWRAP_DELETE_SELF_MSG    = "TTT_GiftWrapCL_DebugDeleteSelfMsg"
+GIFTWRAP_REMOVE_WRAPPER_MSG = "TTT_GiftWrapCL_DebugRemoveWrapperTagMsg"
+GIFTWRAP_DBG_SELECT_MSG     = "TTT_GiftWrapCL_DebugSelectGiftLabelMsg"
 
 local GIFTWRAP_CLEAR_BUY_MSG = "TTT_GiftWrapSV_ClearGiftBoughtFlag"
 local GIFTWRAP_CLOSE_DMS_MSG = "TTT_GiftWrapSV_CloseDeathMatchShop"
@@ -159,6 +160,7 @@ elseif SERVER then
     util.AddNetworkString(GIFTWRAP_RANDOM_GIFT_MSG)
     util.AddNetworkString(GIFTWRAP_UPDATE_GIFTEE_MSG)
     util.AddNetworkString(GIFTWRAP_UPDATE_NOTE_MSG)
+    util.AddNetworkString(GIFTWRAP_DELETE_SELF_MSG)
     util.AddNetworkString(GIFTWRAP_REMOVE_WRAPPER_MSG)
     util.AddNetworkString(GIFTWRAP_DBG_SELECT_MSG)
     util.AddNetworkString(GIFTWRAP_IN_OPTS_MSG)
@@ -204,6 +206,14 @@ elseif SERVER then
         if not IsValid(giftEnt) then return end
 
         giftEnt:SetUnwrapNote(giftNote)
+    end)
+
+    net.Receive(GIFTWRAP_DELETE_SELF_MSG, function(len, ply)
+        local giftEnt = net.ReadEntity()
+        if not IsValid(giftEnt) then return end
+        if not dbg.AllowDebugMenu() then return end
+
+        giftEnt:Remove()
     end)
 
     net.Receive(GIFTWRAP_REMOVE_WRAPPER_MSG, function(len, ply)

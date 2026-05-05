@@ -180,6 +180,7 @@ if SERVER then
             --"npc_turret_floor", -- TODO: bugged (still fires); needs ownership check
             --"ttt_wormhole", -- blocked later (affixed); TODO: bugged (angle is reset to parallel with ground on unwrap)
             "ttt_zombieball_proj", -- TODO: try wrapping an existing one somehow???
+            "npc_zombie",
         }
 
         -- validity check
@@ -783,15 +784,16 @@ if SERVER then
             local dropPitch = math.random(90, 120)
 
             if giftObj:GetClass() == PROP_CLASS_NAME or giftObj:GetIsOpening() then
-                local flourishType = math.random(5)
-                if flourishType == 5 then
-                    dropSnd = "flourish_yippie"
-                else
-                    dropSnd = "flourish_sl" .. flourishType
-                end
-
+                local flourishType = math.random(4)
+                dropSnd = "flourish_sl" .. flourishType
                 dropVol = 0.75
                 dropPitch = 100
+
+                if math.random(5) == 5 then
+                    timer.Simple(0.2, function()
+                        sndOrigin:EmitSound(sounds["flourish_yippie"], 75, 100, 0.6)
+                    end)
+                end
             end
 
             local openSnd = CreateSound(sndOrigin, sounds[dropSnd])

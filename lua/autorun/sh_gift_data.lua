@@ -59,6 +59,7 @@ GiftSound = {
     Springy    = {snd="", desc="springy"},
     Musical    = {snd="", desc="musical"},
     Squeaky    = {snd="", desc="squeaky"}, --new, underused
+    Hollow     = {snd="", desc="hollow"}, --new, underused
     Splashing  = {snd="", desc="like it's splashing"},
     Squelching = {snd="", desc="like it's squelching"},
     Rustling   = {snd="", desc="like it's rustling"},
@@ -190,6 +191,13 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Meowing,  attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Metallic, attrib_feel = GiftFeel.Otherworldly,
+    },
+    car_wreck = GiftData.New {
+        name     = "Car Wreck",           desc       = "a broken down car",
+        category = GiftCategory.PhysProp, identifier = "models/props_vehicles/car005b_physics.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Max,
+        attrib_smell = GiftSmell.Oily,     attrib_feel = GiftFeel.Massive,
     },
     cirno_fumo = GiftData.New {
         name     = "Cirno Fumo",          desc       = "a fumo",
@@ -330,8 +338,7 @@ local giftDataCatalog = {
     watermelon = GiftData.New {
         name     = "Watermelon",          desc       = "a watermelon",
         category = GiftCategory.PhysProp, identifier = "models/props_junk/watermelon01.mdl",
-        can_be_random_gift = true,
-        factor_rarity = 3, factor_quality = -2,
+        can_be_random_gift = false,
         attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Round,
     },
@@ -365,7 +372,7 @@ local giftDataCatalog = {
         special_setup = "grenade", explosion_delay = 2, set_owner = true
     },
     banana_split = GiftData.New {
-        name     = "Live Banana Split", desc      = "way too much potassium",
+        name     = "Live Banana Split", desc      = "dangerous levels of potassium",
         category = GiftCategory.SENT,  identifier = "ttt_banana_split",
         can_be_random_gift = true,
         factor_rarity = 4, factor_quality = -7,
@@ -508,6 +515,14 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Earthy, attrib_feel = GiftFeel.Cursed,
         special_setup = "pog_shard_setup", up_vel = 400, up_min = 0, up_max = 2,
     },
+    zombie = GiftData.New {
+        name     = "Zombie",          desc       = "a zombie",
+        category = GiftCategory.NPC, identifier = "npc_zombie",
+        can_be_random_gift = true,
+        factor_rarity = 4, factor_quality = -7,
+        attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rotten, attrib_feel = GiftFeel.Alive,
+    },
 
     ----------------------------------------------------------------------
     -- Vehicles
@@ -519,7 +534,7 @@ local giftDataCatalog = {
         can_be_random_gift = true,
         factor_rarity = 5, factor_quality = 10,
         attrib_sound = GiftSound.Revving, attrib_size = GiftSize.Max,
-        attrib_smell = GiftSmell.Rusty,   attrib_feel = GiftFeel.Heavy,
+        attrib_smell = GiftSmell.Rusty,   attrib_feel = GiftFeel.Massive,
     },
     buggy = GiftData.New {
         name     = "Buggy",              desc       = "a buggy",
@@ -546,7 +561,18 @@ local giftDataCatalog = {
         can_be_random_gift = true,
         factor_rarity = 3, factor_quality = 10,
         attrib_sound = GiftSound.Revving, attrib_size = GiftSize.Max,
-        attrib_smell = GiftSmell.Rusty,   attrib_feel = GiftFeel.Heavy,
+        attrib_smell = GiftSmell.Rusty,   attrib_feel = GiftFeel.Massive,
+    },
+    prisoner_pod = GiftData.New {
+        name     = "Prisoner Pod",       desc       = "a human-sized cage",
+        category = GiftCategory.Vehicle, identifier = "models/vehicles/prisoner_pod_inner.mdl",
+        entity_class   = "prop_vehicle_prisoner_pod",
+        vehicle_script = "scripts/vehicles/prisoner_pod.txt",
+        can_be_random_gift = true,
+        factor_rarity = 3, factor_quality = -5,
+        attrib_sound = GiftSound.Hollow,   attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Metallic, attrib_feel = GiftFeel.Heavy,
+        adjAngle = Angle(-90, 0, 0)
     },
 
     ----------------------------------------------------------------------

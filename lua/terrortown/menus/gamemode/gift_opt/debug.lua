@@ -78,4 +78,15 @@ function CLGAMEMODESUBMENU:Populate(parent)
             el:SetTooltip(LANG.TryTranslation("gift_opt_change_form_error_full"))
         end
     end
+
+    local deleteBtn = debugForm:MakeButton({
+        label = "gift_opt_debug_form_delete_desc",
+        buttonLabel = "gift_opt_debug_form_delete",
+        OnClick = function(slf)
+            net.Start(GIFTWRAP_DELETE_SELF_MSG)
+            net.WriteEntity(gwRef)
+            net.SendToServer()
+            HELPSCRN._gwOptMenu:Close()
+        end
+    })
 end
