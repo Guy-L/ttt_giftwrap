@@ -2743,6 +2743,27 @@ elseif CLIENT then
         return nil
     end
 
+    function GiftData:GetSizeStr(giftEnt)
+        local closestDesc = "Unknown"
+        local closestDiff = math.huge
+        local giftSize = self.attrib_size
+
+        if IsValid(giftEnt) and giftEnt:GetClass() == PROP_CLASS_NAME then
+            giftSize = giftEnt:GetGiftScale()
+        end
+
+        for descriptor, size in pairs(GiftSize) do
+            local diff = math.abs(giftSize - size)
+
+            if diff < closestDiff then
+                closestDiff = diff
+                closestDesc = descriptor
+            end
+        end
+
+        return closestDesc
+    end
+
     local rarityStr = {
         [1]  = "gift_status_rarity_common",
         [2]  = "gift_status_rarity_uncommon",

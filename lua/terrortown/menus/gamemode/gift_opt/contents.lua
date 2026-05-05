@@ -277,6 +277,10 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
             else
                 AttributeLine(textPanel, "feels",  giftData.attrib_feel, "Just holding it doesn't tell you much")
             end
+
+            local sizeLine = FancyLine(textPanel, "Size: ", giftData:GetSizeStr(storedEnt), nil)
+            sizeLine:SizeToContentsY()
+            sizeLine:DockMargin(0, 0, 0, 2)
         end
     end
 end
