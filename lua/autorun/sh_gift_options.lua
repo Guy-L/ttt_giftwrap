@@ -220,7 +220,7 @@ elseif SERVER then
         if not IsValid(giftEnt) then return end
         if not dbg.AllowDebugMenu() then return end
 
-        local giftData = GetGiftDataFromLabel(giftLabel)
+        local giftData = GetGiftDataFromLabel(giftLabel):Furnish(ply)
         if giftData then
             giftEnt:AutoWrap(giftLabel, giftData)
         else
