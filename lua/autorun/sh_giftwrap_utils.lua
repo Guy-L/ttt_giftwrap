@@ -1,4 +1,6 @@
 GW_DBG = {}
+GW_DBG.Cvar = CreateConVar("ttt2_giftwrap_debug", 0, {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Enables addon debug mode (should not be enabled for real play).", 0, 1)
+
 
 function GW_DBG.Inspect(obj, noMeta)
     if not GW_DBG.Cvar:GetBool() then return end
@@ -139,27 +141,9 @@ function GW_DBG.AllowDebugMenu()
     return GW_DBG.Cvar:GetBool() or GetGlobalBool("ttt2_deathmatch_active", false)
 end
 
-function GW_DBG.GoToGift(i) -- meant for local testing
-    local gifts = ents.FindByClass(PROP_CLASS_NAME)
-    PrintTable(gifts)
-
-    if i ~= nil then
-        player.GetAll()[1]:SetPos(gifts[i]:GetPos())
-    end
-end
-
-function GW_DBG.NearbyEnts(radius, pattern, showTable) -- meant for local testing
-    for _, ent in ipairs(ents.FindInSphere(player.GetAll()[1]:GetPos(), radius)) do
-        local class = ent:GetClass()
-
-        if not pattern or string.find(class, pattern, nil, true) then
-            print(ent, class, ent:GetPos(), ent:GetModel())
-            if showTable then PrintTable(ent:GetSaveTable(true)) end
-        end
-    end
-end
-
 function GW_DBG.InspectDamage(target, dmgInfo)
+    if not GW_DBG.Cvar:GetBool() then return end
+
     GW_DBG.Log(target, dmgInfo)
     GW_DBG.Log("=> AmmoType", dmgInfo:GetAmmoType())
     GW_DBG.Log("=> Attacker", dmgInfo:GetAttacker())
@@ -177,6 +161,31 @@ function GW_DBG.InspectDamage(target, dmgInfo)
     GW_DBG.Log("=> IsBulletDamage", dmgInfo:IsBulletDamage())
     GW_DBG.Log("=> IsExplosionDamage", dmgInfo:IsExplosionDamage())
     GW_DBG.Log("=> IsFallDamage", dmgInfo:IsFallDamage())
+end
+
+function GW_DBG.DumpAllModelPaths()
+    local out = {}
+
+    local function CollectModels(dir)
+        local files, folders = file.Find(dir .. "/*", "GAME")
+
+        for _, f in ipairs(files) do
+            if string.EndsWith(f, ".mdl") then
+                local path = dir .. "/" .. f
+                out[#out + 1] = path
+                --GW_DBG.Log(path)
+            end
+        end
+        out[#out + 1] = ""
+
+        for _, folder in ipairs(folders) do
+            CollectModels(dir .. "/" .. folder)
+        end
+    end
+
+    CollectModels("models")
+    file.Write("all_models.txt", table.concat(out, "\n"))
+    GW_DBG.Log("Saved dump to all_models.txt.")
 end
 
 -----------------------------------------------------
@@ -244,11 +253,6 @@ function GW_Utils.GetEyeTrace(ply)
     return tr
 end
 
-function GW_Utils.GetRandomUpwardsVel(raise)
-    local dir = VectorRand()
-    dir.z = math.abs(dir.z + raise)
-    return dir:GetNormalized()
-end
 
 -- how is this not a function in base TTT2 
 -- port of plymeta:GetSubRoleData() (sh_player_ext.lua)
@@ -264,17 +268,6 @@ function GW_Utils.GetSubRoleData(subRoleID)
     end
 
     return roles.NONE
-end
-
-function GW_Utils.GetEntCenter(ent)
-    local phys = ent:GetPhysicsObject()
-    if IsValid(phys) then
-        local mins, maxs = phys:GetAABB()
-        return phys:LocalToWorld((mins + maxs) * 0.5) + Vector(0, 0, 10)
-    end
-
-    -- fallback (other centering methods are way off for my gift, fucked bbox)
-    return ent:GetPos()
 end
 
 function GW_Utils.GetEntSurfaceProp(ent, phys)
@@ -340,31 +333,6 @@ function GW_Utils.NonSpamMessage(ply, id, msg, acceptClient)
     end
 end
 
-function GW_Utils.DumpAllModelPaths()
-    local out = {}
-
-    local function CollectModels(dir)
-        local files, folders = file.Find(dir .. "/*", "GAME")
-
-        for _, f in ipairs(files) do
-            if string.EndsWith(f, ".mdl") then
-                local path = dir .. "/" .. f
-                out[#out + 1] = path
-                --GW_DBG.Log(path)
-            end
-        end
-        out[#out + 1] = ""
-
-        for _, folder in ipairs(folders) do
-            CollectModels(dir .. "/" .. folder)
-        end
-    end
-
-    CollectModels("models")
-    file.Write("all_models.txt", table.concat(out, "\n"))
-    GW_DBG.Log("Saved dump to all_models.txt.")
-end
-
 function GW_Utils.TL(label) --shorthand
     return LANG.TryTranslation(label)
 end
@@ -390,98 +358,11 @@ function GW_Utils.ConfirmedDead(ply, other)
         or (not other:Alive() and ply:GetSubRoleData().isOmniscientRole) -- omniscient player
 end
 
-if SERVER then
-    function GW_Utils.EnterStasis(giftObj, ent)
-        ent:SetNoDraw(true)
-        ent:SetNotSolid(true)
-
-        ent:SetNWEntity("WrappedByGift", giftObj)
-        ent._GWStoredColGroup = ent:GetCollisionGroup()
-        ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
-
-        local minPos, maxPos = game.GetWorld():GetCollisionBounds()
-        ent:SetPos(maxPos)
-
-        local phys = ent:GetPhysicsObject()
-        if IsValid(phys) then
-            phys:EnableMotion(false)
-            phys:Sleep()
-            phys:SetPos(maxPos)
-        end
-
-        -- hide connected map ropes so stasis pos doesn't show
-        -- (other types may still be broken, will fix as I find them)
-        for _, rope in ipairs(GW_Utils.FindConnectedRopes(ent)) do
-            rope._storedWidth = rope:GetKeyValues()["Width"]
-            rope:SetKeyValue("Width", "0")
-        end
-    end
-
-    function GW_Utils.ExitStasis(ent, pos, stabilize)
-        ent:SetPos(pos)
-        ent:SetNoDraw(false)
-        ent:SetNotSolid(false)
-
-        ent:SetNWEntity("WrappedByGift", nil)
-        if ent._GWStoredColGroup then
-            ent:SetCollisionGroup(ent._GWStoredColGroup)
-        end
-
-        local phys = ent:GetPhysicsObject()
-        if IsValid(phys) then
-            phys:SetPos(pos)
-
-            -- give things with move children a few extra ticks to propagate their new position
-            -- before restarting physics (otherwise things like vehicles go flying off randomly)
-            timer.Simple(stabilize and 0.25 or 0, function()
-                if IsValid(phys) then
-                    phys:EnableMotion(true)
-                    phys:Wake()
-                end
-            end)
-        end
-
-        for _, rope in ipairs(GW_Utils.FindConnectedRopes(ent)) do
-            if rope._storedWidth then
-                rope:SetKeyValue("Width", tostring(rope._storedWidth))
-            end
-        end
-    end
-
-    function GW_Utils.FindConnectedRopes(ent)
-        local ropes = {}
-
-        local worldRopes = {}
-        for _, e in ipairs(ents.GetAll()) do
-            local c = e:GetClass()
-
-            if c == "keyframe_rope" or c == "move_rope" then
-                table.insert(worldRopes, e) -- equivalent types as per the source docs
-            end
-        end
-
-        -- there's probably a better way to do this...
-        for _, rope in ipairs(worldRopes) do
-            if rope:GetParent() == ent then
-                table.insert(ropes, rope)
-
-                -- find connected endpoint
-                for _, endPt in ipairs(worldRopes) do
-                    if endPt:GetInternalVariable("m_hEndPoint") == rope then
-                        table.insert(ropes, endPt)
-                    end
-                end
-            end
-        end
-
-        return ropes
-    end
-end
-
 function GW_Utils.GetWrapper(giftEnt)
     if not IsValid(giftEnt) then return nil end
     return player.GetBySteamID64(giftEnt:GetWrapperSID())
 end
+
 
 GW_Utils.sharedNetTable = {
     { type = "Bool",   name = "IsRandomGift" },
@@ -532,7 +413,7 @@ function GW_Utils.TransferNetVars(fromGift, toGift)
     end
 end
 
-GW_CvarList = GW_CvarList or {}
+GW_CvarList = GW_CvarList or { ["ttt2_giftwrap_debug"] = "bool" }
 GW_Utils.CvarFlags = {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}
 
 function GW_Utils.Cvar(name, default, min, max, desc)
@@ -550,16 +431,16 @@ function GW_Utils.Cvar(name, default, min, max, desc)
     return cvar
 end
 
-GW_DBG.Cvar = GW_Utils.Cvar("ttt2_giftwrap_debug", 0, 0, 1, "Enables addon debug prints for client & server (should not be enabled for real play).")
 GW_DBG.Log("Utils initialized.")
 
 
 -- multi-Lua defs I don't really want to make another file for
 -- TODO: probably also gate these behind utils table
-SWEP_CLASS_NAME = "weapon_ttt_giftwrap"
-PROP_CLASS_NAME = "prop_giftwrap_gift" -- needs to be "prop_" for prop disguiser to work
-MV_TREE_LABEL   = "giftwrap_gift_beacon_"
-MV_GIFTEE_LABEL = "giftwrap_giftee"
+SWEP_CLASS_NAME  = "weapon_ttt_giftwrap"
+PROP_CLASS_NAME  = "prop_giftwrap_gift" -- needs to be "prop_" for prop disguiser to work
+MV_TREE_LABEL    = "giftwrap_gift_beacon_"
+MV_GIFTEE_LABEL  = "giftwrap_giftee"
+MV_GIFT_TP_LABEL = "giftwrap_gift_teleport"
 
 GIFTWRAP_ICON   = "vgui/ttt/icon_giftwrap"
 WRAP_VIEWMODEL  = "models/ttt/giftwrap/v_giftwrap.mdl"

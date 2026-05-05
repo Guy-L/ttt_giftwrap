@@ -28,6 +28,7 @@ local sounds = {
     bounce1 = Sound("physics/metal/paintcan_impact_soft1.wav"),
     bounce2 = Sound("physics/metal/paintcan_impact_soft2.wav"),
     bounce3 = Sound("physics/metal/paintcan_impact_soft3.wav"),
+    teleport = Sound("giftwrap/teleport.mp3"),
 }
 
 -- note: due to lazy design, all of these arrays must be of equal length
@@ -145,6 +146,7 @@ function ENT:OnTakeDamage(dmgInfo)
                 --self:GibBreakServer(Vector(0,0,10))
                 SpawnGiftEnt(attacker, self, utils.GetEntCenter(self))
                 self:RemoveMarkerVision(MV_GIFTEE_LABEL)
+                self:RemoveMarkerVision(MV_GIFT_TP_LABEL)
                 self:Remove()
 
                 if self:GetIsRandomGift() and not attackerOpenedRandomGift then
@@ -199,6 +201,7 @@ function ENT:SetupDataTables()
     local boolCnt, intCnt, stringCnt, entCnt = utils.SetupSharedTable(self)
     self:NetworkVar("Bool", boolCnt, "NotRetrievable")
     self:NetworkVar("Int", intCnt, "DescriptionLine")
+    self:NetworkVar("Float", 0, "TPNoticeDisableTime")
 end
 
 
@@ -223,8 +226,9 @@ if SERVER then
     end
 
     function ENT:HandleClipbrushCollision(curTime) -- (inspired by corv's Teleport Grenade code)
-        local vel     = self:GetVelocity()
-        local curPos  = self:GetPos()
+        local vel    = self:GetVelocity()
+        local curPos = self:GetPos()
+        local phys   = self:GetPhysicsObject()
         self._LastPos = self._LastPos or curPos
 
         local filter = { self }
@@ -240,13 +244,22 @@ if SERVER then
             filter      = filter
         })
 
+        -- no timeout mechanism for magneto movement
+        if phys:HasGameFlag(FVPHYSICS_PLAYER_HELD) then
+            self._LastBounce = 0
+        end
+
         --debugoverlay.Line(self._LastPos, curPos, 3, Color(255,0,0), true)
         --if tr.Hit then print(tr.Hit, tr.Entity) end
 
-        if tr.Hit and tr.HitPos and not tr.StartSolid and not tr.AllSolid
-          and vel:Dot(tr.HitNormal) < 0 and curTime >= self._LastBounce + 0.1 then
+        if tr.Hit and tr.HitPos and not tr.StartSolid and not tr.AllSolid and vel:Dot(tr.HitNormal) < 0 then
+            if curTime < self._LastBounce + 1 then
+                dbg.Log("Bounce detected but skipped due to cooldown; ", curTime, self._LastBounce)
+                self._LastPos = curPos
+                return
+            end
+
             local speed = vel:Length()
-            local phys = self:GetPhysicsObject()
 
             local incoming = tr.HitPos - self._LastPos
             incoming:Normalize()
@@ -259,24 +272,37 @@ if SERVER then
                 for _, magneto in ipairs(ents.FindByClass("weapon_zm_carry")) do
                     if magneto:GetCarryTarget() == self then
                         magneto:Drop()
+                        self._LastBounce = 0
                         timer.Simple(0, function() phys:SetVelocity(incoming * speed * -1) end)
                         break
                     end
                 end
             end
 
-            local bounceVol   = math.max(0.1, speed/720)
-            local bouncePitch = math.max(30, -12*self:GetGiftScale() + 130)
-
-            dbg.Log("Playing bounce sound w/ vol "..bounceVol.."% (speed: "..speed..") & pitch "..bouncePitch.."% (scale: "..self:GetGiftScale()..")")
-            self:EmitSound(sounds["bounce"..math.random(3)], 75, bouncePitch, bounceVol)
+            self:PlayBounceSFX(speed)
             self._LastBounce = curTime
         end
 
         self._LastPos = curPos
     end
 
-    function ENT:UprightCheck() -- Readjust angle if fallen on its side
+    function ENT:PlayBounceSFX(speed)
+        local scale = self:GetGiftScale()
+        local bounceVol   = math.max(0.1, speed/720)
+        local bouncePitch = math.max(30, -12*scale + 130)
+
+        dbg.Log("Playing bounce sound w/ vol "..(bounceVol*100).."% (speed: "..speed..") & pitch "..bouncePitch.."% (scale: "..scale..")")
+        self:EmitSound(sounds["bounce"..math.random(3)], 75, bouncePitch, bounceVol)
+    end
+
+    function ENT:GetZOffsetVec()
+        local mins, maxs = self:GetModelBounds()
+        local height = math.abs(maxs.z - mins.z) * self:GetGiftScale() * 0.5
+
+        return Vector(0, 0, height)
+    end
+
+    function ENT:UprightCheck(verbose) -- Readjust angle if fallen on its side
         local phys = self:GetPhysicsObject()
         if not IsValid(phys) then return end
         if phys:HasGameFlag(FVPHYSICS_PLAYER_HELD) then return end
@@ -291,20 +317,111 @@ if SERVER then
                 endpos = startPos - Vector(0, 0, 100),
                 filter = self
             })
-            if not tr.Hit then return end
-            local dot = self:GetUp():Dot(tr.HitNormal)
+
+            local upNormal = tr.Hit and tr.HitNormal or Vector(0,0,1)
+            local dot = self:GetUp():Dot(upNormal)
 
             if dot < 0.9 then
-                local ang = tr.HitNormal:Angle()
+                dbg.Log("Toppling detected; correcting")
+                local ang = upNormal:Angle()
                 ang:RotateAroundAxis(ang:Right(), -90)
                 self:SetAngles(ang)
 
-                local mins, maxs = self:GetModelBounds()
-                local height = math.abs(maxs.z - mins.z) * self:GetGiftScale()
+                local newPos = self:GetPos() + self:GetZOffsetVec()
+                --debugoverlay.Cross(newPos, 10, 15, GW_DBG.Red)
+                --print(util.IsInWorld(newPos))
 
-                self:SetPos(self:GetPos() + Vector(0, 0, height))
+                self:SetPos(newPos)
                 self:RefreshPhysics()
+
+            elseif verbose then
+                dbg.Log("Upright check passed")
             end
+
+        elseif verbose then
+            dbg.Log("Upright check cancelled; velocity too high:", vel:Length())
+        end
+    end
+
+    function ENT:HandleMapExitTimeout(curTime)
+        local spawnRad = utils.mapSpawnStats.radius
+        --print(utils.PointZone(self:GetPos()))
+        --dbg.DebugSpawns(self, spawnRad, true)
+        --dbg.ShowNearbySpawns(spawnRad, 2, 0.2)
+
+        local exitedMap = function()
+            local pos = self:GetPos()
+            local curZone = utils.PointZone(self:GetPos())
+            if curZone == "safe" then return false end
+
+            return curZone == "exit"
+              or (spawnRad and not utils.IsNearAnySpawn(pos, spawnRad))
+              or (utils.mapSpawnStats.waterExit and self:WaterLevel() > 0)
+        end
+
+        if not self.LastMapExit then
+            if exitedMap() then
+                dbg.Log("Map exit check started...")
+                self.LastMapExit = curTime
+            end
+
+        elseif curTime > self.LastMapExit + utils.mapSpawnStats.timeout then
+            if exitedMap() then
+                local curPos = self:GetPos()
+                local spawnPos = utils.NearestSpawn(curPos).pos
+                local spawnHeight = Vector(0, 0, utils.mapSpawnStats.spnHeight)
+                local phys = self:GetPhysicsObject()
+
+                local tr = util.TraceLine({
+                    start  = spawnPos + spawnHeight,
+                    endpos = spawnPos - spawnHeight,
+                    mask = MASK_SOLID_BRUSHONLY
+                })
+
+                local newPos = (tr.Hit and tr.HitPos or spawnPos + Vector(0, 0, 20)) + self:GetZOffsetVec()
+                local tpDist = curPos:Distance(newPos)
+                dbg.Log("Map exit detected; moving to", newPos)
+
+                self._LastPos = nil --invalidate
+                self:SetPos(newPos)
+                self:SetAngles(Angle(0, 0, 0))
+                self:EmitSound(sounds["teleport"], 75, math.random(95, 100), 0.9)
+                self:RefreshPhysics()
+
+                -- notify magnetoing player if any
+                if phys:HasGameFlag(FVPHYSICS_PLAYER_HELD) then
+                    for _, magneto in ipairs(ents.FindByClass("weapon_zm_carry")) do
+                        if magneto:GetCarryTarget() == self then
+                            utils.NonSpamMessage(magneto:GetOwner(), "GIFT_TP", "The gift you were holding seemed to be out of bounds and was teleported back in-bounds.")
+                            break
+                        end
+                    end
+                end
+
+                -- I don't get why this is needed for the client
+                -- not to freak out... (shouldn't setPos be enough?) (or phys:SetPos?)
+                net.Start(TP_GIFT_MSG)
+                net.WriteEntity(self)
+                net.WriteVector(newPos)
+                net.Broadcast()
+
+                -- short-lived markervision to notify of position change
+                local mvObject = self:AddMarkerVision(MV_GIFT_TP_LABEL)
+                mvObject:SetOwner(0)
+                mvObject:SetVisibleFor(VISIBLE_FOR_ALL)
+                mvObject:SyncToClients()
+
+                local tpNoticeDisableTime = (tpDist > 1000) and 30 or 15
+                self:SetTPNoticeDisableTime(curTime + tpNoticeDisableTime)
+                timer.Simple(tpNoticeDisableTime, function()
+                    self:RemoveMarkerVision(MV_GIFT_TP_LABEL)
+                end)
+
+            else
+                dbg.Log("Map exit cancelled")
+            end
+
+            self.LastMapExit = nil
         end
     end
 
@@ -319,10 +436,17 @@ if SERVER then
 
         if curTime >= self.LastUprightCheck + self.UprightCheckFreq then
             self.LastUprightCheck = curTime
-            self:UprightCheck()
+            self:UprightCheck(false)
+
+            -- bandaid fix on cases of server-client position disagreement
+            net.Start(TP_GIFT_MSG)
+            net.WriteEntity(self)
+            net.WriteVector(self:GetPos())
+            net.Broadcast()
         end
 
         self:HandleClipbrushCollision(curTime)
+        self:HandleMapExitTimeout(curTime)
     end
 
     function notifyHasGiftee(ply, giftee)
@@ -366,6 +490,7 @@ if SERVER then
             activator:PickupWeapon(newGift)
             activator:SelectWeapon(SWEP_CLASS_NAME)
             self:RemoveMarkerVision(MV_GIFTEE_LABEL)
+            self:RemoveMarkerVision(MV_GIFT_TP_LABEL)
             self:Remove()
         end
     end
@@ -518,6 +643,15 @@ elseif CLIENT then
         christmasTree = net.ReadEntity()
     end)
 
+    net.Receive(TP_GIFT_MSG, function()
+        local giftEnt = net.ReadEntity()
+        local newPos = net.ReadVector()
+
+        if IsValid(giftEnt) then
+            giftEnt:SetPos(newPos)
+        end
+    end)
+
     function ENT:Think() -- periodic jingle noise if there's a gift meant for you out there
         local curTime = CurTime()
 
@@ -543,10 +677,22 @@ elseif CLIENT then
 
             mvData:AddIcon(giftIcon, COLOR_WHITE)
             mvData:EnableText()
-            mvData:SetTitle("A gift just for you!")
+            mvData:SetTitle(utils.TL("gift_mv_giftee"))
 
             mvData:AddDescriptionLine(LANG.GetParamTranslation("marker_vision_distance", {
                 distance = util.DistanceToString(dist, 1)
+            }))
+
+        elseif mvObject:IsObjectFor(ent, MV_GIFT_TP_LABEL) then
+            local timeLeft = ent:GetTPNoticeDisableTime() - CurTime()
+            if timeLeft < 0 then return end
+
+            mvData:AddIcon(giftIcon, COLOR_WHITE)
+            mvData:EnableText()
+            mvData:SetTitle(utils.TL("gift_mv_tp"))
+            mvData:AddDescriptionLine(utils.TL("gift_mv_tp_desc"))
+            mvData:AddDescriptionLine(LANG.GetParamTranslation("gift_mv_tp_time", {
+                timeLeft = math.Round(timeLeft)
             }))
 
         elseif string.sub(mvObject:GetIdentifier(), 1, 21) == MV_TREE_LABEL then

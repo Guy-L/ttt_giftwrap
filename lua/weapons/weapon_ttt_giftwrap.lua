@@ -18,6 +18,7 @@ local HOOK_RELOAD_SOUNDS     = "TTT_GiftWrap_ReloadSounds"
 local HOOK_RESET_VM_COLORS   = "TTT_GiftWrap_ResetVMColors"
 local WRAPPED_GIFT_REMOVE    = "TTT_GiftWrap_WrappedGiftRemove"
 local GIFTWRAP_REMOVE        = "TTT_GiftWrap_XMasBeaconRemove"
+TP_GIFT_MSG                  = "TTT_GiftWrapSV_TeleportGift"
 
 local TIMEZONE_OFFSET_HOURS       = utils.Cvar("ttt2_giftwrap_timezone_offset", "0", -24, 24, "Adjusts the timezone used for determining whether it's Christmas (offset in hours).")
 local SECOND_GIFT_CHANCE          = utils.Cvar("ttt2_giftwrap_second_gift_chance", "0.5", 0, 1, "Chance for a second random gift spawn per Snuffle gift replaced.")
@@ -57,6 +58,7 @@ if SERVER then
     util.AddNetworkString(GIFTWRAP_PICKUP_MSG)
     util.AddNetworkString(GIFTWRAP_HL_CHAT_MSG)
     util.AddNetworkString(GIFTWRAP_GIFT_DATA_MSG)
+    util.AddNetworkString(TP_GIFT_MSG)
     util.PrecacheModel(WRAP_VIEWMODEL)
     util.PrecacheModel(WRAP_WORLDMODEL)
     util.PrecacheModel(GIFT_VIEWMODEL)
@@ -887,6 +889,7 @@ if SERVER then
 
     function SWEP:AutoWrap(label, data)
         local owner = self:GetOwner()
+        if not IsValid(owner) then return end
 
         self:SetCachedDataLabel(label)
         self:SetWrapperSID(owner:SteamID64())

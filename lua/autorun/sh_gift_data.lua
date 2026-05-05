@@ -1,4 +1,4 @@
-include("sh_giftwrap_utils.lua")
+include("sh_physics_utils.lua")
 local utils = GW_Utils
 local dbg   = GW_DBG
 
@@ -3158,6 +3158,11 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             if dmg < 0.01 then
                 dmg = math.floor(dmg * 10000 + 0.5)
                 dmgInfo:SetDamage(dmg * VDFIX_MULT_DRIVER:GetFloat()/100)
+
+                local driver = target:GetDriver()
+                if IsValid(driver) then
+                    dbg.Log("Corrected near-zero damage for driver", driver, dmgInfo)
+                end
             end
 
             -- apply damage to passenger seats (one layer down)
@@ -3167,6 +3172,11 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
                     seatDmg:SetDamage(dmg * VDFIX_MULT_PASNGR:GetFloat()/100)
                     seatDmg:SetAttacker(dmgInfo:GetAttacker())
                     child:TakeDamageInfo(seatDmg)
+
+                    local seatPsgr = child:GetDriver()
+                    if IsValid(seatPsgr) then
+                        dbg.Log("Applied damage to passenger", seatPsgr, seatDmg)
+                    end
                 end
             end
         end

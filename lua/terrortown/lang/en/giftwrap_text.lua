@@ -7,6 +7,11 @@ L["gift_instruction_wrapper_lmb"] = "Throw gift"
 L["gift_instruction_all_lmb"] = "Open gift"
 L["gift_instruction_all_rmb"] = "Shake gift"
 
+L["gift_mv_giftee"] = "A gift just for you!"
+L["gift_mv_tp"] = "Gift teleported"
+L["gift_mv_tp_desc"] = "This gift was moved back in-bounds."
+L["gift_mv_tp_time"] = "Notice disappears in: {timeLeft}s"
+
 L["label_giftwrap_random_gifts_form"] = "Natural Random Gifts"
 L["label_giftwrap_random_gifts_desc"] = [[If your server has the YoWaddup General Fixes addon installed, this addon will replace the 3 gifts next to its naturally generating Christmas Tree with gifts bearing random gifts. See the addon's workshop or GitHub page for the current random gift pool.
 
