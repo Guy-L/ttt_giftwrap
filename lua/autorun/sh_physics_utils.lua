@@ -261,7 +261,7 @@ if SERVER then
             if not filters[i] then
                 for _, spawnEntType in pairs(spawnType) do
                     for _, spawn in pairs(spawnEntType) do
-                        local spawnPos = spawn.pos
+                        local spawnPos = Vector(spawn.pos.x, spawn.pos.y, spawn.pos.z)
                         spawnPos.z = spawnPos.z - 20
 
                         if not (filterWater and bit.band(util.PointContents(spawnPos), CONTENTS_WATER) > 0) then
