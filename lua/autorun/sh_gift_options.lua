@@ -260,7 +260,10 @@ elseif SERVER then
 
         else
             giftEnt:AutoWrap(GetSWEPGiftData(equipmentName))
-            equip:Remove()
+
+            if equipmentName ~= SWEP_CLASS_NAME then
+                equip:Remove()
+            end
         end
 
         if shop.buyTable[ply] then -- clear bought flag in shop
