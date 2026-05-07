@@ -2,9 +2,12 @@ include("sh_giftwrap_utils.lua")
 local utils = GW_Utils
 local dbg   = GW_DBG
 
-GW_DBG.Red = Color(255, 50, 50)
-GW_DBG.Blue = Color(50, 255, 50)
-GW_DBG.Green = Color(50, 50, 255)
+HIDE_MARK_MSG   = "TTT_GiftWrapSV_HideMark"
+UNHIDE_MARK_MSG = "TTT_GiftWrapSV_UnHideMark"
+
+GW_DBG.Red   = Color(255, 50, 50)
+GW_DBG.Green = Color(50, 255, 50)
+GW_DBG.Blue  = Color(50, 50, 255)
 
 if SERVER then
     function GW_DBG.GoToGift(i) -- meant for local testing
@@ -142,6 +145,9 @@ end
 -----------------------------------------------------
 
 if SERVER then
+    util.AddNetworkString(HIDE_MARK_MSG)
+    util.AddNetworkString(UNHIDE_MARK_MSG)
+
     function GW_Utils.GetEntCenter(ent)
         local phys = ent:GetPhysicsObject()
         if IsValid(phys) then
@@ -183,6 +189,11 @@ if SERVER then
             rope._storedWidth = rope:GetKeyValues()["Width"]
             rope:SetKeyValue("Width", "0")
         end
+
+        -- hide all markervisions client-side
+        net.Start(HIDE_MARK_MSG)
+        net.WriteEntity(ent)
+        net.Broadcast()
     end
 
     function GW_Utils.ExitStasis(ent, pos, stabilize)
@@ -216,11 +227,17 @@ if SERVER then
         net.WriteVector(pos)
         net.Broadcast()
 
+        -- unhide connected ropes
         for _, rope in ipairs(GW_Utils.FindConnectedRopes(ent)) do
             if rope._storedWidth then
                 rope:SetKeyValue("Width", tostring(rope._storedWidth))
             end
         end
+
+        -- unhide all markervisions client-side
+        net.Start(UNHIDE_MARK_MSG)
+        net.WriteEntity(ent)
+        net.Broadcast()
     end
 
     function GW_Utils.FindConnectedRopes(ent)
@@ -261,8 +278,7 @@ if SERVER then
             if not filters[i] then
                 for _, spawnEntType in pairs(spawnType) do
                     for _, spawn in pairs(spawnEntType) do
-                        local spawnPos = Vector(spawn.pos.x, spawn.pos.y, spawn.pos.z)
-                        spawnPos.z = spawnPos.z - 20
+                        local spawnPos = Vector(spawn.pos.x, spawn.pos.y, spawn.pos.z - 20)
 
                         if not (filterWater and bit.band(util.PointContents(spawnPos), CONTENTS_WATER) > 0) then
                             table.insert(spawns, {pos = spawnPos, grp = i})
@@ -526,4 +542,32 @@ if SERVER then
     GW_DBG.Log("Map Stats for "..map.."...")
     GW_DBG.Inspect(GW_Utils.mapSpawnStats)
     if GW_AllNonWaterSpawns then GW_DBG.Log("Non-water spawns: ", #GW_AllNonWaterSpawns) end
+
+
+elseif CLIENT then
+    net.Receive(HIDE_MARK_MSG, function()
+        local ent = net.ReadEntity()
+        if not IsValid(ent) then return end
+
+        marks.Remove({ ent })
+        ent._HideMarks = true -- handled in mv hook in prop lua
+    end)
+
+    net.Receive(UNHIDE_MARK_MSG, function()
+        local ent = net.ReadEntity()
+        if not IsValid(ent) then return end
+
+        ent._HideMarks = false
+        local markColor = nil
+
+        for _, mv in ipairs(markerVision.registry) do
+            if mv:GetEnt() == ent then
+                markColor = mv:GetColor()
+            end
+        end
+
+        if markColor then
+            marks.Add({ ent }, markColor)
+        end
+    end)
 end

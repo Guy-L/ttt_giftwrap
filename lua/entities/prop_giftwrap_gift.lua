@@ -104,6 +104,7 @@ function ENT:Initialize()
                 local mvObject = self:AddMarkerVision(MV_GIFTEE_LABEL)
                 mvObject:SetOwner(giftee)
                 mvObject:SetVisibleFor(VISIBLE_FOR_PLAYER)
+                mvObject:SetColor(UnpackColor(self:GetGiftBoxColor()))
                 mvObject:SyncToClients()
             end
         end)
@@ -409,12 +410,24 @@ if SERVER then
                 local mvObject = self:AddMarkerVision(MV_GIFT_TP_LABEL)
                 mvObject:SetOwner(0)
                 mvObject:SetVisibleFor(VISIBLE_FOR_ALL)
+                mvObject:SetColor(UnpackColor(self:GetGiftBoxColor()))
                 mvObject:SyncToClients()
 
                 local tpNoticeDisableTime = (tpDist > 1000) and 30 or 15
                 self:SetTPNoticeDisableTime(curTime + tpNoticeDisableTime)
                 timer.Simple(tpNoticeDisableTime, function()
-                    self:RemoveMarkerVision(MV_GIFT_TP_LABEL)
+                    if IsValid(self) then
+                        dbg.Log("Turning off teleport notice for", self)
+                        self:RemoveMarkerVision(MV_GIFT_TP_LABEL)
+
+                        -- resync mark color in case gift had giftee
+                        local giftee = self:GetGiftee()
+                        if IsValid(giftee) then
+                            net.Start(UNHIDE_MARK_MSG)
+                            net.WriteEntity(self)
+                            net.Send(giftee)
+                        end
+                    end
                 end)
 
             else
@@ -669,6 +682,11 @@ elseif CLIENT then
 
     hook.Add("TTT2RenderMarkerVisionInfo", HOOK_GIFTWRAP_MARKER_UI, function(mvData)
         local ent = mvData:GetEntity()
+        if ent._HideMarks then
+            mvData.drawInfo = false
+            return
+        end
+
         local mvObject = mvData:GetMarkerVisionObject()
 
         if mvObject:IsObjectFor(ent, MV_GIFTEE_LABEL) then
@@ -683,7 +701,8 @@ elseif CLIENT then
                 distance = util.DistanceToString(dist, 1)
             }))
 
-        elseif mvObject:IsObjectFor(ent, MV_GIFT_TP_LABEL) then
+        elseif mvObject:IsObjectFor(ent, MV_GIFT_TP_LABEL)
+          and not ent:GetMarkerVision(MV_GIFTEE_LABEL) then --prevent them rendering atop each other
             local timeLeft = ent:GetTPNoticeDisableTime() - CurTime()
             if timeLeft < 0 then return end
 
