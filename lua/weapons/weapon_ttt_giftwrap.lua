@@ -68,6 +68,7 @@ if SERVER then
     hook.Add("TTTBeginRound", HOOK_ROUND_RESET_OPENS, function()
         for _, ply in ipairs(player.GetAll()) do
             ply:SetNWBool("OpenedRandomGift", false)
+            ply:SetNWBool("GotFirstTimeSample", false)
         end
 
         local adjTime = os.time(os.date("!*t")) + (TIMEZONE_OFFSET_HOURS:GetFloat() * 3600)

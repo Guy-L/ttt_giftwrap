@@ -282,6 +282,16 @@ elseif SERVER then
 
     hook.Add("TTT2OrderedEquipment", HOOK_ORDER_EQUIPMENT, function(ply, equipmentName, isItem, credits, ignoreCost)
         InterceptPurchaseForGift(ply, equipmentName, isItem)
+
+        -- give 1cred on 1st giftwrap purchase for roles starting with 1 credits
+        if not ply._gwInOptMenu and equipmentName == SWEP_CLASS_NAME and not ply:GetNWBool("GotFirstTimeSample") then
+            local startCreds = math.ceil(GetConVar("ttt_" .. ply:GetSubRoleData().abbr .. "_credits_starting"):GetFloat())
+
+            if startCreds <= 2 then
+                ply:AddCredits(1)
+                ply:SetNWBool("GotFirstTimeSample", true)
+            end
+        end
     end)
 
     local function extendDeathmatchBuy()
