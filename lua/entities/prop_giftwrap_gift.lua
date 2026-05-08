@@ -159,6 +159,10 @@ function ENT:OnTakeDamage(dmgInfo)
     end
 end
 
+function ENT:UpdateTransmitState()
+    return TRANSMIT_ALWAYS -- update state for all clients
+end
+
 function ENT:GetGiftScale()
     local giftLabel = self:GetCachedDataLabel()
     local giftData  = GetGiftDataFromLabel(giftLabel)
