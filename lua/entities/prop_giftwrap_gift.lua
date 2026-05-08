@@ -682,11 +682,6 @@ elseif CLIENT then
 
     hook.Add("TTT2RenderMarkerVisionInfo", HOOK_GIFTWRAP_MARKER_UI, function(mvData)
         local ent = mvData:GetEntity()
-        if ent._HideMarks then
-            mvData.drawInfo = false
-            return
-        end
-
         local mvObject = mvData:GetMarkerVisionObject()
 
         if mvObject:IsObjectFor(ent, MV_GIFTEE_LABEL) then

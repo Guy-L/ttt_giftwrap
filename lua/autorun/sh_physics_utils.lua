@@ -159,6 +159,15 @@ if SERVER then
         return ent:GetPos()
     end
 
+    function GW_Utils.GetGroundHit(pos, filterEnt)
+        return util.TraceLine({
+            start  = pos + Vector(0, 0, 100),
+            endpos = pos - Vector(0,0,1000),
+            filter = filterEnt,
+            mask   = MASK_NPCWORLDSTATIC,
+        })
+    end
+
     function GW_Utils.GetRandomUpwardsVel(raise)
         local dir = VectorRand()
         dir.z = math.abs(dir.z + raise)
@@ -539,8 +548,8 @@ if SERVER then
     GW_Utils.mapSpawnStats = GW_Utils.mapSpawnStatsList[map] or {radius=1000, timeout=10}
     if not GW_Utils.mapSpawnStats.spnHeight then GW_Utils.mapSpawnStats.spnHeight = 100 end
 
-    GW_DBG.Log("Map Stats for "..map.."...")
-    GW_DBG.Inspect(GW_Utils.mapSpawnStats)
+    --GW_DBG.Log("Map Stats for "..map.."...")
+    --GW_DBG.Inspect(GW_Utils.mapSpawnStats)
     if GW_AllNonWaterSpawns then GW_DBG.Log("Non-water spawns: ", #GW_AllNonWaterSpawns) end
 
 

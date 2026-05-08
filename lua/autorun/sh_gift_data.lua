@@ -15,6 +15,7 @@ local SPECIAL_WEIGHT_MULT = utils.Cvar(SPECIAL_WEIGHT_NAME, "1", 0, 5, "Weight m
 local PLACEHOLDER_DATA_REMOVE    = "GiftWrap_RemoveGiftData"
 local CLUTTERBOMB_LIGHT_FIX_HOOK = "GiftWrap_ClutterbombLightFix"
 local INIT_FIXES_HOOK            = "GiftWrap_InitialFixesSetup"
+local OVERRIDE_MV_HOOK           = "GiftWrapCL_OverrideMarkerVisionRenderHook"
 local ENT_TAKE_DAMAGE_HOOK       = "GiftWrapSV_VehicleOccupantsDamageFix"
 local PLAYER_USE_HOOK            = "GiftWrapSV_InternalVehicleSeatFix"
 
@@ -572,7 +573,7 @@ local giftDataCatalog = {
         factor_rarity = 3, factor_quality = -5,
         attrib_sound = GiftSound.Hollow,   attrib_size = GiftSize.Gigantic,
         attrib_smell = GiftSmell.Metallic, attrib_feel = GiftFeel.Heavy,
-        adjAngle = Angle(-90, 0, 0)
+        adjAngle = Angle(-90, 0, 0), special_setup = "auto_drive"
     },
 
     ----------------------------------------------------------------------
@@ -1499,7 +1500,7 @@ local deployableSWEPs = {
 
     c4      = {name = "C4", desc = "a bomb",
                SENT_id = "ttt_c4", SWEP_id = "weapon_ttt_c4",
-               SENT_setup = "grenade", SENT_setup_var = {k = "explosion_delay", v = 10},
+               SENT_setup = "grenade", SENT_setup_var = {k = "explosion_delay", v = 10}, --TODO throws Lua errors
                SENT_random = false, SWEP_random = false,
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Beeping, smell = GiftSmell.Gunpowder, feel = GiftFeel.Heavy},
@@ -1589,8 +1590,9 @@ local deployableSWEPs = {
 
     fan     = {name = "Fan", desc = "a powerful fan",
                SENT_id = "ent_ttt_fan", SWEP_id = "weapon_fan",
-               SENT_setup = "fan_setup", SENT_setup_var = {k = "set_owner"},
-               SENT_random = false, SWEP_random = false, --todo SENT (fix invincible)
+               SENT_setup = "fan_setup", SENT_setup_var = {{k = "mv_hook", v = "FanMarkerVisionDisplay"}},
+               SENT_random = true, SENT_rarity = 3, SENT_quality = -8,
+               SWEP_random = false,
                SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Large,
                sound = GiftSound.Whirring, smell = GiftSmell.Dusty, feel = GiftFeel.Moving},
 
@@ -1614,6 +1616,7 @@ local deployableSWEPs = {
                SENT_id = PROP_CLASS_NAME, SWEP_id = SWEP_CLASS_NAME,
                SENT_name = "Wrapped Gift",
                SENT_setup = "gift_setup", SWEP_setup = "giftwrap_desc",
+               SENT_setup_var = {k = "mv_hook", v = "TTT_GiftWrap_MarkerVision"},
                SENT_random = true, SENT_rarity = 0.8, SENT_quality = 2,
                SWEP_random = true, SWEP_rarity = 2,   SWEP_quality = 4,
                SWEP_size = GiftSize.Huge,
@@ -1708,7 +1711,7 @@ local deployableSWEPs = {
 
     lethal_mine = {name = "Lethal Mine", desc = "a landmine",
                SENT_id = "item_lethal_company_landmine", SWEP_id = "weapon_ttt_lethalmine",
-               SENT_setup_var = {{k = "stick_to_ground"}, {k = "move_to_giftee"}},
+               SENT_setup_var = {{k = "stick_to_ground"}, {k = "move_to_giftee"}}, --TODO fix: magnetoable, slides off slanted ground (not properly ground-stuck)
                SENT_random = true, SENT_rarity = 10, SENT_quality = -10,
                SWEP_random = false,
                SENT_size = GiftSize.Big, SWEP_size = GiftSize.Normal,
@@ -2240,8 +2243,8 @@ function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
             wrappedEnt.shieldDeployAngleYaw = giftee:GetEyeTrace().Normal:Angle().yaw
 
         elseif self.special_setup == "fan_setup" then
-            wrappedEnt:SetNWString("fanName", "ttt_fan")
-            wrappedEnt:SetNWInt("health", TTT_FAN.CVARS.fan_health)
+            wrappedEnt:SetName("ttt_fan")
+            wrappedEnt.Owner = giftee -- for some reason set_owner messes with health setup
 
         elseif self.special_setup == "gift_setup" then
             wrappedEnt:SetIsRandomGift(true)
@@ -2321,7 +2324,7 @@ function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
     end
 end
 
-function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj)
+function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo)
     if self.move_to_giftee then
         wrappedEnt:SetPos(giftee:GetPos())
     end
@@ -2333,14 +2336,7 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj)
         end
 
         if not wrappedEnt:IsOnGround() then
-            local giftCenter = utils.GetEntCenter(wrappedEnt)
-
-            local groundTr = util.TraceLine({
-                start  = giftCenter + Vector(0, 0, 100),
-                endpos = giftCenter - Vector(0,0,1000),
-                filter = wrappedEnt,
-                mask   = MASK_NPCWORLDSTATIC,
-            })
+            local groundTr = utils.GetGroundHit(utils.GetEntCenter(wrappedEnt), wrappedEnt)
 
             if groundTr.Hit then
                 wrappedEnt:SetPos(groundTr.HitPos)
@@ -2446,6 +2442,46 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj)
         elseif self.special_setup == "amaterasu_setup" then
             giftee:SetNWBool("TTTAmaterasu", true)
             SetGlobalBool("TTTAmaterasuBought", true)
+
+        elseif self.special_setup == "auto_use" and not isUndo then
+            wrappedEnt:Use(giftee)
+
+        elseif self.special_setup == "auto_drive" and not isUndo then
+            giftee:EnterVehicle(wrappedEnt)
+
+            timer.Simple(1.5, function()
+                if giftee:InVehicle() then
+                    utils.NonSpamMessage(giftee, "AutoDriveHint", "Hint: Press the use key to exit the vehicle.")
+                end
+            end)
+
+        elseif self.special_setup == "fan_setup" then
+            local health = wrappedEnt:GetNWInt("health")
+            if not health or health == 0 then --newly spawned
+                wrappedEnt:SetNWInt("health", TTT_FAN.CVARS.fan_health)
+            end
+
+            local groundTr = utils.GetGroundHit(utils.GetEntCenter(wrappedEnt), wrappedEnt)
+
+            if groundTr.Hit then
+                local ang = groundTr.HitNormal:Angle() + Angle(90, 0, 0)
+
+                local dir = (giftee:GetPos() - wrappedEnt:GetPos()):GetNormalized()
+                dir = (dir - groundTr.HitNormal * dir:Dot(groundTr.HitNormal)):GetNormalized()
+
+                local forward = ang:Forward()
+                local rot = math.deg(math.atan2(
+                    forward:Cross(dir):Dot(groundTr.HitNormal),
+                    forward:Dot(dir)
+                ))
+
+                ang:RotateAroundAxis(groundTr.HitNormal, rot - 90)
+                wrappedEnt:SetAngles(ang)
+                wrappedEnt:SetPos(groundTr.HitPos + Vector(0, 0, 18))
+            else
+                wrappedEnt:SetAngles(Angle(0, ang.y - 90, 0))
+            end
+
         end
     end
 
@@ -2526,6 +2562,7 @@ function GiftData:Spawn(giftee)
 
             self:ApplyPreSpawnAdjustments(giftEnt, giftee)
             giftEnt:Spawn()
+
             return giftEnt
 
         elseif category == GiftCategory.AutoEquipSWEP then -- AutoEquipSWEP
@@ -2834,6 +2871,25 @@ elseif CLIENT then
 
         return statusTable
     end
+
+    -- setup client-side markervision overrides
+    hook.Add("InitPostEntity", OVERRIDE_MV_HOOK, function()
+        for label, giftData in pairs(giftDataCatalog) do
+            if giftData.mv_hook then
+                local ogHook = hook.GetTable()["TTT2RenderMarkerVisionInfo"][giftData.mv_hook]
+
+                hook.Add("TTT2RenderMarkerVisionInfo", giftData.mv_hook, function(mvData)
+                    local ent = mvData:GetEntity()
+
+                    if not ent._HideMarks then
+                        ogHook(mvData)
+                    else
+                        mvData.drawInfo = false
+                    end
+                end)
+            end
+        end
+    end)
 end
 
 local giftSurfaceTypeProps = {

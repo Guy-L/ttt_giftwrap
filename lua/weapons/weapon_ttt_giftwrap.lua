@@ -144,7 +144,7 @@ if SERVER then
             "ttt_decoy", -- blocked later if affixed
             "ttt_thrownflashbang",
             "ent_fortnitestructure", -- blocked later (affixed)
-            --"ent_ttt_fan", -- TODO: bugged (wind remains), need ownership check
+            "ent_ttt_fan",
             --"ttt_flame", --TODO: bugged
             --"sent_greendemon_box", --TODO: bugged (ui remains), needs ownership check, possible balance issue
             --"sent_greendemon", --TODO: bugged
@@ -167,8 +167,8 @@ if SERVER then
             "ttt_poison_station", -- TODO: ownership check
             "ttt_potofgreedier",
             --"ttt_radio", -- blocked later if affixed; TODO: bugged (markervision; can get permanent burning SFX?), need ownership check
-            --"ttt_ragnana_peel", -- TODO: bugged (ui remains)
-            --"sent_rcxd", -- TODO: bugged (lights remain)
+            --"ttt_ragnana_peel",
+            --"sent_rcxd",
             "shield_deployer",
             --"ttt_slam_satchel", -- TODO: bugged (ui remains), needs ownership check
             "ttt_shard_of_greed",
@@ -715,11 +715,11 @@ if SERVER then
             -- Plop back into world
             local doStabilize = #giftEnt:GetChildren() > 0 or giftData.category == GiftCategory.Vehicle
             utils.ExitStasis(giftEnt, spawnPos, doStabilize)
-            giftData:ApplyPostUnwrapAdjustments(giftEnt, gifteePly, giftObj)
+            giftData:ApplyPostUnwrapAdjustments(giftEnt, gifteePly, giftObj, isUndo)
 
         else -- for particle position later
             spawnPos = gifteePly:GetShootPos()
-            giftData:ApplyPostUnwrapAdjustments(nil, gifteePly)
+            giftData:ApplyPostUnwrapAdjustments(nil, gifteePly, isUndo)
         end
 
         -- Chat Notif
