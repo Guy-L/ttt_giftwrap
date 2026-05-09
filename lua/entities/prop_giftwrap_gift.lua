@@ -138,8 +138,8 @@ function ENT:OnTakeDamage(dmgInfo)
             elseif IsValid(giftee) and giftee != attacker and not utils.ConfirmedDead(attacker, giftee) then
                 notifyHasGiftee(attacker, giftee)
 
-            elseif attackerOpenedRandomGift and self:GetIsRandomGift() and not dbg.Cvar:GetBool() then
-                utils.NonSpamMessage(attacker, "OpenAttempt", ERROR_ALREADY_OPENED)
+            --elseif attackerOpenedRandomGift and self:GetIsRandomGift() and not dbg.Cvar:GetBool() then
+            --    utils.NonSpamMessage(attacker, "OpenAttempt", ERROR_ALREADY_OPENED)
 
             else
                 -- TODO: Proper gibbing?

@@ -477,13 +477,13 @@ function SWEP:PrimaryAttack()
             local ownerOpenedRandomGift = owner:GetNWBool("OpenedRandomGift")
             local giftee = self:GetGiftee()
 
-            -- Throw if not allowed due to opening a second random gift
-            if ownerOpenedRandomGift and self:GetIsRandomGift() and not dbg.Cvar:GetBool() then
+            -- Throw if not allowed due to opening a second random gift; TODO: only natural random gifts
+            --[[if ownerOpenedRandomGift and self:GetIsRandomGift() and not dbg.Cvar:GetBool() then
                 utils.NonSpamMessage(owner, "OpenAttempt", ERROR_ALREADY_OPENED)
                 self:Throw(owner)
 
             -- Throw if not allowed due to not being giftee (failsafe)
-            elseif IsValid(giftee) and owner != giftee and not utils.ConfirmedDead(owner, giftee) then
+            else]]if IsValid(giftee) and owner != giftee and not utils.ConfirmedDead(owner, giftee) then
                 if SERVER then notifyHasGiftee(owner, giftee) end
                 self:Throw(owner)
 
@@ -727,7 +727,9 @@ if SERVER then
         local giftDesc = giftData:GetDesc(giftEnt, gifteePly)
 
         if giftEnt ~= false then
-            if giftObj:GetIsRandomGift() then
+            local isRandomGift = giftObj:GetIsRandomGift()
+
+            if isRandomGift then
                 if giftData.factor_rarity and giftData.factor_rarity >= 5 then
                     gifteePly:ChatPrint(superRare[math.random(#superRare)])
 
@@ -741,18 +743,38 @@ if SERVER then
                 end
             end
 
+            local nonGifteePlayers = {}
+            local nearbyPlayers = {}
+
+            for _, ply in ipairs(player.GetAll()) do
+                if ply ~= gifteePly then
+                    table.insert(nonGifteePlayers, ply)
+
+                    if ply:GetPos():Distance(gifteePly:GetPos()) <= 300 then
+                        table.insert(nearbyPlayers, ply)
+                    end
+                end
+            end
+
+            local intendedGiftee = giftObj:GetGiftee()
+            local rightText = "!"
+
+            if not isUndo and IsValid(intendedGiftee) and gifteePly != intendedGiftee
+              and utils.ConfirmedDead(gifteePly, intendedGiftee) then
+                rightText = " meant for "..intendedGiftee:Nick().." (RIP)!"
+            end
+
             net.Start(GIFTWRAP_HL_CHAT_MSG)
             net.WriteString("You unwrapped ")
             net.WriteString(giftDesc)
-
-            local intendedGiftee = giftObj:GetGiftee()
-            if not isUndo and IsValid(intendedGiftee) and gifteePly != intendedGiftee
-              and utils.ConfirmedDead(gifteePly, intendedGiftee) then
-                net.WriteString(" meant for "..intendedGiftee:Nick().." (RIP)!")
-            else
-                net.WriteString("!")
-            end
+            net.WriteString(rightText)
             net.Send(gifteePly)
+
+            net.Start(GIFTWRAP_HL_CHAT_MSG)
+            net.WriteString("Someone nearby unwrapped ")
+            net.WriteString(giftDesc)
+            net.WriteString(rightText)
+            net.Send(nearbyPlayers)
 
             local unwrapNote = giftObj:GetUnwrapNote()
             dbg.Log("Unwrap note: '"..unwrapNote.."'")
@@ -763,8 +785,16 @@ if SERVER then
                     net.WriteString("A note was attached: \"")
                     net.WriteString(unwrapNote)
                     net.WriteString("\"")
-                    net.Send(gifteePly)
+                    net.Send(table.Add({gifteePly}, nearbyPlayers))
                 end)
+            end
+
+            if not isUndo and isRandomGift then
+                if giftData.factor_rarity and giftData.factor_rarity >= 5 then
+                    LANG.Msg(nonGifteePlayers, "gift_unwrap_notif_rare", nil, MSG_MSTACK_WARN)
+                else
+                    LANG.Msg(nonGifteePlayers, "gift_unwrap_notif_random", nil, MSG_MSTACK_PLAIN)
+                end
             end
 
         else
