@@ -101,11 +101,22 @@ function ENT:Initialize()
             local giftee = self:GetGiftee()
 
             if IsValid(giftee) then
-                local mvObject = self:AddMarkerVision(MV_GIFTEE_LABEL)
-                mvObject:SetOwner(giftee)
-                mvObject:SetVisibleFor(VISIBLE_FOR_PLAYER)
-                mvObject:SetColor(UnpackColor(self:GetGiftBoxColor()))
-                mvObject:SyncToClients()
+                local mvGiftee = self:AddMarkerVision(MV_GIFTEE_LABEL)
+                mvGiftee:SetOwner(giftee)
+                mvGiftee:SetVisibleFor(VISIBLE_FOR_PLAYER)
+                mvGiftee:SetColor(UnpackColor(self:GetGiftBoxColor()))
+                mvGiftee:SyncToClients()
+            end
+
+            local wrapper = utils.GetWrapper(self)
+
+            if IsValid(wrapper) then
+                local mvWrapper = self:AddMarkerVision(MV_WRAPPER_LABEL)
+                mvWrapper:SetOwner(wrapper)
+                mvWrapper:SetVisibleFor(VISIBLE_FOR_PLAYER)
+                mvWrapper:SetColor(UnpackColor(self:GetGiftBoxColor()))
+                mvWrapper:SyncToClients()
+                self.mvWrapper = mvWrapper
             end
         end)
 
@@ -146,6 +157,7 @@ function ENT:OnTakeDamage(dmgInfo)
                 --self:GibBreakClient(Vector(0,0,10))
                 --self:GibBreakServer(Vector(0,0,10))
                 SpawnGiftEnt(attacker, self, utils.GetEntCenter(self))
+                self:RemoveMarkerVision(MV_WRAPPER_LABEL)
                 self:RemoveMarkerVision(MV_GIFTEE_LABEL)
                 self:RemoveMarkerVision(MV_GIFT_TP_LABEL)
                 self:Remove()
@@ -504,6 +516,15 @@ if SERVER then
             utils.TransferNetVars(self, newGift)
             newGift:SetClip1(-1)
 
+            if self.mvWrapper then
+                if pickupByWrapper then
+                    self:RemoveMarkerVision(MV_WRAPPER_LABEL)
+                else
+                    self.mvWrapper:SetEnt(newGift)
+                    self.mvWrapper:SyncToClients()
+                end
+            end
+
             activator:PickupWeapon(newGift)
             activator:SelectWeapon(SWEP_CLASS_NAME)
             self:RemoveMarkerVision(MV_GIFTEE_LABEL)
@@ -695,7 +716,27 @@ elseif CLIENT then
         local ent = mvData:GetEntity()
         local mvObject = mvData:GetMarkerVisionObject()
 
-        if mvObject:IsObjectFor(ent, MV_GIFTEE_LABEL) then
+        if mvObject:IsObjectFor(ent, MV_WRAPPER_LABEL) then
+            local dist = mvData:GetEntityDistance()
+            if dist < 150 then return end
+
+            mvData:AddIcon(giftIcon, Color(150, 150, 150))
+            mvData:EnableText()
+
+            local giftee = ent:GetGiftee()
+            if IsValid(giftee) then
+                mvData:AddDescriptionLine(LANG.GetParamTranslation("gift_mv_wrapper_giftee", {
+                    giftee = giftee:Nick()
+                }))
+            else
+                mvData:SetTitle(utils.TL("gift_mv_wrapper"))
+            end
+
+            mvData:AddDescriptionLine(LANG.GetParamTranslation("marker_vision_distance", {
+                distance = util.DistanceToString(dist, 1)
+            }))
+
+        elseif mvObject:IsObjectFor(ent, MV_GIFTEE_LABEL) then
             local dist = mvData:GetEntityDistance()
             if dist < 150 then return end
 
@@ -707,8 +748,8 @@ elseif CLIENT then
                 distance = util.DistanceToString(dist, 1)
             }))
 
-        elseif mvObject:IsObjectFor(ent, MV_GIFT_TP_LABEL)
-          and not ent:GetMarkerVision(MV_GIFTEE_LABEL) then --prevent them rendering atop each other
+        elseif mvObject:IsObjectFor(ent, MV_GIFT_TP_LABEL) --prevent them rendering atop each other
+          and not (ent:GetMarkerVision(MV_GIFTEE_LABEL) or ent:GetMarkerVision(MV_WRAPPER_LABEL)) then
             local timeLeft = ent:GetTPNoticeDisableTime() - CurTime()
             if timeLeft < 0 then return end
 

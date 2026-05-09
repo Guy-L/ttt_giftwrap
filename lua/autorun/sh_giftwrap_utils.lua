@@ -439,6 +439,7 @@ GW_DBG.Log("Utils initialized.")
 SWEP_CLASS_NAME  = "weapon_ttt_giftwrap"
 PROP_CLASS_NAME  = "prop_giftwrap_gift" -- needs to be "prop_" for prop disguiser to work
 MV_TREE_LABEL    = "giftwrap_gift_beacon_"
+MV_WRAPPER_LABEL = "giftwrap_wrapper_tracking"
 MV_GIFTEE_LABEL  = "giftwrap_giftee"
 MV_GIFT_TP_LABEL = "giftwrap_gift_teleport"
 

@@ -576,6 +576,12 @@ function SWEP:Deploy()
     end
 end
 
+function SWEP:OnRemove()
+    if self:GetMarkerVision(MV_WRAPPER_LABEL) then
+        self:RemoveMarkerVision(MV_WRAPPER_LABEL)
+    end
+end
+
 function SWEP:Throw(owner, force)
     if not owner then owner = self:GetOwner() end
     if not IsValid(owner) then return end
@@ -723,9 +729,14 @@ if SERVER then
             giftData:ApplyPostUnwrapAdjustments(nil, gifteePly, isUndo)
         end
 
-        -- Chat Notif
-        local giftDesc = giftData:GetDesc(giftEnt, gifteePly)
+        -- Wrapper Toast Notif
+        local wrapper = utils.GetWrapper(giftObj)
 
+        if not isUndo and IsValid(wrapper) then
+            LANG.Msg(wrapper, "gift_unwrap_notif_wrapper", {giftee = gifteePly:Nick()}, MSG_MSTACK_PLAIN)
+        end
+
+        -- Chat & Global Toast Notif
         if giftEnt ~= false then
             local isRandomGift = giftObj:GetIsRandomGift()
 
@@ -743,12 +754,12 @@ if SERVER then
                 end
             end
 
-            local nonGifteePlayers = {}
+            local uninvolvedPlayers = {}
             local nearbyPlayers = {}
 
             for _, ply in ipairs(player.GetAll()) do
-                if ply ~= gifteePly then
-                    table.insert(nonGifteePlayers, ply)
+                if ply ~= gifteePly and ply ~= wrapper then
+                    table.insert(uninvolvedPlayers, ply)
 
                     if ply:GetPos():Distance(gifteePly:GetPos()) <= 300 then
                         table.insert(nearbyPlayers, ply)
@@ -757,6 +768,7 @@ if SERVER then
             end
 
             local intendedGiftee = giftObj:GetGiftee()
+            local giftDesc = giftData:GetDesc(giftEnt, gifteePly)
             local rightText = "!"
 
             if not isUndo and IsValid(intendedGiftee) and gifteePly != intendedGiftee
@@ -791,9 +803,9 @@ if SERVER then
 
             if not isUndo and isRandomGift then
                 if giftData.factor_rarity and giftData.factor_rarity >= 5 then
-                    LANG.Msg(nonGifteePlayers, "gift_unwrap_notif_rare", nil, MSG_MSTACK_WARN)
+                    LANG.Msg(uninvolvedPlayers, "gift_unwrap_notif_rare", nil, MSG_MSTACK_WARN)
                 else
-                    LANG.Msg(nonGifteePlayers, "gift_unwrap_notif_random", nil, MSG_MSTACK_PLAIN)
+                    LANG.Msg(uninvolvedPlayers, "gift_unwrap_notif_random", nil, MSG_MSTACK_PLAIN)
                 end
             end
 

@@ -8,10 +8,13 @@ L["gift_instruction_all_lmb"] = "Open gift"
 L["gift_instruction_all_rmb"] = "Shake gift"
 
 L["gift_mv_giftee"] = "A gift just for you!"
+L["gift_mv_wrapper"] = "Your thrown gift"
+L["gift_mv_wrapper_giftee"] = "Your gift for {giftee}"
 L["gift_mv_tp"] = "Gift teleported"
 L["gift_mv_tp_desc"] = "This gift was moved back in-bounds."
 L["gift_mv_tp_time"] = "Notice disappears in: {timeLeft}s"
 
+L["gift_unwrap_notif_wrapper"] = "{giftee} opened your gift!"
 L["gift_unwrap_notif_random"] = "Someone unwrapped a random gift!"
 L["gift_unwrap_notif_rare"] = "Someone unwrapped a random Super Rare gift!"
 
