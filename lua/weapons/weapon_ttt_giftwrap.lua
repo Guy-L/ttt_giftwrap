@@ -178,7 +178,7 @@ if SERVER then
             "ttt_soap", -- blocked later (affixed); TODO consider making moveable with ownership check
             "ttt_springmine", -- blocked later (affixed); TODO consider making moveable with ownership check
             --"plasma_burster_nade", -- good luck wrapping that; TODO fix the whole thing being ass
-            --"npc_turret_floor", -- TODO: bugged (still fires); needs ownership check
+            "npc_turret_floor",
             --"ttt_wormhole", -- blocked later (affixed); TODO: bugged (angle is reset to parallel with ground on unwrap)
             "ttt_zombieball_proj", -- TODO: try wrapping an existing one somehow???
             "npc_zombie",
@@ -667,10 +667,10 @@ if SERVER then
     end
 
     local superRare = {
-        "You got a super rare item!",
-        "You pulled a super rare!",
-        "You found a super rare gift!",
-        "It's super rare!",
+        "You got a Super Rare item!",
+        "You pulled a Super Rare!",
+        "You found a Super Rare gift!",
+        "It's a Super Rare!",
         "L U C K Y!",
     }
     local niceList = {

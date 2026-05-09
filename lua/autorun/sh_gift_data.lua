@@ -1538,7 +1538,7 @@ local deployableSWEPs = {
 
     conc_mine = {name = "Concussion Mine", desc = "a powerful whoopie cushion",
                SENT_id = "ttt_conmine", SWEP_id = "weapon_ttt_concussionmine",
-               SENT_random = false, SWEP_random = false,
+               SENT_random = false, SWEP_random = false, --TODO add
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Beeping, smell = GiftSmell.Sterile, feel = GiftFeel.Hollow},
 
@@ -1552,7 +1552,7 @@ local deployableSWEPs = {
     d20     = {name = "D20",             desc = "a DND dice",
                SENT_id = "ttt_d20_proj", SWEP_id = "ttt_d20",
                SENT_setup = "grenade",
-               SENT_random = true, SENT_rarity = 20, SENT_quality = 0,
+               SENT_random = false, --SENT_rarity = 20, SENT_quality = 0,
                SWEP_random = false,
                SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini, -- (todo check if it comes back)
                sound = GiftSound.Glass, smell = GiftSmell.Mineral, feel = GiftFeel.Random},
@@ -1590,7 +1590,7 @@ local deployableSWEPs = {
 
     fan     = {name = "Fan", desc = "a powerful fan",
                SENT_id = "ent_ttt_fan", SWEP_id = "weapon_fan",
-               SENT_setup = "fan_setup", SENT_setup_var = {{k = "mv_hook", v = "FanMarkerVisionDisplay"}},
+               SENT_setup = "fan_setup", SENT_setup_var = {{k = "ambush_giftee"}, {k = "ambush_angle", v = -90}, {k = "ambush_yoff", v = 18}},
                SENT_random = true, SENT_rarity = 3, SENT_quality = -8,
                SWEP_random = false,
                SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Large,
@@ -1873,7 +1873,7 @@ local deployableSWEPs = {
     turret  = {name = "Turret", desc = "a next-gen turret",
                SENT_category = GiftCategory.NPC,
                SENT_id = "npc_turret_floor", SWEP_id = "weapon_ttt_turret",
-               SENT_setup_var = {{k = "stick_to_ground"}, {k = "keep_motion"}},
+               SENT_setup_var = {{k = "ambush_giftee"}},
                SENT_random = true, SENT_rarity = 4, SENT_quality = -8,
                SWEP_random = false,
                SENT_size = GiftSize.Max, SWEP_size = GiftSize.Small,
@@ -2326,23 +2326,45 @@ end
 
 function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo)
     if self.move_to_giftee then
+        local curMoveType = wrappedEnt:GetMoveType()
+        wrappedEnt:SetMoveType(MOVETYPE_VPHYSICS)
         wrappedEnt:SetPos(giftee:GetPos())
+        wrappedEnt:SetMoveType(curMoveType)
     end
 
-    if self.stick_to_ground then
-        local phys = wrappedEnt:GetPhysicsObject()
-        if IsValid(phys) then
-            phys:EnableMotion(self.keep_motion == true)
-        end
+    if self.stick_to_ground and not wrappedEnt:IsOnGround() then
+        local groundTr = utils.GetGroundHit(utils.GetEntCenter(wrappedEnt), wrappedEnt)
 
-        if not wrappedEnt:IsOnGround() then
-            local groundTr = utils.GetGroundHit(utils.GetEntCenter(wrappedEnt), wrappedEnt)
-
-            if groundTr.Hit then
-                wrappedEnt:SetPos(groundTr.HitPos)
-                wrappedEnt:SetAngles(groundTr.HitNormal:Angle() + Angle(90, 0, 0))
-            end
+        if groundTr.Hit then
+            wrappedEnt:SetPos(groundTr.HitPos)
+            wrappedEnt:SetAngles(groundTr.HitNormal:Angle() + Angle(90, 0, 0))
+            if wrappedEnt.WeldToSurface then wrappedEnt:WeldToSurface(true) end
+            wrappedEnt:SetMoveType(MOVETYPE_NONE)
+            wrappedEnt:GetPhysicsObject():AddGameFlag(FVPHYSICS_NO_PLAYER_PICKUP)
         end
+    end
+
+    if self.ambush_giftee then
+        local groundTr = utils.GetGroundHit(utils.GetEntCenter(wrappedEnt), wrappedEnt)
+
+       if groundTr.Hit then
+           local ang = groundTr.HitNormal:Angle() + Angle(90, 0, 0)
+
+           local dir = (giftee:GetPos() - wrappedEnt:GetPos()):GetNormalized()
+           dir = (dir - groundTr.HitNormal * dir:Dot(groundTr.HitNormal)):GetNormalized()
+
+           local forward = ang:Forward()
+           local rot = math.deg(math.atan2(
+               forward:Cross(dir):Dot(groundTr.HitNormal),
+               forward:Dot(dir)
+           ))
+
+           ang:RotateAroundAxis(groundTr.HitNormal, rot + (self.ambush_angle or 0))
+           wrappedEnt:SetAngles(ang)
+           wrappedEnt:SetPos(groundTr.HitPos + Vector(0, 0, self.ambush_yoff or 0))
+       else
+           wrappedEnt:SetAngles(Angle(0, ang.y - 90, 0))
+       end
     end
 
     if IsValid(giftObj) and giftObj:GetIsContentsOnFire() then
@@ -2459,27 +2481,6 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
             local health = wrappedEnt:GetNWInt("health")
             if not health or health == 0 then --newly spawned
                 wrappedEnt:SetNWInt("health", TTT_FAN.CVARS.fan_health)
-            end
-
-            local groundTr = utils.GetGroundHit(utils.GetEntCenter(wrappedEnt), wrappedEnt)
-
-            if groundTr.Hit then
-                local ang = groundTr.HitNormal:Angle() + Angle(90, 0, 0)
-
-                local dir = (giftee:GetPos() - wrappedEnt:GetPos()):GetNormalized()
-                dir = (dir - groundTr.HitNormal * dir:Dot(groundTr.HitNormal)):GetNormalized()
-
-                local forward = ang:Forward()
-                local rot = math.deg(math.atan2(
-                    forward:Cross(dir):Dot(groundTr.HitNormal),
-                    forward:Dot(dir)
-                ))
-
-                ang:RotateAroundAxis(groundTr.HitNormal, rot - 90)
-                wrappedEnt:SetAngles(ang)
-                wrappedEnt:SetPos(groundTr.HitPos + Vector(0, 0, 18))
-            else
-                wrappedEnt:SetAngles(Angle(0, ang.y - 90, 0))
             end
 
         end
