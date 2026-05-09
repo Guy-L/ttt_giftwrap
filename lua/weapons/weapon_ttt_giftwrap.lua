@@ -541,7 +541,7 @@ function SWEP:SecondaryAttack()
 end
 
 function SWEP:HasGift()
-    return IsValid(self:GetStoredGift()) or self:GetIsRandomGift()
+    return self:GetCachedDataLabel() ~= "" or self:GetIsRandomGift()
 end
 
 function SWEP:OwnedByWrapper(owner)

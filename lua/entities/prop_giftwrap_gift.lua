@@ -564,11 +564,7 @@ if SERVER then
                         dbg.Log("Spawning "..tostring(giftCnt).." gifts.")
 
                         for i = 1, giftCnt do
-                            local newGift = ents.Create(PROP_CLASS_NAME)
-                            newGift:SetPos(ent:GetPos() + Vector(0, 0, 100))
-                            newGift:SetIsRandomGift(true)
-                            newGift:SetWrapperSID("WORLD")
-                            newGift:Spawn()
+                            SpawnRandomGift(ent:GetPos() + Vector(0, 0, 100))
                         end
                     end
 
@@ -623,12 +619,8 @@ if SERVER then
                                     --mask = MASK_SOLID
                                 })
 
-                                local newGift = ents.Create(PROP_CLASS_NAME)
-                                newGift:SetIsRandomGift(true)
-                                newGift:SetWrapperSID("WORLD")
-                                newGift:SetPos(tr.HitPos + Vector(0, 0, overPrevious and 150 or 75))
-                                newGift:SetAngles(Angle(0, angle, 0))
-                                newGift:Spawn()
+                                local spawnPos = tr.HitPos + Vector(0, 0, overPrevious and 150 or 75)
+                                SpawnRandomGift(spawnPos, angle)
                                 dbg.Log("Spawned gift for "..ply:Nick().."! (angle "..tostring(angle)..")")
                             end
                         end
@@ -645,6 +637,21 @@ if SERVER then
     hook.Add("TTTBeginRound", HOOK_ROUND_START_TIME, function()
         utils.RoundStartTime = CurTime()
     end)
+
+    function SpawnRandomGift(pos, angle)
+        local newGift = ents.Create(PROP_CLASS_NAME)
+        newGift:SetIsRandomGift(true)
+        newGift:SetWrapperSID("WORLD")
+        newGift:SetPos(pos)
+        RollGiftColors(newGift)
+
+        if angle then
+            newGift:SetAngles(Angle(0, angle, 0))
+        end
+
+        newGift:Spawn()
+        return newGift
+    end
 
 
 
