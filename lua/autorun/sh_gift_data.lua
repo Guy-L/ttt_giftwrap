@@ -225,7 +225,7 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Cotton, attrib_feel = GiftFeel.Massive,
     },
     dead_bunger = GiftData.New {
-        name     = "Dead Bunger",         desc       = "a friendly Bunger",
+        name     = "Dead Bunger",         desc       = "a dead Bunger",
         category = GiftCategory.PhysProp, identifier = "models/betterbunger.mdl",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Normal,
@@ -400,13 +400,14 @@ local giftDataCatalog = {
         special_setup = "bouncy_ball_setup"
     },
     bunger = GiftData.New {
-        name     = "Live Bunger",    desc       = "a cute Bunger",
+        name     = "Live Bunger",    desc       = "a Bunger",
         category = GiftCategory.NPC, identifier = "npc_headcrab_fast",
         can_be_random_gift = true,
-        factor_rarity = 2, factor_quality = 2,
+        factor_rarity = 0.7, factor_quality = 10,
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Alive,
-        special_setup = "bunger_setup"
+        special_setup = "bunger_setup",
+        menu_model_override = "models/betterbunger.mdl"
     },
     deadly_ball = GiftData.New {
         name     = "Harmful Bouncy Ball", desc       = "a colorful ball",
@@ -2264,7 +2265,7 @@ function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
             -- copied from bunger addon
             wrappedEnt:SetNPCState(2)
             wrappedEnt:SetNoDraw(true)
-            wrappedEnt:SetHealth(500) -- half as much
+            wrappedEnt:SetNWBool("GWFriendlyBunger", true)
 
             local bunger = ents.Create("prop_dynamic")
             bunger:SetModel("models/betterbunger.mdl")
@@ -2272,6 +2273,17 @@ function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
             bunger:SetAngles(Angle(0,270,0))
             bunger:SetParent(wrappedEnt)
             bunger:SetModelScale(2,0) -- for cute
+
+            local hat = ents.Create("prop_dynamic")
+            hat:SetModel("models/ttt/propeller_hat/propeller_hat.mdl")
+            hat:SetPos(bunger:GetPos() + Vector(2,0,20.5))
+            hat:SetAngles(Angle(0,270,1))
+            hat:SetParent(bunger)
+            hat:SetModelScale(3.5,0)
+
+            hat:Spawn()
+            hat:SetSequence("spin_max")
+            hat:ResetSequence("spin_max")
 
         elseif self.special_setup == "slam_setup" then
             wrappedEnt:SetPlacer(giftee)
@@ -2418,6 +2430,12 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
                 wrappedEnt:SetNoDraw(true)
             end
 
+            -- npc health must be set after spawning
+            if wrappedEnt:GetNWBool("GWFriendlyBunger") then
+                wrappedEnt:SetMaxHealth(1200)
+                wrappedEnt:SetHealth(1200)
+            end
+
         elseif self.special_setup == "timed_molotov_setup" then
             if wrappedEnt.storedFuse then
                 wrappedEnt.SpawnTime = CurTime() - wrappedEnt.storedFuse
@@ -2528,6 +2546,13 @@ function GiftData:GetDesc(wrappedEnt, giftee)
                 end
             else
                 return "a highly-targeted gift"
+            end
+
+        elseif self.special_setup == "bunger_setup" then
+            if not IsValid(wrappedEnt) or wrappedEnt:GetNWBool("GWFriendlyBunger") then
+                return "a pet Bunger"
+            else
+                return "an angry Bunger"
             end
         end
     end
@@ -3285,7 +3310,53 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             end
         end
     end)
+
 end)
+    -- Extend Killer Bungers damage method to conditionally disable damage
+    if SERVER and TurtleNadeDamage then
+        hook.Add("EntityTakeDamage", "TurtlenadeDmgHandle", function(victim, dmg)
+            local attacker = dmg:GetAttacker()
+
+            if attacker:IsValid() and attacker:GetNWBool("GWFriendlyBunger") then
+                TurtleInnocentDamage = 0
+                TurtleTraitorDamage  = 0
+
+            elseif victim:IsValid() and victim:GetNWBool("GWFriendlyBunger") then
+                if dmg:GetInflictor():GetClass() == "weapon_zm_improvised" then
+                    dmg:SetInflictor(game.GetWorld())
+                end
+
+                local bunger = utils.GetEntChildAt(victim, 1)
+
+                if IsValid(bunger) then
+                    local hat = utils.GetEntChildAt(bunger, 1)
+
+                    if IsValid(hat) then
+                        local oldHealth = victim:Health() - 980
+                        local newHealth = oldHealth - dmg:GetDamage()
+                        local maxHealth = victim:GetMaxHealth() - 980
+
+                        if oldHealth > maxHealth*0.75 and newHealth <= maxHealth*0.75 then
+                            hat:SetSequence("spin_fast")
+                            hat:ResetSequence("spin_fast")
+
+                        elseif oldHealth > maxHealth*0.5 and newHealth <= maxHealth*0.5 then
+                            hat:SetSequence("spin_med")
+                            hat:ResetSequence("spin_med")
+
+                        elseif oldHealth > maxHealth*0.25 and newHealth <= maxHealth*0.25 then
+                            hat:SetSequence("spin_slow")
+                            hat:ResetSequence("spin_slow")
+                        end
+                    end
+                end
+            end
+
+            TurtleNadeDamage(victim, dmg)
+            TurtleInnocentDamage = 20 -- defaults
+            TurtleTraitorDamage  = 5
+        end)
+    end
 
 
 if SERVER then

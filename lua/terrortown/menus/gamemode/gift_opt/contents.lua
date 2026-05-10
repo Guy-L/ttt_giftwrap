@@ -46,7 +46,10 @@ end)
 function SetModelImage(dImage, ent, giftData)
     local entModel
 
-    if IsValid(ent) then
+    if giftData and giftData.menu_model_override then
+        entModel = giftData.menu_model_override
+
+    elseif IsValid(ent) then
         entModel = ent:GetModel()
         dbg.Log("Got preview image from live model:", entModel)
 
