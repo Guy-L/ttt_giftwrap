@@ -46,8 +46,15 @@ end)
 function SetModelImage(dImage, ent, giftData)
     local entModel
 
-    if giftData and giftData.menu_model_override then
-        entModel = giftData.menu_model_override
+    if giftData and giftData.visual_override then
+        local override = giftData.visual_override
+        if override.type == "model" then
+            entModel = override.path
+
+        elseif override.type == "sprite" then
+            dImage:SetImage(override.path)
+            return
+        end
 
     elseif IsValid(ent) then
         entModel = ent:GetModel()

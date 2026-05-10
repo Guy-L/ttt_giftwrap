@@ -397,7 +397,8 @@ local giftDataCatalog = {
         factor_rarity = 1, factor_quality = 1,
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Round,
-        special_setup = "bouncy_ball_setup"
+        special_setup = "bouncy_ball_setup",
+        visual_override = {path = "sprites/sent_ball", type = "sprite"}
     },
     bunger = GiftData.New {
         name     = "Live Bunger",    desc       = "a Bunger",
@@ -407,7 +408,7 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Alive,
         special_setup = "bunger_setup",
-        menu_model_override = "models/betterbunger.mdl"
+        visual_override = {path = "models/betterbunger.mdl", type = "model"}
     },
     deadly_ball = GiftData.New {
         name     = "Harmful Bouncy Ball", desc       = "a colorful ball",
@@ -415,7 +416,8 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Round,
-        special_setup = "bouncy_ball_setup"
+        special_setup = "bouncy_ball_setup",
+        visual_override = {path = "sprites/sent_ball", type = "sprite"}
     },
     chicken = GiftData.New {
         name     = "Chicken",             desc       = "an aggressive pet chicken",
@@ -3311,7 +3313,6 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
         end
     end)
 
-end)
     -- Extend Killer Bungers damage method to conditionally disable damage
     if SERVER and TurtleNadeDamage then
         hook.Add("EntityTakeDamage", "TurtlenadeDmgHandle", function(victim, dmg)
@@ -3357,6 +3358,7 @@ end)
             TurtleTraitorDamage  = 5
         end)
     end
+end)
 
 
 if SERVER then
