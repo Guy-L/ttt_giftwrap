@@ -1,4 +1,4 @@
-include("sh_giftwrap_utils.lua")
+include("sh_physics_utils.lua")
 local utils = GW_Utils
 local dbg   = GW_DBG
 
@@ -282,7 +282,7 @@ elseif SERVER then
 
         -- give 1cred on 1st giftwrap purchase for roles starting with 1 credits
         if not ply._gwInOptMenu and equipmentName == SWEP_CLASS_NAME and not ply:GetNWBool("GotFirstTimeSample") then
-            local startCreds = math.ceil(GetConVar("ttt_" .. ply:GetSubRoleData().abbr .. "_credits_starting"):GetFloat())
+            local startCreds = ply:GetSubRoleData():GetStartingCredits()
 
             if startCreds <= 2 then
                 ply:AddCredits(1)

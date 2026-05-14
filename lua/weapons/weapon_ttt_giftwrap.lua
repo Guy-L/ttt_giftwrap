@@ -856,7 +856,7 @@ if SERVER then
     function SWEP:DropContents(isUndo)
         local owner = self:GetOwner()
 
-        if IsValid(owner) and self:HasGift() then
+        if IsValid(owner) and self:HasGift() and not self._PreserveGift then
             SpawnGiftEnt(owner, self, nil, isUndo)
 
             dbg.Log("Dropped gift contents")
