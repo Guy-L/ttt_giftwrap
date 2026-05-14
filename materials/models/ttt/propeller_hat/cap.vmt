@@ -1,0 +1,8 @@
+VertexLitGeneric
+{
+    "$basetexture" "models/ttt/propeller_hat/cap"
+    "$model" "1"
+    "$phong" "1"
+    "$phongboost" "1"
+    "$phongexponent" "20"
+}

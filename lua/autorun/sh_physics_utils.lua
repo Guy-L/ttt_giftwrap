@@ -192,6 +192,13 @@ if SERVER then
             phys:SetPos(maxPos)
         end
 
+        -- otherwise clients may see old position for a frame or so
+        -- (really should not need to do this tbh)
+        net.Start(TP_GIFT_MSG)
+        net.WriteEntity(ent)
+        net.WriteVector(maxPos)
+        net.Broadcast()
+
         -- hide connected map ropes so stasis pos doesn't show
         -- (other types may still be broken, will fix as I find them)
         for _, rope in ipairs(GW_Utils.FindConnectedRopes(ent)) do

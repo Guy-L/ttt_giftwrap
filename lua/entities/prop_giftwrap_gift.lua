@@ -160,6 +160,8 @@ function ENT:OnTakeDamage(dmgInfo)
                 self:RemoveMarkerVision(MV_WRAPPER_LABEL)
                 self:RemoveMarkerVision(MV_GIFTEE_LABEL)
                 self:RemoveMarkerVision(MV_GIFT_TP_LABEL)
+
+                self._PreserveGift = true
                 self:Remove()
 
                 if self:GetIsRandomGift() and not attackerOpenedRandomGift then
@@ -529,6 +531,8 @@ if SERVER then
             activator:SelectWeapon(SWEP_CLASS_NAME)
             self:RemoveMarkerVision(MV_GIFTEE_LABEL)
             self:RemoveMarkerVision(MV_GIFT_TP_LABEL)
+
+            self._PreserveGift = true
             self:Remove()
         end
     end
@@ -656,8 +660,18 @@ if SERVER then
     end)
 
     hook.Add("TTTBeginRound", HOOK_ROUND_START_TIME, function()
-        utils.RoundStartTime = CurTime()
+        utils.RoundStartTime = CurTime() --todo rework
     end)
+
+    function ENT:OnRemove()
+        if self._PreserveGift then return end
+        local storedGift = self:GetStoredGift()
+
+        if IsValid(storedGift) then
+            dbg.Log("Removing stored gift:", storedGift)
+            storedGift:Remove()
+        end
+    end
 
     function SpawnRandomGift(pos, angle)
         local newGift = ents.Create(PROP_CLASS_NAME)
@@ -714,6 +728,8 @@ elseif CLIENT then
 
     hook.Add("TTT2RenderMarkerVisionInfo", HOOK_GIFTWRAP_MARKER_UI, function(mvData)
         local ent = mvData:GetEntity()
+        if ent._HideMarks then mvData.drawInfo = false return end
+
         local mvObject = mvData:GetMarkerVisionObject()
 
         if mvObject:IsObjectFor(ent, MV_WRAPPER_LABEL) then

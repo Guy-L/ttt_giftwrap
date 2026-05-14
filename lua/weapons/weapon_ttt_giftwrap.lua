@@ -131,9 +131,9 @@ if SERVER then
             "ent_ttt_ttt2_camera", -- blocked later (affixed)
             "force_shield", -- blocked later (no phys, won't budge)
             "christmas_present",
-            "ttt_cse_proj", -- TODO: ownership check (honor original design)
+            "ttt_cse_proj",
             "ttt_chomik",
-            --"sent_controllable_manhack", -- TODO: bugged (SFX) + not balanced without ownership check
+            "sent_controllable_manhack",
             "ttt_d20_proj",
             "deadly_ball",
             "ttt_dingus",
@@ -607,6 +607,7 @@ function SWEP:Throw(owner, force)
             phys:AddAngleVelocity(Vector(0, 0, 500))
         end
 
+        self._PreserveGift = true
         self:Remove()
         owner:EmitSound(sounds["throw"], 75, math.random(90, 120))
 
@@ -953,6 +954,18 @@ if SERVER then
         net.WriteString(label)
         net.WriteTable(data)
         net.Send(owner)
+    end
+
+    function SWEP:OnRemove()
+        if self._PreserveGift then return end
+        local storedGift = self:GetStoredGift()
+        --dbg.Log("Removing gift w/ stored:", storedGift)
+
+        if IsValid(storedGift) then
+            dbg.Log("Removing stored gift:", storedGift)
+            storedGift:RemoveCallOnRemove(WRAPPED_GIFT_REMOVE)
+            storedGift:Remove()
+        end
     end
 
 ----------------------------------

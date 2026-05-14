@@ -1547,6 +1547,7 @@ local deployableSWEPs = {
 
     ctrl_manhack = {name = "Controllable Manhack", desc = "a remote-control drone",
                SENT_id = "sent_controllable_manhack", SWEP_id = "weapon_controllable_manhack",
+               SENT_setup = "manhack_setup",
                SENT_random = false,
                SWEP_random = true, SWEP_rarity = 2, SWEP_quality = 6,
                SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Normal,
@@ -1886,7 +1887,7 @@ local deployableSWEPs = {
                SENT_id = "ttt_cse_proj", SWEP_id = "weapon_ttt_cse",
                SENT_setup_var = {k = "set_thrower"},
                SENT_random = true, SENT_rarity = 1, SENT_quality = -2,
-               SWEP_random = false, --TODO: wrapping SWEP seems buggy? (disappears on unwrap)
+               SWEP_random = false,
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Whirring, smell = GiftSmell.Sterile, feel = GiftFeel.Bright},
 
@@ -2179,6 +2180,9 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
 
         elseif self.special_setup == "moon_grenade_setup" then
             timer.Remove(wrappedEnt.FuseID)
+
+        elseif self.special_setup == "manhack_setup" then
+            wrappedEnt:StopControlling()
         end
     end
 
@@ -3358,7 +3362,75 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             TurtleTraitorDamage  = 5
         end)
     end
+
+    if SERVER then
+        -- Disable manhack right click while it's in the giftbox
+        local manhackWep = weapons.GetStored("weapon_controllable_manhack")
+
+        if manhackWep then
+            local OGManhackSecondary = manhackWep.SecondaryAttack
+
+            manhackWep.SecondaryAttack = function(slf)
+                local manhack = slf:GetSpawnedManhack()
+
+                if IsValid(manhack) then
+                    if not IsValid(manhack:GetNWEntity("WrappedByGift")) then
+                        OGManhackSecondary(slf)
+                    else
+                        utils.NonSpamMessage(slf:GetOwner(), "wrapped_manhack", "Sorry, your manhack is wrapped inside a giftbox.")
+                    end
+                end
+            end
+        end
+
+        -- Explode giftbox when self-desturcting
+        local manhackSENT = scripted_ents.GetStored("sent_controllable_manhack")
+
+        if manhackSENT then
+            manhackSENT = manhackSENT.t
+            local OGManhackSelfDestruct = manhackSENT.SelfDestruct
+
+            manhackSENT.SelfDestruct = function(self)
+                local parentGift = self:GetNWEntity("WrappedByGift")
+
+                if IsValid(parentGift) then
+                    if self.isSelfDestructing then return end
+                    self.isSelfDestructing = true
+
+                    local giftee = parentGift:GetOwner()
+                    if IsValid(giftee) then
+                        giftee:EmitSound(self.SoundStunned)
+                        giftee:ChatPrint("Your gift is beeping!")
+                    else
+                        parentGift:EmitSound(self.SoundStunned)
+                    end
+
+                    timer.Simple(3, function()
+                        if not IsValid(self) then return end
+                        parentGift = self:GetNWEntity("WrappedByGift")
+
+                        if IsValid(parentGift) then
+                            local explode = ents.Create("env_explosion")
+                            explode:SetPos(utils.GetEntCenter(parentGift))
+                            explode:SetOwner(self:GetPlayerController())
+                            explode:Spawn()
+                            explode:SetKeyValue("iMagnitude", self.ExplosionSize)
+                            explode:Fire("Explode", 0, 0)
+                            parentGift:Remove()
+
+                        else
+                            self:Remove()
+                        end
+                    end)
+
+                else
+                    OGManhackSelfDestruct(self)
+                end
+            end
+        end
+    end
 end)
+
 
 
 if SERVER then

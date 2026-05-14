@@ -1,0 +1,12 @@
+"VertexLitGeneric"
+{
+    "$basetexture" "models/ttt/propeller_hat/cap_color_map"
+    "$bumpmap" "models/ttt/propeller_hat/cap_normal_map"
+
+    "$phong" "1"
+    "$phongboost" "1"
+    "$phongexponenttexture" "models/ttt/propeller_hat/cap_gloss_map"
+
+    "$phongfresnelranges" "[0 0.5 1]"
+    "$halflambert" "1"
+}

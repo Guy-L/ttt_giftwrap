@@ -213,9 +213,6 @@ elseif SERVER then
         if not IsValid(giftEnt) then return end
         if not dbg.AllowDebugMenu() then return end
 
-        local storedGift = giftEnt:GetStoredGift()
-        if IsValid(storedGift) then storedGift:Remove() end
-
         giftEnt:Remove()
     end)
 
