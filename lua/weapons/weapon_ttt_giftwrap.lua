@@ -418,6 +418,7 @@ function SWEP:SetupDataTables()
             timer.Simple(0.1, function()
                 if IsValid(self) then
                     self:UpdateUI(name.." update")
+                    self:UpdateModel(name.." update")
                     UpdateGiftContentMenu()
                 end
             end)
