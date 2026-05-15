@@ -1487,6 +1487,15 @@ end
 
 -- to populate the list with SWEPs that also have a SENT tied to them (cf. ADS, which should be using this)
 local deployableSWEPs = {
+    baron_hat = GiftData.New {name = "Baron Hat", desc = "a bougie hat",
+               SWEP_category = GiftCategory.Item,
+               SENT_id = "ttt2_hat_baron", SWEP_id = "item_ttt2_baron_hat",
+               SENT_setup = "baron_hat_drop", SWEP_setup = "baron_hat_setup",
+               SENT_random = true, SENT_rarity = 1, SENT_quality = 8,
+               SWEP_random = false,
+               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
+               sound = GiftSound.None, smell = GiftSmell.Leather, feel = GiftFeel.Round},
+
     beacon  = {name = "Beacon", desc = "a high-tech beacon",
                SENT_id = "ttt_beacon", SWEP_id = "weapon_ttt_beacon",
                SENT_setup_var = {k = "set_thrower"},
@@ -1567,7 +1576,7 @@ local deployableSWEPs = {
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Whirring, smell = GiftSmell.Sterile, feel = GiftFeel.Electric},
 
-    force_shield = {name = "Deployable Force Shield", desc = "a next-generation damage-blocking screen",
+    force_shield = {name = "Deployable Force Shield", desc = "a next-gen force shield",
                SWEP_category = GiftCategory.FloorSWEP,
                SENT_id = "shield_deployer", SWEP_id = "weapon_ttt_force_shield",
                SENT_setup = "shield_deployer_setup",
@@ -2347,6 +2356,8 @@ function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
         elseif self.special_setup == "sopd_setup" then
             wrappedEnt:SetGrabbedFromCorpse(true)
 
+        elseif self.special_setup == "baron_hat_drop" then
+            timer.Simple(0, function() wrappedEnt:Drop() end)
         end
     end
 end
@@ -2536,6 +2547,11 @@ function GiftData:ApplyPostGiftPurchaseAdjustments(giftee)
     if self.special_setup then
         if self.special_setup == "amaterasu_setup" then
             giftee:SetNWBool("TTTAmaterasu", false)
+
+        elseif self.special_setup == "baron_hat_setup" then
+            giftee.baron_hat:Remove()
+            giftee.baron_hat = nil
+            giftee:RemoveEquipmentItem("item_ttt2_baron_hat")
         end
     end
 end

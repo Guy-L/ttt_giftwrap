@@ -149,6 +149,7 @@ if SERVER then
             --"ttt_flame", --TODO: bugged
             --"sent_greendemon_box", --TODO: bugged (ui remains), needs ownership check, possible balance issue
             --"sent_greendemon", --TODO: bugged
+            "ttt2_hat_baron",
             "ttt_hat_deerstalker",
             "env_headcrabcanister", -- blocked later (affixed)
             "npc_headcrab",
@@ -759,8 +760,10 @@ if SERVER then
             local nearbyPlayers = {}
 
             for _, ply in ipairs(player.GetAll()) do
-                if ply ~= gifteePly and ply ~= wrapper then
-                    table.insert(uninvolvedPlayers, ply)
+                if ply ~= gifteePly then
+                    if ply ~= wrapper then
+                        table.insert(uninvolvedPlayers, ply)
+                    end
 
                     if ply:GetPos():Distance(gifteePly:GetPos()) <= 300 then
                         table.insert(nearbyPlayers, ply)
