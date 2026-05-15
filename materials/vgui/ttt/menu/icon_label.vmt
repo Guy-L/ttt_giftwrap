@@ -1,6 +1,6 @@
 "UnlitGeneric"
 {
-    "$basetexture" "vgui/ttt/menu/icon_label2"
+    "$basetexture" "vgui/ttt/menu/icon_label"
     "$nocull" 1
     "$nodecal" 1
     "$nolod" 1
