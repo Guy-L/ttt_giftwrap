@@ -246,6 +246,7 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
     end
 
     -- MIDDLE: info text container
+    local player = LocalPlayer()
     local textPanel = vgui.Create("DPanel", curContents)
     textPanel:Dock(FILL)
     textPanel:DockPadding(5, 10, 10, 10)
@@ -254,13 +255,13 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
     local name = vgui.Create("DLabel", textPanel)
     name:Dock(TOP)
     name:SetFont("DermaLarge")
-    name:SetText(giftData and giftData.name or "Nothing yet")
+    name:SetText(giftData and giftData:GetName(player) or "Nothing yet")
     name:SetTall(30)
 
     if giftData and giftData.placeholderEquip then
         local desc = vgui.Create("DLabel", textPanel)
         desc:Dock(TOP)
-        desc:SetText("(auto-generated)\n" .. giftData:GetDesc(storedEnt, LocalPlayer()))
+        desc:SetText("(auto-generated)\n" .. giftData:GetDesc(storedEnt, player))
         desc:SetWrap(true)
         desc:SetAutoStretchVertical(true)
         desc:SetTextColor(curcont_graytext)
@@ -269,7 +270,7 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
     else
         local desc
         if giftData then
-            local giftDesc = giftData:GetDesc(storedEnt, LocalPlayer())
+            local giftDesc = giftData:GetDesc(storedEnt, player)
             desc = FancyLine(textPanel, "It's ", giftDesc, giftData.autoGen and "! (auto-generated)" or "!")
         else
             desc = FancyLine(textPanel, "Go find something they'll ", "love", "!")

@@ -813,7 +813,7 @@ if SERVER then
         else
             net.Start(GIFTWRAP_HL_CHAT_MSG)
             net.WriteString("You were meant to unwrap ")
-            net.WriteString(giftDesc .. " (" .. giftData.name ..")")
+            net.WriteString(giftDesc .. " (" .. giftData:GetName(gifteePly) ..")")
             net.WriteString(", but it couldn't be spawned.")
             net.Send(gifteePly)
             return

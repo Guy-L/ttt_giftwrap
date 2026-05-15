@@ -1754,13 +1754,22 @@ local deployableSWEPs = {
     poison_station = {name = "Poison Station", desc = "a healing microwave",
                SWEP_category = GiftCategory.AutoEquipSWEP,
                SENT_id = "ttt_poison_station", SWEP_id = "weapon_ttt_poison_station",
-               SENT_setup_var = {k = "set_thrower"},  --todo broken? (can't interact)
-               SWEP_setup = "poison_station_desc",
-               SENT_random = true, SENT_rarity = 5, SENT_quality = -5,
+               SENT_setup_var = {k = "set_thrower"},
+               SENT_random = false,
                SWEP_random = false,
                SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Huge,
                sound = GiftSound.Beeping, smell = GiftSmell.Nice, feel = GiftFeel.Warm,
                SWEP_desc = "a damaging microwave", SWEP_smell = GiftSmell.Toxic},
+
+    poison_station_v2 = {name = "Poison Station v2",
+               SWEP_category = GiftCategory.AutoEquipSWEP,
+               SENT_id = "prop_poison_station_v2", SWEP_id = "weapon_ttt_poison_station_v2",
+               SENT_setup = "poison_station_desc",
+               SENT_random = true, SENT_rarity = 4, SENT_quality = -5,
+               SWEP_random = false,
+               SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Huge,
+               sound = GiftSound.Beeping, smell = GiftSmell.Nice, feel = GiftFeel.Warm,
+               SWEP_desc = "a poisonous microwave", SWEP_smell = GiftSmell.Toxic},
 
     pog     = {name = "Pot of Greedier", desc = "Pot of Greed, which lets you draw two additional gifts from your deck",
                SENT_id = "ttt_potofgreedier", SWEP_id = "weapon_ttt_potofgreedier",
@@ -2531,6 +2540,18 @@ function GiftData:ApplyPostGiftPurchaseAdjustments(giftee)
     end
 end
 
+function GiftData:GetName(giftee)
+    if self.special_setup == "poison_station_desc" then
+        if PS2_Utils and PS2_Utils.IsMainEvil(giftee) then
+            return "Live Poison Station"
+        else
+            return "Live Health Station"
+        end
+    end
+
+    return self.name
+end
+
 function GiftData:GetDesc(wrappedEnt, giftee)
     if self.special_setup then
         if self.special_setup == "giftwrap_desc" then
@@ -2559,6 +2580,13 @@ function GiftData:GetDesc(wrappedEnt, giftee)
                 return "a pet Bunger"
             else
                 return "an angry Bunger"
+            end
+
+        elseif self.special_setup == "poison_station_desc" then
+            if PS2_Utils and PS2_Utils.IsMainEvil(giftee) then
+                return "a poisonous microwave"
+            else
+                return "a healing microwave"
             end
         end
     end
