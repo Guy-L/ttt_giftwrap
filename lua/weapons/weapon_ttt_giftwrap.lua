@@ -112,6 +112,7 @@ if SERVER then
             "ttt_chicken",
             "ttt_kfc",
             "glue_trap_paste",
+            "ttt_seekgull_bird",
         }
 
         -- check overrides
@@ -155,7 +156,7 @@ if SERVER then
             "npc_headcrab",
             "npc_headcrab_fast", -- bunger
             "ttt_health_station", -- TODO: ownership check
-            "ttt_seekgull_bird", -- blocked later i'm fairly sure, TODO make work properly
+            "ttt_seekgull_bird",
             "ttt_knife_proj",
             "item_lethal_company_landmine", -- blocked later (affixed)
             "matryoshka", -- blocked later (affixed) (breaching charge)

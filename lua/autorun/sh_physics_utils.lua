@@ -174,6 +174,11 @@ if SERVER then
         return dir:GetNormalized()
     end
 
+    function GW_Utils.ColorFromString(str)
+        local r, g, b, a = str:match("(%d+)%s+(%d+)%s+(%d+)%s+(%d+)")
+        return Color(tonumber(r), tonumber(g), tonumber(b), tonumber(a))
+    end
+
     function GW_Utils.EnterStasis(giftObj, ent)
         ent:SetNoDraw(true)
         ent:SetNotSolid(true)
@@ -204,6 +209,26 @@ if SERVER then
         for _, rope in ipairs(GW_Utils.FindConnectedRopes(ent)) do
             rope._storedWidth = rope:GetKeyValues()["Width"]
             rope:SetKeyValue("Width", "0")
+        end
+
+        -- hide & store connected sprite trails
+        ent._childTrails = {}
+
+        for _, child in ipairs(ent:GetChildren()) do
+            if child:GetClass() == "env_spritetrail" then
+                table.insert(ent._childTrails, {
+                    trailEnt   = child,
+                    attachID   = child:GetInternalVariable("m_iParentAttachment"),
+                    color      = GW_Utils.ColorFromString(child:GetInternalVariable("rendercolor")),
+                    additive   = true,
+                    startWidth = child:GetInternalVariable("startwidth"),
+                    endWidth   = child:GetInternalVariable("endwidth"),
+                    lifetime   = child:GetInternalVariable("lifetime"),
+                    textureRes = child:GetInternalVariable("m_flTextureRes"),
+                    texture    = child:GetInternalVariable("model"),
+                })
+                child:SetNoDraw(true)
+            end
         end
 
         -- hide all markervisions client-side
@@ -247,6 +272,14 @@ if SERVER then
         for _, rope in ipairs(GW_Utils.FindConnectedRopes(ent)) do
             if rope._storedWidth then
                 rope:SetKeyValue("Width", tostring(rope._storedWidth))
+            end
+        end
+
+        -- recreate connected sprite trails
+        if ent._childTrails then
+            for _, t in ipairs(ent._childTrails) do
+                t.trailEnt:Remove()
+                util.SpriteTrail(ent, t.attachID, t.color, t.additive, t.startWidth, t.endWidth, t.lifetime, t.textureRes, t.texture)
             end
         end
 

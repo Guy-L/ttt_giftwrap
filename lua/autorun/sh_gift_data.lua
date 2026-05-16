@@ -522,6 +522,15 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Paper,    attrib_feel = GiftFeel.Jolly,
         special_setup = "snuffles_present_setup"
     },
+    seekgull = GiftData.New {
+        name     = "Live Seekgull",   desc       = "a homing seagull",
+        category = GiftCategory.SENT, identifier = "ttt_seekgull_bird",
+        can_be_random_gift = true,
+        factor_rarity = 3, factor_quality = -5,
+        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Salty,     attrib_feel = GiftFeel.Alive,
+        special_setup = "seekgull_setup", set_owner = true
+    },
     shard_of_greed = GiftData.New {
         name     = "Shard of Greed",  desc       = "an ominous shard",
         category = GiftCategory.SENT, identifier = "ttt_shard_of_greed",
@@ -1521,7 +1530,7 @@ local deployableSWEPs = {
     br_charge = {name = "Breaching Charge", desc = "a wall-mounted grenade dispenser",
                SENT_id = "matryoshka", SWEP_id = "matryoshkaplacer",
                SENT_random = false, SWEP_random = false,
-               SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Larger, -- (todo check if it comes back)
+               SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Larger,
                sound = GiftSound.Metallic, smell = GiftSmell.Gunpowder, feel = GiftFeel.Electric},
 
     c4      = {name = "C4", desc = "a bomb",
@@ -1581,7 +1590,7 @@ local deployableSWEPs = {
                SENT_setup = "grenade",
                SENT_random = false, --SENT_rarity = 20, SENT_quality = 0,
                SWEP_random = false,
-               SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini, -- (todo check if it comes back)
+               SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini,
                sound = GiftSound.Glass, smell = GiftSmell.Mineral, feel = GiftFeel.Random},
 
     decoy   = {name = "Decoy",        desc = "a high-tech decoy",
@@ -1613,7 +1622,7 @@ local deployableSWEPs = {
                SENT_id = "ttt_emp_proj", SWEP_id = "weapon_ttt_emp",
                SENT_setup = "grenade", SENT_setup_var = {k = "explosion_delay", v = 3},
                SENT_random = false, SWEP_random = false,
-               SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini,  -- (todo check if it comes back)
+               SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini,
                sound = GiftSound.Pulsing, smell = GiftSmell.Nondescript, feel = GiftFeel.Electric},
 
     fan     = {name = "Fan", desc = "a powerful fan",
@@ -1818,16 +1827,16 @@ local deployableSWEPs = {
                SENT_id = "ttt_ragnana_peel", SWEP_id = "ttt_ragnana",
                SENT_random = false, --SENT_rarity = 4, SENT_quality = -9,
                SWEP_random = false,
-               SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Normal, -- (todo check if it comes back)
+               SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Squishy, smell = GiftSmell.Rotten, feel = GiftFeel.Slippery,
                SWEP_desc = "an extremely slippery banana"},
 
     rcxd    = {name = "RCXD",         desc = "an RC car toy",
                SENT_id = "sent_rcxd", SWEP_id = "weapon_ttt_rcxd",
-               --SENT_setup_var = {k = "set_owner"}, -- doesn't work (would need to give SWEP); TODO make harmless version to give innos
+               --SENT_setup_var = {k = "set_owner"}, -- doesn't work (would need to give SWEP)
                SENT_random = false, --SENT_rarity = 2, SENT_quality = 5,
                SWEP_random = false,
-               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large, -- (todo check if it comes back)
+               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Revving, smell = GiftSmell.Rusty, feel = GiftFeel.Electric,
                SWEP_desc = "an RC car in a can"},
 
@@ -1840,7 +1849,7 @@ local deployableSWEPs = {
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Thudding, smell = GiftSmell.Mineral, feel = GiftFeel.Hollow},
 
-    seekgull = {name = "Seekgull in a Can", desc = "a seagull in a can", --TODO: fix trail showing up connecting wrap spot to unwrap spot? (also happens with chomik)
+    seekgull_can = {name = "Seekgull in a Can", desc = "a seagull in a can",
                SWEP_category = GiftCategory.FloorSWEP,
                SENT_id = "ttt_seekgull_proj", SWEP_id = "weapon_ttt_seekgull",
                SENT_setup = "grenade", SENT_setup_var = {k = "set_owner"},
@@ -1942,7 +1951,7 @@ local deployableSWEPs = {
                SENT_id = "ttt_zombieball_proj", SWEP_id = "weapon_ttt_zombieball",
                SENT_random = false, --SENT_rarity = 6, SENT_quality = -8,
                SWEP_random = false,
-               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large, -- (todo check if it comes back)
+               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Talking, smell = GiftSmell.Rotten, feel = GiftFeel.Round,
                SWEP_desc = "a necromancy kit"},
 
@@ -2227,6 +2236,9 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
             else
                 wrappedEnt.ActivateTime = CurTime() + 1e9
             end
+
+        elseif self.special_setup == "seekgull_setup" then
+            wrappedEnt.SecondsPerTick = 1e9
         end
     end
 
@@ -2564,6 +2576,10 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
 
             wrappedEnt:EmitSound(wrappedEnt.SpawnSound)
             wrappedEnt.ActivateTime = CurTime() + wakeUpTime
+
+        elseif self.special_setup == "seekgull_setup" then
+            wrappedEnt.SecondsPerTick = 0.01
+            wrappedEnt:NextThink(CurTime())
         end
     end
 
