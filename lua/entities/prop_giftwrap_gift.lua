@@ -741,7 +741,7 @@ elseif CLIENT then
 
             local giftee = ent:GetGiftee()
             if IsValid(giftee) then
-                mvData:AddDescriptionLine(LANG.GetParamTranslation("gift_mv_wrapper_giftee", {
+                mvData:SetTitle(LANG.GetParamTranslation("gift_mv_wrapper_giftee", {
                     giftee = giftee:Nick()
                 }))
             else
