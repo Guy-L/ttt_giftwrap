@@ -1781,8 +1781,9 @@ local deployableSWEPs = {
     paper_plane = {name = "Paper Plane", desc = "an origami plane",
                SWEP_category = GiftCategory.AutoEquipSWEP,
                SENT_id = "ttt_paper_plane_proj", SWEP_id = "weapon_ttt_paper_plane",
-               SENT_setup_var = {k = "set_thrower"},
-               SENT_random = false, SWEP_random = false, --todo fix targetting & make SENT wrappabble
+               SENT_setup = "paper_plane_setup", SENT_setup_var = {k = "set_thrower"},
+               SENT_random = true, SENT_rarity = 2, SENT_quality = -7,
+               SWEP_random = false,
                SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Larger,
                sound = GiftSound.Whooshing, smell = GiftSmell.Paper, feel = GiftFeel.Moving},
 
@@ -2257,6 +2258,10 @@ function GiftData:ApplyOnAutoWrapAdjustments(giftObj)
 end
 
 function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
+    if IsValid(wrappedEnt) then
+        wrappedEnt:SetNWEntity("GW_Spawner", giftee)
+    end
+
     if self.adjAngle then
         wrappedEnt:SetAngles(self.adjAngle)
     end
@@ -2397,11 +2402,16 @@ function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
 
         elseif self.special_setup == "baron_hat_drop" then
             timer.Simple(0, function() wrappedEnt:Drop() end)
+
         end
     end
 end
 
 function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo)
+    if IsValid(wrappedEnt) then
+        wrappedEnt:SetNWEntity("GW_Wrapper", giftee)
+    end
+
     if self.move_to_giftee then
         local curMoveType = wrappedEnt:GetMoveType()
         wrappedEnt:SetMoveType(MOVETYPE_VPHYSICS)
@@ -2580,6 +2590,14 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
         elseif self.special_setup == "seekgull_setup" then
             wrappedEnt.SecondsPerTick = 0.01
             wrappedEnt:NextThink(CurTime())
+
+        elseif self.special_setup == "paper_plane_setup" then
+            local phys = wrappedEnt:GetPhysicsObject()
+
+            -- otherwise it'll zoom at mach speed towards its target
+            if IsValid(phys) then
+                phys:SetMass(200)
+            end
         end
     end
 
@@ -3556,6 +3574,33 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
                 self:SetPos(ogPos - Vector(0, 0, 8))
                 OGGreenDemonDraw(self)
                 self:SetPos(ogPos)
+            end
+        end
+    end
+
+    -- Paper plane targetting override for random gifts
+    local sent_paperplane = scripted_ents.GetStored("ttt_paper_plane_proj")
+
+    if sent_paperplane then
+        sent_paperplane = sent_paperplane.t
+        OGPaperPlaneClosestPlayerFunc = OGPaperPlaneClosestPlayerFunc or sent_paperplane.GetClosestPlayer
+
+        sent_paperplane.GetClosestPlayer = function(self, ent, plys)
+            local spawner = self:GetNWEntity("GW_Spawner")
+
+            if IsValid(spawner) then
+                local sphere = ents.FindInSphere(self:GetPos(), 5000)
+                local possibleTargets = {}
+
+                for key, v in pairs(sphere) do
+                    if v:IsPlayer() and v:Alive() and not v:IsSpec() and v ~= spawner then
+                        table.insert(possibleTargets, v)
+                    end
+                end
+
+                return OGPaperPlaneClosestPlayerFunc(self, ent, possibleTargets)
+            else
+                return OGPaperPlaneClosestPlayerFunc(self, ent, plys)
             end
         end
     end

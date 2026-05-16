@@ -128,7 +128,7 @@ if SERVER then
             "prop_physics_override",
             "prop_sphere",
             "ads", -- blocked later (affixed)
-            --"npc_barnacle", -- TODO: bugged, need ownership check
+            --"npc_barnacle", -- TODO: bugged
             "ent_ttt_ttt2_camera", -- blocked later (affixed)
             "force_shield", -- blocked later (no phys, won't budge)
             "christmas_present",
@@ -155,7 +155,7 @@ if SERVER then
             "env_headcrabcanister", -- blocked later (affixed)
             "npc_headcrab",
             "npc_headcrab_fast", -- bunger
-            "ttt_health_station", -- TODO: ownership check
+            "ttt_health_station",
             "ttt_seekgull_bird",
             "ttt_knife_proj",
             "item_lethal_company_landmine", -- blocked later (affixed)
@@ -166,14 +166,14 @@ if SERVER then
             "sent_molotov",
             "moonball",
             "ent_moongrenade",
-            --"ttt_paper_plane_proj", -- TODO: bugged (trails continues, probably still exists), needs ownership check
-            "ttt_poison_station", -- TODO: ownership check
+            "ttt_paper_plane_proj",
+            "ttt_poison_station",
             "ttt_potofgreedier",
             --"ttt_radio", -- blocked later if affixed; TODO: bugged (markervision; can get permanent burning SFX?), need ownership check
             --"ttt_ragnana_peel",
-            --"sent_rcxd",
+            "sent_rcxd",
             "shield_deployer",
-            --"ttt_slam_satchel", -- TODO: bugged (ui remains), needs ownership check
+            --"ttt_slam_satchel", -- TODO: bugged (ui remains)
             "ttt_shard_of_greed",
             "ttt2_hat_shellmet",
             "ttt_slam_tripmine", -- blocked later (affixed)
@@ -182,7 +182,7 @@ if SERVER then
             --"plasma_burster_nade", -- good luck wrapping that; TODO fix the whole thing being ass
             "npc_turret_floor",
             --"ttt_wormhole", -- blocked later (affixed); TODO: bugged (angle is reset to parallel with ground on unwrap)
-            "ttt_zombieball_proj", -- TODO: try wrapping an existing one somehow???
+            "ttt_zombieball_proj",
             "npc_zombie",
         }
 
