@@ -787,30 +787,32 @@ if SERVER then
             net.WriteString(rightText)
             net.Send(gifteePly)
 
-            net.Start(GIFTWRAP_HL_CHAT_MSG)
-            net.WriteString("Someone nearby unwrapped ")
-            net.WriteString(giftDesc)
-            net.WriteString(rightText)
-            net.Send(nearbyPlayers)
+            if not isUndo then
+                net.Start(GIFTWRAP_HL_CHAT_MSG)
+                net.WriteString("Someone nearby unwrapped ")
+                net.WriteString(giftDesc)
+                net.WriteString(rightText)
+                net.Send(nearbyPlayers)
 
-            local unwrapNote = giftObj:GetUnwrapNote()
-            dbg.Log("Unwrap note: '"..unwrapNote.."'")
+                local unwrapNote = giftObj:GetUnwrapNote()
+                dbg.Log("Unwrap note: '"..unwrapNote.."'")
 
-            if not isUndo and unwrapNote and unwrapNote != "" then
-                timer.Simple(1, function()
-                    net.Start(GIFTWRAP_HL_CHAT_MSG)
-                    net.WriteString("A note was attached: \"")
-                    net.WriteString(unwrapNote)
-                    net.WriteString("\"")
-                    net.Send(table.Add({gifteePly}, nearbyPlayers))
-                end)
-            end
+                if unwrapNote and unwrapNote != "" then
+                    timer.Simple(1, function()
+                        net.Start(GIFTWRAP_HL_CHAT_MSG)
+                        net.WriteString("A note was attached: \"")
+                        net.WriteString(unwrapNote)
+                        net.WriteString("\"")
+                        net.Send(table.Add({gifteePly}, nearbyPlayers))
+                    end)
+                end
 
-            if not isUndo and isRandomGift then
-                if giftData.factor_rarity and giftData.factor_rarity >= 5 then
-                    LANG.Msg(uninvolvedPlayers, "gift_unwrap_notif_rare", nil, MSG_MSTACK_WARN)
-                else
-                    LANG.Msg(uninvolvedPlayers, "gift_unwrap_notif_random", nil, MSG_MSTACK_PLAIN)
+                if isRandomGift then
+                    if giftData.factor_rarity and giftData.factor_rarity >= 5 then
+                        LANG.Msg(uninvolvedPlayers, "gift_unwrap_notif_rare", nil, MSG_MSTACK_WARN)
+                    else
+                        LANG.Msg(uninvolvedPlayers, "gift_unwrap_notif_random", nil, MSG_MSTACK_PLAIN)
+                    end
                 end
             end
 
