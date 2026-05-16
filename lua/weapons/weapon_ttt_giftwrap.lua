@@ -173,7 +173,7 @@ if SERVER then
             "ttt_ragnana_peel",
             "sent_rcxd",
             "shield_deployer",
-            --"ttt_slam_satchel", -- TODO: bugged (ui remains)
+            "ttt_slam_satchel",
             "ttt_shard_of_greed",
             "ttt2_hat_shellmet",
             "ttt_slam_tripmine", -- blocked later (affixed)
@@ -562,10 +562,23 @@ function SWEP:HeldByWrapper(owner)
 end
 
 function SWEP:OnRemove()
-    if CLIENT and IsValid(self:GetOwner())
-      and self:GetOwner() == LocalPlayer()
-      and utils.IsLivingPlayer(self:GetOwner()) then
+    if CLIENT and IsValid(self:GetOwner()) then
         RunConsoleCommand("lastinv")
+    end
+
+    if self:GetMarkerVision(MV_WRAPPER_LABEL) then
+        self:RemoveMarkerVision(MV_WRAPPER_LABEL)
+    end
+
+    if SERVER and not self._PreserveGift then
+        local storedGift = self:GetStoredGift()
+        --dbg.Log("Removing gift w/ stored:", storedGift)
+
+        if IsValid(storedGift) then
+            dbg.Log("Removing stored gift:", storedGift)
+            storedGift:RemoveCallOnRemove(WRAPPED_GIFT_REMOVE)
+            storedGift:Remove()
+        end
     end
 end
 
@@ -579,17 +592,11 @@ function SWEP:Deploy()
     end
 end
 
-function SWEP:OnRemove()
-    if self:GetMarkerVision(MV_WRAPPER_LABEL) then
-        self:RemoveMarkerVision(MV_WRAPPER_LABEL)
-    end
-end
-
 function SWEP:Throw(owner, force)
     if not owner then owner = self:GetOwner() end
     if not IsValid(owner) then return end
 
-    if SERVER then
+    if SERVER and not self._PreventThrow then
         local giftData = GetCachedGiftData(self, owner)
         local giftProp = self:MakePropCopy(false)
         if not IsValid(giftProp) then return end
@@ -963,18 +970,6 @@ if SERVER then
         net.WriteString(label)
         net.WriteTable(data)
         net.Send(owner)
-    end
-
-    function SWEP:OnRemove()
-        if self._PreserveGift then return end
-        local storedGift = self:GetStoredGift()
-        --dbg.Log("Removing gift w/ stored:", storedGift)
-
-        if IsValid(storedGift) then
-            dbg.Log("Removing stored gift:", storedGift)
-            storedGift:RemoveCallOnRemove(WRAPPED_GIFT_REMOVE)
-            storedGift:Remove()
-        end
     end
 
 ----------------------------------

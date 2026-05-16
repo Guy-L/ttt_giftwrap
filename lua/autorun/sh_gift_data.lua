@@ -1756,9 +1756,9 @@ local deployableSWEPs = {
                SENT_size = GiftSize.Big, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Beeping, smell = GiftSmell.Gunpowder, feel = GiftFeel.Round},
 
-    m4_slam  = {name = "M4 Slam", desc = "a SLAM",
+    m4_slam  = {name = "M4 SLAM", desc = "a SLAM",
                SENT_id = "ttt_slam_satchel", SWEP_id = "weapon_ttt_slam",
-               SENT_setup = "slam_setup",
+               SENT_setup = "slam_setup", SENT_setup_var = {k = "mv_hook", v = "SLAMMarkerVisionDisplay"},
                SENT_random = false, SWEP_random = false,
                SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Beeping, smell = GiftSmell.Gunpowder, feel = GiftFeel.Electric},
@@ -3491,6 +3491,42 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
         end)
     end
 
+    -- Util method for gifts that can be remotely detonated while wrapped
+    local function RemoteGiftExplosion(wrappedEnt, sound, fuse, funcs)
+        local parentGift = wrappedEnt:GetNWEntity("WrappedByGift")
+
+        if IsValid(parentGift) then
+            if wrappedEnt.isSelfDestructing then return end
+            wrappedEnt.isSelfDestructing = true
+
+            local giftee = parentGift:GetOwner()
+            if IsValid(giftee) then
+                giftee:EmitSound(sound)
+                giftee:ChatPrint("Your gift is beeping!")
+            else
+                parentGift:EmitSound(sound)
+            end
+
+            timer.Simple(fuse, function()
+                if not IsValid(wrappedEnt) then return end
+                parentGift = wrappedEnt:GetNWEntity("WrappedByGift")
+
+                if IsValid(parentGift) then
+                    parentGift._PreventThrow = true
+                    parentGift:Remove()
+                    funcs.explosion(parentGift)
+
+                else
+                    wrappedEnt:Remove()
+                end
+            end)
+
+        else
+            funcs.og()
+        end
+    end
+
+    -- Manhack tweaks
     if SERVER then
         -- Disable manhack right click while it's in the giftbox
         local manhackWep = weapons.GetStored("weapon_controllable_manhack")
@@ -3519,46 +3555,57 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             local OGManhackSelfDestruct = manhackSENT.SelfDestruct
 
             manhackSENT.SelfDestruct = function(self)
-                local parentGift = self:GetNWEntity("WrappedByGift")
+                RemoteGiftExplosion(self, self.SoundStunned, 3, {
+                    explosion = function(parentGift)
+                        local explode = ents.Create("env_explosion")
+                        explode:SetPos(utils.GetEntCenter(parentGift))
+                        explode:SetOwner(self:GetPlayerController())
+                        explode:Spawn()
+                        explode:SetKeyValue("iMagnitude", self.ExplosionSize)
+                        explode:Fire("Explode", 0, 0)
+                    end,
 
-                if IsValid(parentGift) then
-                    if self.isSelfDestructing then return end
-                    self.isSelfDestructing = true
-
-                    local giftee = parentGift:GetOwner()
-                    if IsValid(giftee) then
-                        giftee:EmitSound(self.SoundStunned)
-                        giftee:ChatPrint("Your gift is beeping!")
-                    else
-                        parentGift:EmitSound(self.SoundStunned)
+                    og = function()
+                        OGManhackSelfDestruct(self)
                     end
-
-                    timer.Simple(3, function()
-                        if not IsValid(self) then return end
-                        parentGift = self:GetNWEntity("WrappedByGift")
-
-                        if IsValid(parentGift) then
-                            local explode = ents.Create("env_explosion")
-                            explode:SetPos(utils.GetEntCenter(parentGift))
-                            explode:SetOwner(self:GetPlayerController())
-                            explode:Spawn()
-                            explode:SetKeyValue("iMagnitude", self.ExplosionSize)
-                            explode:Fire("Explode", 0, 0)
-                            parentGift:Remove()
-
-                        else
-                            self:Remove()
-                        end
-                    end)
-
-                else
-                    OGManhackSelfDestruct(self)
-                end
+                })
             end
         end
     end
 
-    -- Green demon fixes
+    -- SLAM: explode giftbox when detonating
+    local sent_slam = scripted_ents.GetStored("ttt_slam_base")
+
+    if sent_slam then
+        sent_slam = sent_slam.t
+        local OGSlamStartExplode = sent_slam.StartExplode
+
+        sent_slam.StartExplode = function(self, checkActive)
+            RemoteGiftExplosion(self, self.PreExplosionSound, 2, {
+                explosion = function(parentGift)
+                    local pos = parentGift:GetPos()
+                    local radius = self.BlastRadius
+                    local damage = self.BlastDamage
+
+                    local effect = EffectData()
+                    effect:SetStart(pos)
+                    effect:SetOrigin(pos)
+                    effect:SetScale(radius)
+                    effect:SetRadius(radius)
+                    effect:SetMagnitude(damage)
+                    util.Effect("Explosion", effect, true, true)
+                    util.BlastDamage(parentGift, self:GetPlacer(), pos, radius, damage)
+                    parentGift:EmitSound(self.ExplosionSound, 60, math.random(125, 150))
+                end,
+
+                og = function()
+                    OGSlamStartExplode(self, checkActive)
+                end
+            })
+        end
+    end
+
+    -- Green demon tweaks
     local sent_greendemon = scripted_ents.GetStored("sent_greendemon")
 
     if sent_greendemon then
@@ -3583,7 +3630,7 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
 
     if sent_paperplane then
         sent_paperplane = sent_paperplane.t
-        OGPaperPlaneClosestPlayerFunc = OGPaperPlaneClosestPlayerFunc or sent_paperplane.GetClosestPlayer
+        local OGPaperPlaneClosestPlayerFunc = sent_paperplane.GetClosestPlayer
 
         sent_paperplane.GetClosestPlayer = function(self, ent, plys)
             local spawner = self:GetNWEntity("GW_Spawner")
