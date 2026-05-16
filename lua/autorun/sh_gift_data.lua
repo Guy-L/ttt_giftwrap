@@ -3540,17 +3540,6 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
                 OGGreenDemonDraw(self)
                 self:SetPos(ogPos)
             end
-
-        -- Override collision group change that prevents wrapping (doesn't affect anything afaik)
-        elseif SERVER then
-            local OGGreenDemonThink = sent_greendemon.Think
-
-            sent_greendemon.Think = function(self)
-                OGGreenDemonThink(self)
-                if self.Solidified and self:GetCollisionGroup() ~= COLLISION_GROUP_DEBRIS then
-                    self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
-                end
-            end
         end
     end
 end)

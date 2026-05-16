@@ -247,9 +247,25 @@ function GW_Utils.GetChildNamed(panel, name)
 end
 
 function GW_Utils.GetEyeTrace(ply)
+    for _, ent in ipairs(ents.GetAll()) do
+        if ent:GetCollisionGroup() == COLLISION_GROUP_IN_VEHICLE then
+            GW_DBG.Log("Temporarily override collision group for", ent)
+            ent._HadInVehicleCollision = true
+            ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+        end
+    end
+
     ply:LagCompensation(true)
     local tr = ply:GetEyeTrace(MASK_SHOT)
     ply:LagCompensation(false)
+
+    for _, ent in ipairs(ents.GetAll()) do
+        if ent._HadInVehicleCollision then
+            ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
+            ent._HadInVehicleCollision = nil
+        end
+    end
+
     return tr
 end
 
