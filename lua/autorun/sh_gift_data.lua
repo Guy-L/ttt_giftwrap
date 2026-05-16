@@ -799,7 +799,7 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Stinky,  attrib_feel = GiftFeel.Muffled,
     },
     eagleflight = GiftData.New {
-        name     = "Eagleflight Gun",      desc       = "a gun that shoots yourself",
+        name     = "Eagleflight Gun",      desc       = "a gun where you are the bullet",
         category = GiftCategory.WorldSWEP, identifier = "ttt_weapon_eagleflightgun",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Normal,
@@ -1800,7 +1800,7 @@ local deployableSWEPs = {
     pog     = {name = "Pot of Greedier", desc = "Pot of Greed, which lets you draw two additional gifts from your deck",
                SENT_id = "ttt_potofgreedier", SWEP_id = "weapon_ttt_potofgreedier",
                SENT_setup = "pog_setup",
-               SENT_random = true, SENT_rarity = 5, SENT_quality = 10,
+               SENT_random = true, SENT_rarity = 2, SENT_quality = 7,
                SWEP_random = false,
                SENT_size = GiftSize.Big, SWEP_size = GiftSize.Big,
                sound = GiftSound.Glass, smell = GiftSmell.Earthy, feel = GiftFeel.Cursed},

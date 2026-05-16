@@ -790,7 +790,7 @@ if SERVER then
             if not isUndo then
                 net.Start(GIFTWRAP_HL_CHAT_MSG)
                 net.WriteString("Someone nearby unwrapped ")
-                net.WriteString(giftDesc)
+                net.WriteString(giftDesc:gsub("lets you", "lets them"):gsub("your", "their"):gsub("you", "they"))
                 net.WriteString(rightText)
                 net.Send(nearbyPlayers)
 
