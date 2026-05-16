@@ -444,13 +444,17 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.None, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Wool, attrib_feel = GiftFeel.Sus,
     },
-    kfc = GiftData.New {
-        name     = "KFC Bucket",      desc       = "a bucket o' chicken",
-        category = GiftCategory.SENT, identifier = "ttt_kfc",
+    green_demon = GiftData.New {
+        name     = "Live Green Demon", desc       = "a 1-UP",
+        category = GiftCategory.SENT,  identifier = "sent_greendemon",
         can_be_random_gift = true,
-        factor_rarity = 3, factor_quality = 6,
-        attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Warm,
+        factor_rarity = 10, factor_quality = -10,
+        attrib_sound = GiftSound.Musical, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Cursed,
+        set_owner = true,
+        mv_hook = "HUDDrawMarkerVisionGreenDemon",
+        visual_override = {path = "models/entities/entities/sent_greendemon/gd.png", type = "sprite"},
+        special_setup = "green_demon_setup"
     },
     headcrab = GiftData.New {
         name     = "Headcrab",       desc       = "an aggressive pet crab",
@@ -459,6 +463,14 @@ local giftDataCatalog = {
         factor_rarity = 3, factor_quality = -8,
         attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Rotten, attrib_feel = GiftFeel.Alive,
+    },
+    kfc = GiftData.New {
+        name     = "KFC Bucket",      desc       = "a bucket o' chicken",
+        category = GiftCategory.SENT, identifier = "ttt_kfc",
+        can_be_random_gift = true,
+        factor_rarity = 3, factor_quality = 6,
+        attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Warm,
     },
     maxwell = GiftData.New {
         name     = "Maxwell",         desc       = "a dapper gentleman",
@@ -1643,13 +1655,14 @@ local deployableSWEPs = {
                SENT_size = GiftSize.Gigantic, SWEP_size = GiftSize.Large,
                sound = GiftSound.Goopy, smell = GiftSmell.Cardboard, feel = GiftFeel.Sticky},
 
-    green_demon = {name = "Green Demon", desc = "a 1-UP",
-               SENT_id = "sent_greendemon", SWEP_id = "weapon_ttt_greendemon",
-               SENT_setup_var = {{k = "set_owner"}},
-               SENT_random = true, SENT_rarity = 10, SENT_quality = -10,
+    green_demon_box = {name = "Green Demon Box", desc = "a 1-UP",
+               SENT_id = "sent_greendemon_box", SWEP_id = "weapon_ttt_greendemon",
+               SENT_setup_var = {{k = "set_owner"}, {k = "move_to_giftee"}, {k = "mv_hook", v = "HUDDrawMarkerVisionGreenDemonBox"}},
+               SENT_random = false,
                SWEP_random = false,
                SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Large,
-               sound = GiftSound.Musical, smell = GiftSmell.Food, feel = GiftFeel.Cursed},
+               sound = GiftSound.Musical, smell = GiftSmell.Food, feel = GiftFeel.Cursed,
+               SWEP_desc = "a 1-UP box"},
 
     groovitron = {name = "Groovitron", desc = "a disco ball",
                SENT_id = "ttt_pap_groovitron_proj", SWEP_id = "ttt_pap_groovitron",
@@ -2201,6 +2214,13 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
 
         elseif self.special_setup == "manhack_setup" then
             wrappedEnt:StopControlling()
+
+        elseif self.special_setup == "green_demon_setup" then
+            if wrappedEnt.Solidified then
+                wrappedEnt.LoopSound:Stop()
+            else
+                wrappedEnt.ActivateTime = CurTime() + 1e9
+            end
         end
     end
 
@@ -2527,6 +2547,16 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
                 wrappedEnt:SetNWInt("health", TTT_FAN.CVARS.fan_health)
             end
 
+        elseif self.special_setup == "green_demon_setup" then
+            local wakeUpTime = GetConVar("sv_ttt2_greendemon_spawn_delay"):GetFloat()
+
+            if wrappedEnt.Solidified then
+                wrappedEnt.Solidified = false
+                wakeUpTime = wakeUpTime / 2
+            end
+
+            wrappedEnt:EmitSound(wrappedEnt.SpawnSound)
+            wrappedEnt.ActivateTime = CurTime() + wakeUpTime
         end
     end
 
@@ -2838,6 +2868,7 @@ if SERVER then
         if not self.cachedModel and (self.category == GiftCategory.NPC or self.category == GiftCategory.SENT) then
             local previewEnt = ents.Create(self.identifier)
 
+            if self.set_owner then previewEnt:SetOwner(ply) end
             if previewEnt.SetThrower then previewEnt:SetThrower(ply) end
             if previewEnt.SetOriginator then previewEnt:SetOriginator(ply) end
 
@@ -2948,9 +2979,9 @@ elseif CLIENT then
         return statusTable
     end
 
-    -- setup client-side markervision overrides
     hook.Add("InitPostEntity", OVERRIDE_MV_HOOK, function()
         for label, giftData in pairs(giftDataCatalog) do
+        -- setup client-side markervision overrides
             if giftData.mv_hook then
                 local ogHook = hook.GetTable()["TTT2RenderMarkerVisionInfo"][giftData.mv_hook]
 
@@ -3473,8 +3504,38 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             end
         end
     end
-end)
 
+    -- Green demon fixes
+    local sent_greendemon = scripted_ents.GetStored("sent_greendemon")
+
+    if sent_greendemon then
+        -- Make visible z coordinate of Green Demon SENT more intuitively match hitbox
+        sent_greendemon = sent_greendemon.t
+        sent_greendemon.SparkleHeightOffset = 4
+
+        if CLIENT then
+            local OGGreenDemonDraw = sent_greendemon.DrawTortuga
+
+            sent_greendemon.DrawTortuga = function(self)
+                local ogPos = self:GetPos()
+                self:SetPos(ogPos - Vector(0, 0, 8))
+                OGGreenDemonDraw(self)
+                self:SetPos(ogPos)
+            end
+
+        -- Override collision group change that prevents wrapping (doesn't affect anything afaik)
+        elseif SERVER then
+            local OGGreenDemonThink = sent_greendemon.Think
+
+            sent_greendemon.Think = function(self)
+                OGGreenDemonThink(self)
+                if self.Solidified and self:GetCollisionGroup() ~= COLLISION_GROUP_DEBRIS then
+                    self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+                end
+            end
+        end
+    end
+end)
 
 
 if SERVER then

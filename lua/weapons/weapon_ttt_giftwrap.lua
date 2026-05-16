@@ -147,8 +147,8 @@ if SERVER then
             "ent_fortnitestructure", -- blocked later (affixed)
             "ent_ttt_fan",
             --"ttt_flame", --TODO: bugged
-            --"sent_greendemon_box", --TODO: bugged (ui remains), needs ownership check, possible balance issue
-            --"sent_greendemon", --TODO: bugged
+            "sent_greendemon_box",
+            "sent_greendemon",
             "ttt2_hat_baron",
             "ttt_hat_deerstalker",
             "env_headcrabcanister", -- blocked later (affixed)
@@ -839,7 +839,9 @@ if SERVER then
 
                 if math.random(5) == 5 then
                     timer.Simple(0.2, function()
-                        sndOrigin:EmitSound(sounds["flourish_yippie"], 75, 100, 0.6)
+                        if IsValid(sndOrigin) then
+                            sndOrigin:EmitSound(sounds["flourish_yippie"], 75, 100, 0.6)
+                        end
                     end)
                 end
             end
