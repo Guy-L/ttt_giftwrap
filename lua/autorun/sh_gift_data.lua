@@ -2315,6 +2315,7 @@ function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
             -- copied from bunger addon
             wrappedEnt:SetNPCState(2)
             wrappedEnt:SetNoDraw(true)
+            wrappedEnt:SetNWEntity("Thrower", giftee)
             wrappedEnt:SetNWBool("GWFriendlyBunger", true)
 
             local bunger = ents.Create("prop_dynamic")
