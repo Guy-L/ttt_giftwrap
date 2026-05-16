@@ -694,6 +694,7 @@ local giftDataCatalog = {
         factor_rarity = 1, factor_quality = 3,
         attrib_sound = GiftSound.Glass,       attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Nondescript, attrib_feel = GiftFeel.Sturdy,
+        worldmodel_fix = true,
     },
     blink = GiftData.New {
         name     = "Blink",                desc       = "teleportation powers",
@@ -1511,6 +1512,7 @@ local deployableSWEPs = {
     beacon  = {name = "Beacon", desc = "a high-tech beacon",
                SENT_id = "ttt_beacon", SWEP_id = "weapon_ttt_beacon",
                SENT_setup_var = {k = "set_thrower"},
+               SWEP_setup_var = {k = "worldmodel_fix"},
                SENT_random = true, SENT_rarity = 1, SENT_quality = 3,
                SWEP_random = false,
                SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Larger,
@@ -1584,6 +1586,7 @@ local deployableSWEPs = {
 
     decoy   = {name = "Decoy",        desc = "a high-tech decoy",
                SENT_id = "ttt_decoy", SWEP_id = "weapon_ttt_decoy",
+               SWEP_setup_var = {k = "worldmodel_fix"},
                SENT_random = false,   SWEP_random = false,
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Whirring, smell = GiftSmell.Sterile, feel = GiftFeel.Electric},
@@ -1658,6 +1661,7 @@ local deployableSWEPs = {
     green_demon_box = {name = "Green Demon Box", desc = "a 1-UP",
                SENT_id = "sent_greendemon_box", SWEP_id = "weapon_ttt_greendemon",
                SENT_setup_var = {{k = "set_owner"}, {k = "move_to_giftee"}, {k = "mv_hook", v = "HUDDrawMarkerVisionGreenDemonBox"}},
+               SWEP_setup_var = {k = "worldmodel_fix"},
                SENT_random = false,
                SWEP_random = false,
                SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Large,
@@ -1804,6 +1808,7 @@ local deployableSWEPs = {
     radio   = {name = "Radio", desc = "a toy radio",
                SENT_id = "ttt_radio", SWEP_id = "weapon_ttt_radio",
                SENT_setup_var = {k = "set_thrower"},
+               SWEP_setup_var = {k = "worldmodel_fix"},
                SENT_random = true, SENT_rarity = 1, SENT_quality = 2,
                SWEP_random = false,
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
@@ -1917,6 +1922,7 @@ local deployableSWEPs = {
     visualizer = {name = "Visualizer", desc = "a high-tech crime visualizer",
                SENT_id = "ttt_cse_proj", SWEP_id = "weapon_ttt_cse",
                SENT_setup_var = {k = "set_thrower"},
+               SWEP_setup_var = {k = "worldmodel_fix"},
                SENT_random = true, SENT_rarity = 1, SENT_quality = -2,
                SWEP_random = false,
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
@@ -2994,6 +3000,18 @@ elseif CLIENT then
                         mvData.drawInfo = false
                     end
                 end)
+            end
+
+            -- fix AddCustomWorldModel sweps being visually frozen after PVS exit
+            -- (to be removed once https://github.com/TTT-2/TTT2/issues/1874 is fixed)
+            if giftData.worldmodel_fix then
+                local swep = weapons.GetStored(giftData.identifier)
+
+                if swep then
+                    swep.DrawWorldModel = function(self, flags)
+                        self:DrawModel()
+                    end
+                end
             end
         end
     end)
