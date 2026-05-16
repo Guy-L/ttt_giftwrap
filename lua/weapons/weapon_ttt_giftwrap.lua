@@ -169,8 +169,8 @@ if SERVER then
             "ttt_paper_plane_proj",
             "ttt_poison_station",
             "ttt_potofgreedier",
-            --"ttt_radio", -- blocked later if affixed; TODO: bugged (markervision; can get permanent burning SFX?), need ownership check
-            --"ttt_ragnana_peel",
+            "ttt_radio",
+            "ttt_ragnana_peel",
             "sent_rcxd",
             "shield_deployer",
             --"ttt_slam_satchel", -- TODO: bugged (ui remains)

@@ -1817,7 +1817,7 @@ local deployableSWEPs = {
 
     radio   = {name = "Radio", desc = "a toy radio",
                SENT_id = "ttt_radio", SWEP_id = "weapon_ttt_radio",
-               SENT_setup_var = {k = "set_thrower"},
+               SENT_setup_var = {{k = "set_thrower"}, {k = "mv_hook", v = "HUDDrawMarkerVisionRadio"}},
                SWEP_setup_var = {k = "worldmodel_fix"},
                SENT_random = true, SENT_rarity = 1, SENT_quality = 2,
                SWEP_random = false,
