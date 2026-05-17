@@ -1627,7 +1627,7 @@ local deployableSWEPs = {
 
     fan     = {name = "Fan", desc = "a powerful fan",
                SENT_id = "ent_ttt_fan", SWEP_id = "weapon_fan",
-               SENT_setup = "fan_setup", SENT_setup_var = {{k = "ambush_giftee"}, {k = "ambush_angle", v = -90}, {k = "ambush_yoff", v = 18}},
+               SENT_setup = "fan_setup", SENT_setup_var = {{k = "ambush_giftee"}, {k = "ambush_angle", v = -90}, {k = "ambush_yoff", v = 18}, {k = "mv_hook", v = "FanMarkerVisionDisplay"}},
                SENT_random = true, SENT_rarity = 3, SENT_quality = -8,
                SWEP_random = false,
                SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Large,
@@ -1790,7 +1790,7 @@ local deployableSWEPs = {
     poison_station = {name = "Poison Station", desc = "a healing microwave",
                SWEP_category = GiftCategory.AutoEquipSWEP,
                SENT_id = "ttt_poison_station", SWEP_id = "weapon_ttt_poison_station",
-               SENT_setup_var = {k = "set_thrower"},
+               SENT_setup_var = {{k = "set_thrower"}, {k = "mv_hook", v = "PoisonStationMarkerVisionDisplay"}},
                SENT_random = false,
                SWEP_random = false,
                SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Huge,
@@ -1878,7 +1878,7 @@ local deployableSWEPs = {
 
     spring_mine = {name = "Spring Mine", desc = "a comically large spring",
                SENT_id = "ttt_springmine", SWEP_id = "weapon_ttt_springmine",
-               SENT_setup_var = {{k = "stick_to_ground"}, {k = "set_thrower"}},
+               SENT_setup_var = {{k = "stick_to_ground"}, {k = "set_thrower"}, {k = "mv_hook", v = "HUDDrawMarkerVisionSpringMine"}},
                SENT_random = true, SENT_rarity = 5, SENT_quality = -8,
                SWEP_random = false,
                SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Normal,
@@ -2425,7 +2425,7 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
 
         if groundTr.Hit then
             wrappedEnt:SetPos(groundTr.HitPos)
-            wrappedEnt:SetAngles(groundTr.HitNormal:Angle() + self.ground_angles and self.ground_angles or Angle(90, 0, 0))
+            wrappedEnt:SetAngles(groundTr.HitNormal:Angle() + (self.ground_angles and self.ground_angles or Angle(90, 0, 0)))
             if wrappedEnt.WeldToSurface then wrappedEnt:WeldToSurface(true) end
             wrappedEnt:SetMoveType(MOVETYPE_NONE)
             wrappedEnt:GetPhysicsObject():AddGameFlag(FVPHYSICS_NO_PLAYER_PICKUP)
