@@ -179,7 +179,7 @@ if SERVER then
             "ttt_slam_tripmine", -- blocked later (affixed)
             "ttt_soap", -- blocked later (affixed); TODO consider making moveable with ownership check
             "ttt_springmine", -- blocked later (affixed); TODO consider making moveable with ownership check
-            --"plasma_burster_nade", -- good luck wrapping that; TODO fix the whole thing being ass
+            "plasma_burster_nade",
             "npc_turret_floor",
             --"ttt_wormhole", -- blocked later (affixed); TODO: bugged (angle is reset to parallel with ground on unwrap)
             "ttt_zombieball_proj",
@@ -731,7 +731,7 @@ if SERVER then
             end
 
             -- Plop back into world
-            local doStabilize = #giftEnt:GetChildren() > 0 or giftData.category == GiftCategory.Vehicle
+            local doStabilize = #giftEnt:GetChildren() > 0 or giftData.category == GiftCategory.Vehicle or giftData.stabilize
             utils.ExitStasis(giftEnt, spawnPos, doStabilize)
             giftData:ApplyPostUnwrapAdjustments(giftEnt, gifteePly, giftObj, isUndo)
 

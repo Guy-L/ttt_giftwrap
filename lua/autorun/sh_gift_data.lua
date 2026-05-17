@@ -1128,7 +1128,7 @@ local giftDataCatalog = {
         name     = "Rocket Jumper",        desc       = "a Rocket Jumper",
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_rocket_jumper",
         can_be_random_gift = true,
-        factor_rarity = 10, factor_quality = 9,
+        factor_rarity = 8, factor_quality = 9,
         attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Heavy,
     },
@@ -1884,16 +1884,13 @@ local deployableSWEPs = {
                SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Springy, smell = GiftSmell.Rubbery, feel = GiftFeel.Round},
 
-    --star_burster = {name = "Star Burster", desc = "a cosmic magical ball", --TODO fix SWEP drops having fucked ammo count on client
-    --           SENT_id = "plasma_burster_nade", SWEP_id = "ttt_plasma_burster_nade",
-    --           --SWEP_setup = "star_burster_setup",
-    --           --SENT_setup_var = {{k = "stick_to_ground"}, {k = "set_thrower"}},
-    --           --SWEP_setup_var = {{k = "set_owner"}},
-    --           SENT_random = false,
-    --           SWEP_random = false,
-    --           SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Normal,
-    --           sound = GiftSound.Whooshing, smell = GiftSmell.Strange, feel = GiftFeel.Magical,
-    --           SWEP_desc = "cosmic magical balls"},
+    star_burster = {name = "Star Burster", desc = "a shooting star",
+               SENT_id = "plasma_burster_nade", SWEP_id = "ttt_plasma_burster_nade",
+               SENT_setup = "starburst_ent_setup", SENT_setup_var = {k = "set_owner"},
+               SENT_random = true, SENT_rarity = 2, SENT_quality = -4,
+               SWEP_random = false,
+               SENT_size = GiftSize.Small, SWEP_size = GiftSize.Normal,
+               sound = GiftSound.Whooshing, smell = GiftSmell.Strange, feel = GiftFeel.Bursting},
 
     super_discombob = {name = "Super Discombobulator", desc = "an air-packed grenade",
                SENT_id = "ttt_confgrenade_proj_super", SWEP_id = "weapon_ttt_confgrenade_s",
@@ -2240,6 +2237,10 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
 
         elseif self.special_setup == "seekgull_setup" then
             wrappedEnt.SecondsPerTick = 1e9
+
+        elseif self.special_setup == "starburst_ent_setup" then
+            wrappedEnt:NextThink(CurTime() + 1e9)
+            timer.Remove("killPlasmaBurster2AfterTime")
         end
     end
 
@@ -2598,6 +2599,20 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
             if IsValid(phys) then
                 phys:SetMass(200)
             end
+
+        elseif self.special_setup == "starburst_ent_setup" then
+            wrappedEnt.Trail = util.SpriteTrail(wrappedEnt, 0, Color(255, 100, 0), false, 32, 1, 0.3, 0.01, "trails/plasma.vmt")
+            wrappedEnt.charges = GetConVar("ttt_plasmaburster_bounces"):GetInt()
+            wrappedEnt:NextThink(CurTime() + 0.1)
+            local phys = wrappedEnt:GetPhysicsObject()
+
+            timer.Simple(0.3, function()
+                if phys:IsValid() then
+                    local aim = giftee:GetAimVector()
+                    phys:SetVelocity((aim + VectorRand() * 0.1):GetNormalized() * 1500)
+                    phys:Wake()
+                end
+            end)
         end
     end
 
@@ -2789,7 +2804,7 @@ function GetPerGiftWeightBreakdown(xmasFactor, scoreFactor, isBoosted)
     local breakdown = {}
 
     for label, giftData in pairs(giftDataCatalog) do
-        breakdown[label.."_spawnable"] = giftData:IsSpawnable(LocalPlayer())
+        breakdown[label.."_spawnable"] = giftData:IsSpawnable(LocalPlayer and LocalPlayer() or player.GetAll()[1])
         breakdown[label.."_weight"]    = giftData:CalcWeight(xmasFactor, scoreFactor, isBoosted)
     end
 
@@ -3649,6 +3664,37 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             else
                 return OGPaperPlaneClosestPlayerFunc(self, ent, plys)
             end
+        end
+    end
+
+    -- Fix client-side clipsize discrepancy & related Lua error when spawning as worldmodel
+    if CLIENT then
+        local starBurstWep = weapons.GetStored("ttt_plasma_burster_nade")
+
+        if starBurstWep then
+            local OGStarBurstInit = starBurstWep.Initialize
+
+            starBurstWep.Initialize = function(self)
+                local defaultClip = GetConVar("ttt_plasmaburster_ammo"):GetFloat()
+                self.Primary.ClipSize = defaultClip
+                self:SetClip1(defaultClip)
+                OGStarBurstInit(self)
+            end
+        end
+    end
+
+    -- Make Star Burster entity wrappable
+    local starBurstEnt = scripted_ents.GetStored("plasma_burster_nade")
+
+    if starBurstEnt then
+        starBurstEnt = starBurstEnt.t
+        local OGStarBurstEntInit = starBurstEnt.Initialize
+
+        starBurstEnt.Initialize = function(self)
+            OGStarBurstEntInit(self)
+
+            -- need to do this for collisions to work, surprisingly the box size doesn't change anything
+            self:SetCollisionBounds(Vector(-1, -1, -1), Vector(1, 1, 1))
         end
     end
 end)

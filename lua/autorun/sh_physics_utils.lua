@@ -278,7 +278,7 @@ if SERVER then
         -- recreate connected sprite trails
         if ent._childTrails then
             for _, t in ipairs(ent._childTrails) do
-                t.trailEnt:Remove()
+                if IsValid(t.trailEnt) then t.trailEnt:Remove() end
                 util.SpriteTrail(ent, t.attachID, t.color, t.additive, t.startWidth, t.endWidth, t.lifetime, t.textureRes, t.texture)
             end
         end
