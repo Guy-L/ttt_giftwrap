@@ -113,6 +113,7 @@ if SERVER then
             "ttt_kfc",
             "glue_trap_paste",
             "ttt_seekgull_bird",
+            "ttt_wormhole"
         }
 
         -- check overrides
@@ -181,7 +182,7 @@ if SERVER then
             "ttt_springmine", -- blocked later (affixed); TODO consider making moveable with ownership check
             "plasma_burster_nade",
             "npc_turret_floor",
-            --"ttt_wormhole", -- blocked later (affixed); TODO: bugged (angle is reset to parallel with ground on unwrap)
+            "ttt_wormhole",
             "ttt_zombieball_proj",
             "npc_zombie",
         }

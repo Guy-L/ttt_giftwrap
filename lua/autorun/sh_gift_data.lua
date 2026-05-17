@@ -1938,7 +1938,7 @@ local deployableSWEPs = {
     wormhole_vent = {name = "Wormhole-Vent", desc = "a suspicious grate",
                SWEP_category = GiftCategory.AutoEquipSWEP,
                SENT_id = "ttt_wormhole", SWEP_id = "ttt_wormholecaller",
-               SENT_setup_var = {{k = "stick_to_ground"}}, --TODO fix angle not applying
+               SENT_setup_var = {{k = "stick_to_ground"}, {k = "ground_angles", v = Angle(90,0,0)}},
                SENT_random = false,
                SWEP_random = true, SWEP_rarity = 9, SWEP_quality = 6,
                SENT_size = GiftSize.Big, SWEP_size = GiftSize.Big,
@@ -2425,7 +2425,7 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
 
         if groundTr.Hit then
             wrappedEnt:SetPos(groundTr.HitPos)
-            wrappedEnt:SetAngles(groundTr.HitNormal:Angle() + Angle(90, 0, 0))
+            wrappedEnt:SetAngles(groundTr.HitNormal:Angle() + self.ground_angles and self.ground_angles or Angle(90, 0, 0))
             if wrappedEnt.WeldToSurface then wrappedEnt:WeldToSurface(true) end
             wrappedEnt:SetMoveType(MOVETYPE_NONE)
             wrappedEnt:GetPhysicsObject():AddGameFlag(FVPHYSICS_NO_PLAYER_PICKUP)
