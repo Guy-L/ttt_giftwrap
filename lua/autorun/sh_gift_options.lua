@@ -117,9 +117,11 @@ if CLIENT then
         end
     end
 
-    function UpdateGiftContentMenu()
+    function UpdateGiftContentMenu(owner)
+        if IsValid(owner) and owner ~= LocalPlayer() then return end
+
         if IsValid(HELPSCRN._gwOptMenu) and IsValid(HELPSCRN._gwOptMenu.contentsBtn) then
-            dbg.Log("Reloading content menu due to change...")
+            dbg.Log("Reloading content menu due to change for owner", owner)
             HELPSCRN._gwOptMenu.contentsBtn.DoClick(HELPSCRN._gwOptMenu.contentsBtn)
         end
     end

@@ -412,7 +412,7 @@ function SWEP:SetupDataTables()
                     self:EmitSound(sounds["undo_wrap"], 150, math.random(90, 110))
                 end
 
-                UpdateGiftContentMenu()
+                UpdateGiftContentMenu(self:GetOwner())
             end)
         end)
 
@@ -421,7 +421,7 @@ function SWEP:SetupDataTables()
                 if IsValid(self) then
                     self:UpdateUI(name.." update")
                     self:UpdateModel(name.." update")
-                    UpdateGiftContentMenu()
+                    UpdateGiftContentMenu(self:GetOwner())
                 end
             end)
         end
@@ -563,10 +563,6 @@ function SWEP:HeldByWrapper(owner)
 end
 
 function SWEP:OnRemove()
-    if CLIENT and IsValid(self:GetOwner()) then
-        RunConsoleCommand("lastinv")
-    end
-
     if self:GetMarkerVision(MV_WRAPPER_LABEL) then
         self:RemoveMarkerVision(MV_WRAPPER_LABEL)
     end
