@@ -67,7 +67,7 @@ function GW_DBG.HighlightUI(el)
 end
 
 local function ReconstructMsg(...)
-        --reconstruct string for server relay
+    --reconstruct string for server relay
     local parts = {}
     for i = 1, select("#", ...) do
         parts[i] = tostring(select(i, ...))

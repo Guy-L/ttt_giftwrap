@@ -3041,15 +3041,17 @@ elseif CLIENT then
             if giftData.mv_hook then
                 local ogHook = hook.GetTable()["TTT2RenderMarkerVisionInfo"][giftData.mv_hook]
 
-                hook.Add("TTT2RenderMarkerVisionInfo", giftData.mv_hook, function(mvData)
-                    local ent = mvData:GetEntity()
+                if ogHook then
+                    hook.Add("TTT2RenderMarkerVisionInfo", giftData.mv_hook, function(mvData)
+                        local ent = mvData:GetEntity()
 
-                    if not ent._HideMarks then
-                        ogHook(mvData)
-                    else
-                        mvData.drawInfo = false
-                    end
-                end)
+                        if not ent._HideMarks then
+                            ogHook(mvData)
+                        else
+                            mvData.drawInfo = false
+                        end
+                    end)
+                end
             end
 
             -- fix AddCustomWorldModel sweps being visually frozen after PVS exit
@@ -3522,16 +3524,25 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
                 parentGift:EmitSound(sound)
             end
 
+            for _, ply in ipairs(player.GetAll()) do
+                if ply ~= giftee then
+                    if ply:GetPos():Distance(parentGift:GetPos()) <= 300 then
+                        ply:ChatPrint("A nearby gift is beeping!")
+                    end
+                end
+            end
+
             timer.Simple(fuse, function()
                 if not IsValid(wrappedEnt) then return end
                 parentGift = wrappedEnt:GetNWEntity("WrappedByGift")
 
                 if IsValid(parentGift) then
                     parentGift._PreventThrow = true
-                    parentGift:Remove()
                     funcs.explosion(parentGift)
+                    parentGift:Remove()
 
                 else
+                    funcs.explosion(wrappedEnt)
                     wrappedEnt:Remove()
                 end
             end)
@@ -3571,9 +3582,9 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
 
             manhackSENT.SelfDestruct = function(self)
                 RemoteGiftExplosion(self, self.SoundStunned, 3, {
-                    explosion = function(parentGift)
+                    explosion = function(parentEnt)
                         local explode = ents.Create("env_explosion")
-                        explode:SetPos(utils.GetEntCenter(parentGift))
+                        explode:SetPos(utils.GetEntCenter(parentEnt))
                         explode:SetOwner(self:GetPlayerController())
                         explode:Spawn()
                         explode:SetKeyValue("iMagnitude", self.ExplosionSize)
@@ -3597,8 +3608,8 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
 
         sent_slam.StartExplode = function(self, checkActive)
             RemoteGiftExplosion(self, self.PreExplosionSound, 2, {
-                explosion = function(parentGift)
-                    local pos = parentGift:GetPos()
+                explosion = function(parentEnt)
+                    local pos = parentEnt:GetPos()
                     local radius = self.BlastRadius
                     local damage = self.BlastDamage
 
@@ -3609,8 +3620,8 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
                     effect:SetRadius(radius)
                     effect:SetMagnitude(damage)
                     util.Effect("Explosion", effect, true, true)
-                    util.BlastDamage(parentGift, self:GetPlacer(), pos, radius, damage)
-                    parentGift:EmitSound(self.ExplosionSound, 60, math.random(125, 150))
+                    util.BlastDamage(parentEnt, self:GetPlacer(), pos, radius, damage)
+                    parentEnt:EmitSound(self.ExplosionSound, 60, math.random(125, 150))
                 end,
 
                 og = function()
