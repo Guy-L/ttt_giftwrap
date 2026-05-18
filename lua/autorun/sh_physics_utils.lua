@@ -187,7 +187,7 @@ if SERVER then
         ent._GWStoredColGroup = ent:GetCollisionGroup()
         ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 
-        local minPos, maxPos = game.GetWorld():GetCollisionBounds()
+        local minPos, maxPos = game.GetWorld():GetModelBounds()
         ent:SetPos(maxPos)
 
         local phys = ent:GetPhysicsObject()

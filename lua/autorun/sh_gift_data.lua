@@ -1733,7 +1733,7 @@ local deployableSWEPs = {
                SENT_size = GiftSize.Small, SWEP_size = GiftSize.Small,
                sound = GiftSound.Splashing, smell = GiftSmell.Stinky, feel = GiftFeel.Warm},
 
-    killer_bungers = {name = "Bunger Grenade", desc = "a bunch of friendly Bungers",
+    killer_bungers = {name = "Bunger Grenade", desc = "a bunch of angry Bungers",
                SENT_id = "ttt_bungernade_proj", SWEP_id = "weapon_ttt_bungernade",
                SENT_setup = "grenade", --TODO fix not being able to wrap sent nade
                SENT_random = true, SENT_rarity = 5, SENT_quality = -8,
