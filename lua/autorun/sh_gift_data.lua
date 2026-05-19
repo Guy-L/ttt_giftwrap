@@ -435,6 +435,15 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.None, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Wool, attrib_feel = GiftFeel.Sus,
     },
+    force_shield = GiftData.New {
+        name     = "Live Force Shield", desc       = "a next-gen force shield",
+        category = GiftCategory.SENT,   identifier = "force_shield",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Pulsing,     attrib_size = 10,
+        attrib_smell = GiftSmell.Nondescript, attrib_feel = GiftFeel.Futuristic,
+        ambush_giftee = true, ambush_angle = 90, mark_invalid = true,
+        special_setup = "force_shield_setup"
+    },
     green_demon = GiftData.New {
         name     = "Live Green Demon", desc       = "a 1-UP",
         category = GiftCategory.SENT,  identifier = "sent_greendemon",
@@ -1594,14 +1603,15 @@ local deployableSWEPs = {
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Whirring, smell = GiftSmell.Sterile, feel = GiftFeel.Electric},
 
-    force_shield = {name = "Deployable Force Shield", desc = "a next-gen force shield",
+    deployable_force_shield = {name = "Deployable Force Shield", desc = "a next-gen force shield",
                SWEP_category = GiftCategory.FloorSWEP,
                SENT_id = "shield_deployer", SWEP_id = "weapon_ttt_force_shield",
                SENT_setup = "shield_deployer_setup",
                SENT_random = false,
                SWEP_random = true, SWEP_rarity = 1, SWEP_quality = 0,
                SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Normal,
-               sound = GiftSound.Pulsing, smell = GiftSmell.Strange, feel = GiftFeel.Bright},
+               sound = GiftSound.Pulsing, smell = GiftSmell.Nondescript, feel = GiftFeel.Bright,
+               SWEP_smell = GiftSmell.Sterile},
 
     discombob = {name = "Discombobulator", desc = "an air-filled grenade",
                SWEP_category = GiftCategory.FloorSWEP,
@@ -2248,6 +2258,9 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
             if IsValid(enemy) and enemy:IsPlayer() and enemy:Alive() then
                 enemy:RemoveEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
             end
+
+        elseif self.special_setup == "force_shield_setup" then
+            wrappedEnt:StopSound("ambient/machines/combine_shield_touch_loop1.wav")
         end
     end
 
@@ -2444,7 +2457,11 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
                 if wrappedEnt.WeldToSurface then wrappedEnt:WeldToSurface(true) end
             end)
             wrappedEnt:SetMoveType(MOVETYPE_NONE)
-            wrappedEnt:GetPhysicsObject():AddGameFlag(FVPHYSICS_NO_PLAYER_PICKUP)
+
+            local phys = wrappedEnt:GetPhysicsObject()
+            if IsValid(phys) then
+                phys:AddGameFlag(FVPHYSICS_NO_PLAYER_PICKUP)
+            end
         end
     end
 
@@ -2671,6 +2688,9 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
                     phys:Wake()
                 end
             end)
+
+        elseif self.special_setup == "force_shield_setup" then
+            wrappedEnt:EmitSound("ambient/machines/combine_shield_touch_loop1.wav", 55)
         end
     end
 

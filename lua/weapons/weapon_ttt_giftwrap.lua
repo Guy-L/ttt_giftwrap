@@ -110,6 +110,7 @@ if SERVER then
 
         local override_classes = {
             "ttt_chicken",
+            "force_shield",
             "glue_trap_paste",
             "ttt_kfc",
             "item_lethal_company_landmine",
