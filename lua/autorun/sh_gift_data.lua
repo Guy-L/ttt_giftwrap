@@ -484,7 +484,7 @@ local giftDataCatalog = {
         category = GiftCategory.SENT, identifier = "ttt_minecraft_arrow",
         can_be_random_gift = true,
         factor_rarity = 2, factor_quality = -4,
-        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Small,
+        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Woody,     attrib_feel = GiftFeel.Otherworldly,
     },
     molotov_grenade = GiftData.New {
@@ -1016,7 +1016,7 @@ local giftDataCatalog = {
         name     = "Minecraft Bow",        desc       = "a bow and arrow",
         category = GiftCategory.WorldSWEP, identifier = "ttt_minecraft_bow",
         can_be_random_gift = false,
-        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Large,
+        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Woody,   attrib_feel = GiftFeel.Otherworldly,
     },
     meatball = GiftData.New {
@@ -3756,6 +3756,26 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
         end
     end
 end)
+
+    -- Make Minecraft arrow entity wrappable
+    local mcArrowEnt = scripted_ents.GetStored("ttt_minecraft_arrow")
+
+    if mcArrowEnt then
+        mcArrowEnt = mcArrowEnt.t
+        OGMCArrowEntThink = OGMCArrowEntThink or mcArrowEnt.Think
+
+        mcArrowEnt.Think = function(self)
+            OGMCArrowEntThink(self)
+
+            -- need to do this for collisions to work, surprisingly the box size doesn't change anything
+            if self.Disabled and not self:IsSolid() then
+                self:SetMoveType(MOVETYPE_VPHYSICS)
+                self:SetNotSolid(false)
+                self:SetColor(Color(180, 180, 180))
+            end
+        end
+    end
+--end)
 
 
 if SERVER then

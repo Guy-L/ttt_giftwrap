@@ -162,7 +162,7 @@ if SERVER then
             "item_lethal_company_landmine", -- blocked later (affixed)
             "matryoshka", -- blocked later (affixed) (breaching charge)
             "npc_metropolice", -- wraps SuperCop, should be PaP only
-            "ttt_minecraft_arrow", -- TODO: bugged, can't be selected
+            "ttt_minecraft_arrow",
             "sent_molotov_timed",
             "sent_molotov",
             "moonball",
