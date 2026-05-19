@@ -1698,9 +1698,10 @@ local deployableSWEPs = {
 
     hwapoon = {name = "Hwapoon", desc = "a harpoon",
                SWEP_category = GiftCategory.AutoEquipSWEP,
-               SENT_setup_var = {k = "set_owner"}, --TODO DOUBLE CHECK WRAPPING THE ENT WORKS
+               SENT_setup = "harpoon_setup", SENT_setup_var = {k = "set_owner"},
                SENT_id = "hwapoon_arrow", SWEP_id = "weapon_ttt_hwapoon",
-               SENT_random = false, SWEP_random = false,
+               SENT_random = true, SENT_rarity = 4, SENT_quality = -8,
+               SWEP_random = false,
                SENT_size = GiftSize.Gigantic, SWEP_size = GiftSize.Gigantic,
                sound = GiftSound.Metallic, smell = GiftSmell.Rusty, feel = GiftFeel.Long},
 
@@ -2691,6 +2692,23 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
 
         elseif self.special_setup == "force_shield_setup" then
             wrappedEnt:EmitSound("ambient/machines/combine_shield_touch_loop1.wav", 55)
+
+        elseif self.special_setup == "harpoon_setup" then
+            wrappedEnt:Initialize()
+            local phys = wrappedEnt:GetPhysicsObject()
+            local aim = giftee:GetAimVector()
+            wrappedEnt:SetAngles(aim:Angle())
+
+            if phys:IsValid() then
+                phys:Sleep()
+
+                timer.Simple(0.8, function()
+                    if IsValid(phys) then
+                        phys:SetVelocity((aim + utils.GetRandomUpwardsVel(0) * 0.3):GetNormalized() * 1000)
+                        phys:Wake()
+                    end
+                end)
+            end
         end
     end
 
@@ -3825,6 +3843,32 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
         lethalMineEnt.EndTouch = function(self, ent)
             if IsValid(self:GetNWEntity("WrappedByGift")) then return end
             OGLethalMineEndTouch(self, ent)
+        end
+    end
+
+    if SERVER then
+        local hwapoonEnt = scripted_ents.GetStored("hwapoon_arrow")
+
+        if hwapoonEnt then
+            hwapoonEnt = hwapoonEnt.t --TODO
+
+            -- Make Hwapoon arrows wrappable
+            local OGHwapoonPhysCollide = hwapoonEnt.PhysicsCollide
+
+            hwapoonEnt.PhysicsCollide = function(self, data, physObj)
+                OGHwapoonPhysCollide(self, data, physObj)
+
+                if self:GetSolid() == SOLID_NONE then
+                    self:SetSolid(SOLID_VPHYSICS)
+                end
+            end
+
+            -- Prevent Hwapoon arrows from disappearing
+            hwapoonEnt.AcceptInput = function(self, inputName, activator, caller, param)
+                if inputName == "kill" then
+                    return true
+                end
+            end
         end
     end
 end)

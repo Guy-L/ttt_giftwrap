@@ -112,6 +112,7 @@ if SERVER then
             "ttt_chicken",
             "force_shield",
             "glue_trap_paste",
+            "hwapoon_arrow",
             "ttt_kfc",
             "item_lethal_company_landmine",
             "ttt_seekgull_bird",
@@ -161,6 +162,7 @@ if SERVER then
             "npc_headcrab",
             "npc_headcrab_fast", -- bunger
             "ttt_health_station",
+            "hwapoon_arrow",
             "ttt_seekgull_bird",
             "ttt_knife_proj",
             "item_lethal_company_landmine", -- blocked later (affixed)
