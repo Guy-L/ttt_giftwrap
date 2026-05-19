@@ -129,7 +129,7 @@ if SERVER then
             "prop_physics_override",
             "prop_sphere",
             "ads", -- blocked later (affixed)
-            --"npc_barnacle", -- TODO: bugged
+            "npc_barnacle",
             "ent_ttt_ttt2_camera", -- blocked later (affixed)
             "force_shield", -- blocked later (no phys, won't budge)
             "christmas_present",

@@ -381,15 +381,6 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Fresh,
         special_setup = "grenade_auto", explosion_delay = 2, set_owner = true
     },
-    barnacle = GiftData.New {
-        name     = "Live Barnacle",  desc       = "a hungry barnacle",
-        category = GiftCategory.NPC, identifier = "npc_barnacle",
-        can_be_random_gift = true,
-        factor_rarity = 4, factor_quality = -9,
-        attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Larger,
-        attrib_smell = GiftSmell.Rotten, attrib_feel = GiftFeel.Alive,
-        special_setup = "barnacle_setup"
-    },
     bouncy_ball = GiftData.New {
         name     = "Bouncy Ball",     desc       = "a colorful ball",
         category = GiftCategory.SENT, identifier = "sent_ball",
@@ -688,13 +679,6 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Squishy,   attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Fresh,
-    },
-    barnacle_item = GiftData.New {
-        name     = "Barnacle",             desc       = "a hungry pet barnacle",
-        category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_barnacle",
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Larger,
-        attrib_smell = GiftSmell.Rotten, attrib_feel = GiftFeel.Alive,
     },
     binoculars = GiftData.New {
         name     = "Binoculars",           desc       = "a pair of binoculars",
@@ -1509,7 +1493,17 @@ end
 
 -- to populate the list with SWEPs that also have a SENT tied to them (cf. ADS, which should be using this)
 local deployableSWEPs = {
-    baron_hat = GiftData.New {name = "Baron Hat", desc = "a bougie hat",
+    barnacle  = {name = "Barnacle", desc = "a hungry barnacle",
+               SWEP_desc = "a hungry pet barnacle",
+               SENT_category = GiftCategory.NPC,
+               SENT_id = "npc_barnacle", SWEP_id = "weapon_ttt_barnacle",
+               SENT_setup = "barnacle_setup", SENT_setup_var = {k = "mv_hook", v = "BarnacleMarkerVisionDisplay"},
+               SENT_random = true, SENT_rarity = 3, SENT_quality = -9,
+               SWEP_random = false,
+               SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Large,
+               sound = GiftSound.Fleshy, smell = GiftSmell.Rotten, feel = GiftFeel.Alive},
+
+    baron_hat = {name = "Baron Hat", desc = "a bougie hat",
                SWEP_category = GiftCategory.Item,
                SENT_id = "ttt2_hat_baron", SWEP_id = "item_ttt2_baron_hat",
                SENT_setup = "baron_hat_drop", SWEP_setup = "baron_hat_setup",
@@ -1692,7 +1686,7 @@ local deployableSWEPs = {
                SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Huge,
                sound = GiftSound.Beeping, smell = GiftSmell.Nice, feel = GiftFeel.Warm},
 
-    hwapoon = GiftData.New {name = "Hwapoon", desc = "a harpoon", 
+    hwapoon = {name = "Hwapoon", desc = "a harpoon",
                SWEP_category = GiftCategory.AutoEquipSWEP,
                SENT_setup_var = {k = "set_owner"}, --TODO DOUBLE CHECK WRAPPING THE ENT WORKS
                SENT_id = "hwapoon_arrow", SWEP_id = "weapon_ttt_hwapoon",
@@ -2241,6 +2235,14 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
         elseif self.special_setup == "starburst_ent_setup" then
             wrappedEnt:NextThink(CurTime() + 1e9)
             timer.Remove("killPlasmaBurster2AfterTime")
+
+        elseif self.special_setup == "barnacle_setup" then
+            wrappedEnt:Fire("LetGo")
+            local enemy = wrappedEnt:GetInternalVariable("m_hEnemy")
+
+            if IsValid(enemy) and enemy:IsPlayer() and enemy:Alive() then
+                enemy:RemoveEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
+            end
         end
     end
 
@@ -2302,8 +2304,11 @@ function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
 
     if self.special_setup then
         if self.special_setup == "barnacle_setup" then
-             -- required to have its final position set properly before being spawned/activated
-            wrappedEnt:SetPos(giftee:GetPos() + Vector(0, 0, 100))
+            timer.Simple(1.5, function()
+                if IsValid(giftee) and giftee:Alive() then
+                    giftee:ChatPrint("NOTE: You CAN shoot it to escape!")
+                end
+            end)
 
         elseif self.special_setup == "bouncy_ball_setup" then
             wrappedEnt:SetBallSize(math.random(20,40))
@@ -2471,11 +2476,53 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
 
     if self.special_setup then
         if self.special_setup == "barnacle_setup" then
-            wrappedEnt:SetPos(giftee:GetPos() + Vector(0, 0, 100))
-            wrappedEnt:SetDamageOwner(giftee)
-            wrappedEnt:Activate()
-            wrappedEnt:SetHealth(30)
-            giftee:ChatPrint("NOTE: You CAN shoot it to escape!")
+            local ang = wrappedEnt:GetAngles()
+            local owner = wrappedEnt:GetDamageOwner()
+            wrappedEnt:Remove() --tried very hard to properly move it but it's too involved
+
+            local startPos = giftee:GetPos()
+            local upTr = util.TraceLine({
+                start = startPos,
+                endpos = startPos + Vector(0, 0, 10000),
+                filter = ply,
+                mask = MASK_SOLID_BRUSHONLY
+            })
+
+            local newPos = upTr.Hit and upTr.HitPos or startPos + Vector(0, 0, 100)
+            local newBarnacleOwner = IsValid(owner) and owner or giftee
+            local newBarnacle = ents.Create("npc_barnacle")
+            newBarnacle:SetPos(newPos)
+            newBarnacle:SetAngles(ang)
+            newBarnacle:SetNWEntity("owner", newBarnacleOwner)
+            newBarnacle:SetDamageOwner(newBarnacleOwner)
+            newBarnacle:SetRenderMode(RENDERMODE_TRANSALPHA)
+            newBarnacle:SetColor(Color(0,0,0,30))
+            newBarnacle:SetKeyValue("RestDist",50)
+            newBarnacle:Spawn()
+            newBarnacle:Activate()
+            newBarnacle:SetHealth(50)
+            newBarnacle:Fire("SetDropTongueSpeed", 100)
+
+            local timerName = newBarnacle:EntIndex().."_timer" --recreate barnacle addon logic
+            timer.Create(timerName, 0.1, 0, function()
+                if not IsValid(newBarnacle) then
+                    timer.Remove(timerName)
+                    return
+                end
+
+                local enemy = newBarnacle:GetInternalVariable("m_hEnemy")
+                if IsValid(enemy) and enemy:IsPlayer() and enemy:Alive() then
+                    newBarnacle:SetColor(Color(255, 255, 255, 255))
+                    if IsValid(owner) then enemy:SelectWeapon('weapon_ttt_unarmed') end
+
+                elseif not newBarnacle.Health or newBarnacle:Health() <= 0 then
+                    newBarnacle:SetColor(Color(255, 255, 255, 255))
+                    timer.Remove(timerName)
+
+                else
+                    newBarnacle:SetColor(Color(0, 0, 0, 25))
+                end
+            end)
 
         elseif self.special_setup == "grenade" then
             local storedExplodeTime = wrappedEnt.storedExplodeTime or 1.5
