@@ -1743,12 +1743,13 @@ local deployableSWEPs = {
                sound = GiftSound.Metallic, smell = GiftSmell.Sterile, feel = GiftFeel.Sharp},
 
     lethal_mine = {name = "Lethal Mine", desc = "a landmine",
+               SWEP_desc = "a landmine gun",
                SENT_id = "item_lethal_company_landmine", SWEP_id = "weapon_ttt_lethalmine",
-               SENT_setup_var = {{k = "stick_to_ground"}, {k = "move_to_giftee"}}, --TODO fix: magnetoable, slides off slanted ground (not properly ground-stuck)
+               SENT_setup_var = {{k = "stick_to_ground"}, {k = "move_to_giftee"}, {k = "mark_invalid"}, {k = "mv_hook", v = "LethalMineMarkerVisionDisplay"}},
                SENT_random = true, SENT_rarity = 10, SENT_quality = -10,
                SWEP_random = false,
                SENT_size = GiftSize.Big, SWEP_size = GiftSize.Normal,
-               sound = GiftSound.Beeping, smell = GiftSmell.Gunpowder, feel = GiftFeel.Round},
+               sound = GiftSound.Beeping, smell = GiftSmell.Gunpowder, feel = GiftFeel.Flat},
 
     m4_slam  = {name = "M4 SLAM", desc = "a SLAM",
                SENT_id = "ttt_slam_satchel", SWEP_id = "weapon_ttt_slam",
@@ -2188,6 +2189,10 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
         constraint.RemoveAll(wrappedEnt)
     end
 
+    if self.mark_invalid then
+        wrappedEnt._Invalid = true
+    end
+
     if self.special_setup then
         if self.special_setup == "grenade" and wrappedEnt.SetExplodeTime then
             wrappedEnt.storedExplodeTime = wrappedEnt:GetExplodeTime() - CurTime()
@@ -2416,6 +2421,10 @@ end
 function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo)
     if IsValid(wrappedEnt) then
         wrappedEnt:SetNWEntity("GW_Wrapper", giftee)
+
+        if wrappedEnt._Invalid then
+            wrappedEnt._Invalid = false
+        end
     end
 
     if self.move_to_giftee then
@@ -3757,14 +3766,13 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             self:SetCollisionBounds(Vector(-1, -1, -1), Vector(1, 1, 1))
         end
     end
-end)
 
     -- Make Minecraft arrow entity wrappable
     local mcArrowEnt = scripted_ents.GetStored("ttt_minecraft_arrow")
 
     if mcArrowEnt then
         mcArrowEnt = mcArrowEnt.t
-        OGMCArrowEntThink = OGMCArrowEntThink or mcArrowEnt.Think
+        local OGMCArrowEntThink = mcArrowEnt.Think
 
         mcArrowEnt.Think = function(self)
             OGMCArrowEntThink(self)
@@ -3777,7 +3785,29 @@ end)
             end
         end
     end
---end)
+
+    -- Allow invalidating arbitrary entities (don't like having to do this)
+    local meta = FindMetaTable("Entity")
+    local OGIsValid = meta.IsValid
+
+    function meta:IsValid()
+        if self._Invalid then return false end
+        return OGIsValid(self)
+    end
+
+    -- Prevent Lethal Mines exploding in giftbox
+    local lethalMineEnt = scripted_ents.GetStored("item_lethal_company_landmine")
+
+    if lethalMineEnt then
+        lethalMineEnt = lethalMineEnt.t
+        local OGLethalMineEndTouch = lethalMineEnt.EndTouch
+
+        lethalMineEnt.EndTouch = function(self, ent)
+            if IsValid(self:GetNWEntity("WrappedByGift")) then return end
+            OGLethalMineEndTouch(self, ent)
+        end
+    end
+end)
 
 
 if SERVER then

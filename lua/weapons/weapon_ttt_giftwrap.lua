@@ -112,6 +112,7 @@ if SERVER then
             "ttt_chicken",
             "glue_trap_paste",
             "ttt_kfc",
+            "item_lethal_company_landmine",
             "ttt_seekgull_bird",
             "ttt_soap",
             "ttt_springmine",
