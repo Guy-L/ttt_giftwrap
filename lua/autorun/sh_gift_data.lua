@@ -1864,7 +1864,7 @@ local deployableSWEPs = {
 
     soap    = {name = "Soap", desc = "a bar of soap",
                SENT_id = "ttt_soap", SWEP_id = "weapon_ttt_soap",
-               SENT_setup_var = {{k = "move_to_giftee"}, {k = "stick_to_ground"}, {k = "set_thrower"}},
+               SENT_setup_var = {{k = "move_to_giftee"}, {k = "stick_to_ground"}, {k = "set_thrower"}, {k = "mv_hook", v = "HUDDrawMarkerVisionSoap"}},
                SENT_random = true, SENT_rarity = 0.8, SENT_quality = -3,
                SWEP_random = false,
                SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini,
@@ -1872,7 +1872,7 @@ local deployableSWEPs = {
 
     spring_mine = {name = "Spring Mine", desc = "a comically large spring",
                SENT_id = "ttt_springmine", SWEP_id = "weapon_ttt_springmine",
-               SENT_setup_var = {{k = "stick_to_ground"}, {k = "set_thrower"}, {k = "mv_hook", v = "HUDDrawMarkerVisionSpringMine"}},
+               SENT_setup_var = {{k = "move_to_giftee"}, {k = "stick_to_ground"}, {k = "set_thrower"}, {k = "mv_hook", v = "HUDDrawMarkerVisionSpringMine"}},
                SENT_random = true, SENT_rarity = 5, SENT_quality = -8,
                SWEP_random = false,
                SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Normal,
@@ -1932,7 +1932,7 @@ local deployableSWEPs = {
     wormhole_vent = {name = "Wormhole-Vent", desc = "a suspicious grate",
                SWEP_category = GiftCategory.AutoEquipSWEP,
                SENT_id = "ttt_wormhole", SWEP_id = "ttt_wormholecaller",
-               SENT_setup_var = {{k = "stick_to_ground"}, {k = "ground_angles", v = Angle(90,0,0)}},
+               SENT_setup_var = {{k = "stick_to_ground"}, {k = "ground_angles", v = Angle(0, 0, 0)}},
                SENT_random = false,
                SWEP_random = true, SWEP_rarity = 9, SWEP_quality = 6,
                SENT_size = GiftSize.Big, SWEP_size = GiftSize.Big,
@@ -2430,8 +2430,10 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
 
         if groundTr.Hit then
             wrappedEnt:SetPos(groundTr.HitPos)
-            wrappedEnt:SetAngles(groundTr.HitNormal:Angle() + (self.ground_angles and self.ground_angles or Angle(90, 0, 0)))
-            if wrappedEnt.WeldToSurface then wrappedEnt:WeldToSurface(true) end
+            timer.Simple(0, function()
+                wrappedEnt:SetAngles(groundTr.HitNormal:Angle() + (self.ground_angles and self.ground_angles or Angle(90, 0, 0)))
+                if wrappedEnt.WeldToSurface then wrappedEnt:WeldToSurface(true) end
+            end)
             wrappedEnt:SetMoveType(MOVETYPE_NONE)
             wrappedEnt:GetPhysicsObject():AddGameFlag(FVPHYSICS_NO_PLAYER_PICKUP)
         end

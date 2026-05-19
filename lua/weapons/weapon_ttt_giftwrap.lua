@@ -110,9 +110,11 @@ if SERVER then
 
         local override_classes = {
             "ttt_chicken",
-            "ttt_kfc",
             "glue_trap_paste",
+            "ttt_kfc",
             "ttt_seekgull_bird",
+            "ttt_soap",
+            "ttt_springmine",
             "ttt_wormhole"
         }
 
@@ -178,8 +180,8 @@ if SERVER then
             "ttt_shard_of_greed",
             "ttt2_hat_shellmet",
             "ttt_slam_tripmine", -- blocked later (affixed)
-            "ttt_soap", -- blocked later (affixed); TODO consider making moveable with ownership check
-            "ttt_springmine", -- blocked later (affixed); TODO consider making moveable with ownership check
+            "ttt_soap",
+            "ttt_springmine",
             "plasma_burster_nade",
             "npc_turret_floor",
             "ttt_wormhole",
