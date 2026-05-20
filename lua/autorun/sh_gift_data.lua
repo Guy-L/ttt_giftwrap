@@ -1269,7 +1269,8 @@ local giftDataCatalog = {
     climb = GiftData.New {
         name     = "Climb",           desc       = "parkour skills",
         category = GiftCategory.Item, identifier = "item_ttt_climb",
-        can_be_random_gift = false,
+        can_be_random_gift = true,
+        factor_rarity = 5, factor_quality = 10,
         attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Earthy,    attrib_feel = GiftFeel.Magical,
     },
@@ -1296,6 +1297,14 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Rubbery,   attrib_feel = GiftFeel.Sturdy,
     },
+    juggernaut_suit = GiftData.New {
+        name     = "Juggernaut Suit", desc       = "heavy armor",
+        category = GiftCategory.Item, identifier = "item_ttt_juggernaut_suit",
+        can_be_random_gift = true,
+        factor_rarity = 5, factor_quality = 8,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rusty,    attrib_feel = GiftFeel.Heavy,
+    },
     pog_instant = GiftData.New { -- weird bug (og addon): will always try giving you a pap upgrade if holding something that doesn't have one lol
         name     = "Pot of Greedier (Instant)", desc       = "Pot of Greed, which lets you draw two additional gifts from your deck",
         category = GiftCategory.Item,           identifier = "item_ttt_potofgreedier",
@@ -1305,13 +1314,13 @@ local giftDataCatalog = {
         can_get_multiple = true,
     },
     pap = GiftData.New {
-        name     = "Pack-a-Punch",    desc       = "a fresh coat of paint for your crowbar",
+        name     = "Pack-a-Punch",    desc       = "a fresh coat of paint",
         category = GiftCategory.Item, identifier = "ttt2_pap_item",
         can_be_random_gift = true,
         factor_rarity = 1, factor_quality = 5,
         attrib_sound = GiftSound.Musical, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Paint,   attrib_feel = GiftFeel.Powerful,
-        special_setup = "pap_setup",
+        special_setup = "pap_setup", can_get_multiple = true
     },
     radar = GiftData.New {
         name     = "Radar",           desc       = "a toy radar",
@@ -2137,20 +2146,18 @@ function GiftData:IsSpawnable(giftee)
             return false
 
         elseif self.special_setup == "pap_setup" then
-            local foundCrowbar = false
+            -- player must have non-PaP crowbar or holstered
+            local foundUpgradeable = false
 
             for _, wep in ipairs(giftee:GetWeapons()) do
-                if IsValid(wep) and wep:GetClass() == "weapon_zm_improvised" then
-                    if wep.PAPUpgrade ~= nil then
-                        return false
-                    else
-                        foundCrowbar = true
-                        break
-                    end
+                if IsValid(wep) and not wep.PAPUpgrade and wep:GetClass() == "weapon_zm_improvised"
+                  or wep:GetClass() == "weapon_ttt_unarmed" then
+                    foundUpgradeable = true
+                    break
                 end
             end
 
-            if not foundCrowbar then return false end
+            if not foundUpgradeable then return false end
         end
     end
 
@@ -2279,7 +2286,7 @@ function GiftData:ApplyOnAutoWrapAdjustments(giftObj)
     end
 end
 
-function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
+function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee, giftObj)
     if IsValid(wrappedEnt) then
         wrappedEnt:SetNWEntity("GW_Spawner", giftee)
     end
@@ -2408,11 +2415,20 @@ function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
             end
 
         elseif self.special_setup == "pap_setup" then
-            -- note: copied from pap's OrderedEquipment hook (i would've called it directly,
-            --       but I need to know the old numeric ID EQUIP_PAP which somehow becomes nil over the namespace
-            giftee:SelectWeapon("weapon_zm_improvised")
+            local preferredWepName = giftObj:GetClass() == SWEP_CLASS_NAME and "weapon_ttt_unarmed" or "weapon_zm_improvised"
+            local preferredWep = giftee:GetWeapon(preferredWepName)
+
+            if IsValid(preferredWep) and not preferredWep.PAPUpgrade then
+                giftee:SelectWeapon(preferredWepName)
+                giftee._UpgradeGiftWep = preferredWepName
+            else
+                giftee:SelectWeapon("weapon_zm_improvised")
+                giftee._UpgradeGiftWep = "weapon_zm_improvised"
+            end
             TTTPAP:OrderPAP(giftee, true)
 
+            -- note: copied from pap's OrderedEquipment hook (i would've called it directly,
+            --       but I need to know the old numeric ID EQUIP_PAP which somehow becomes nil over the namespace
             timer.Simple(0.1, function()
                 if giftee.RemoveEquipmentItem then
                     giftee:RemoveEquipmentItem(self.identifier)
@@ -2428,6 +2444,8 @@ function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee)
         elseif self.special_setup == "baron_hat_drop" then
             timer.Simple(0, function() wrappedEnt:Drop() end)
 
+        elseif self.special_setup == "perk_bottle" then
+            items.GetStored(self.identifier):Bought(giftee)
         end
     end
 end
@@ -2791,13 +2809,20 @@ function GiftData:GetDesc(wrappedEnt, giftee)
             else
                 return "a healing microwave"
             end
+
+        elseif self.special_setup == "pap_setup" and giftee._UpgradeGiftWep then
+            if giftee._UpgradeGiftWep == "weapon_zm_improvised" then
+                return "a fresh coat of paint for your crowbar"
+            elseif giftee._UpgradeGiftWep == "weapon_ttt_unarmed" then
+                return "yellow bodypaint"
+            end
         end
     end
 
     return self.desc
 end
 
-function GiftData:Spawn(giftee)
+function GiftData:Spawn(giftee, giftObj)
     if self:IsSpawnable(giftee) then
         local category   = self.category
         local identifier = self.identifier
@@ -2833,13 +2858,8 @@ function GiftData:Spawn(giftee)
             giftee:SelectWeapon(identifier)
 
         elseif category == GiftCategory.Item then -- Item
-            self:ApplyPreSpawnAdjustments(nil, giftee)
+            self:ApplyPreSpawnAdjustments(nil, giftee, giftObj)
             giftee:GiveEquipmentItem(identifier)
-
-            -- apply perk (blocked when buying for gift)
-            if self.special_setup == "perk_bottle" then
-                items.GetStored(identifier):Bought(giftee)
-            end
         end
 
         return nil
@@ -2878,6 +2898,7 @@ function GiftData:CalcWeight(xmasFactor, scoreFactor, isBoosted)
 
     local scaledQuality = self.factor_quality / QUALITY_MAX
     local qualityFactor = ((scaledQuality * scoreFactor) + (math.abs(scaledQuality) * xmasFactor) + 1) / 2
+
     return math.max(0, categoryMult * (qualityFactor / self.factor_rarity))
 end
 

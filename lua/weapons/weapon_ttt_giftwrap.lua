@@ -713,7 +713,7 @@ if SERVER then
         local giftData = GetCachedGiftData(giftObj, gifteePly)
 
         if giftObj:GetIsRandomGift() or not IsValid(giftEnt) then
-            giftEnt = giftData:Spawn(gifteePly)
+            giftEnt = giftData:Spawn(gifteePly, giftObj)
         end
 
         if IsValid(giftEnt) then

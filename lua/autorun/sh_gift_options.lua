@@ -244,11 +244,20 @@ elseif SERVER then
         ply._gwInOptMenu = net.ReadBool()
     end)
 
+    local function GetOrderingWrap(ply)
+        if ply._gwInOptMenu then
+            local wrapEnt = utils.GetInventoryGiftwrap(ply)
+
+            if wrapEnt and not wrapEnt:HasGift() then
+                return wrapEnt
+            end
+        end
+    end
+
     -- handle ordering equipment for gift
     local function InterceptPurchaseForGift(ply, equipmentName, isItem)
-        if not ply._gwInOptMenu then return false end
-        local giftEnt = utils.GetInventoryGiftwrap(ply)
-        if not giftEnt or giftEnt:HasGift() then return false end
+        local wrapEnt = GetOrderingWrap(ply)
+        if not wrapEnt then return false end
 
         dbg.Log(ply:Nick()..": Wrapping "..equipmentName.." into gift...")
         local equip = utils.GetEquipment(ply, equipmentName)
@@ -256,12 +265,12 @@ elseif SERVER then
 
         if isItem then
             local newLabel, newData = GetItemGiftData(equipmentName)
-            giftEnt:AutoWrap(newLabel, newData)
+            wrapEnt:AutoWrap(newLabel, newData)
             ply:RemoveEquipmentItem(equip)
             newData:ApplyPostGiftPurchaseAdjustments(ply)
 
         else
-            giftEnt:AutoWrap(GetSWEPGiftData(equipmentName))
+            wrapEnt:AutoWrap(GetSWEPGiftData(equipmentName))
 
             if equipmentName ~= SWEP_CLASS_NAME then
                 equip:Remove()
@@ -295,7 +304,9 @@ elseif SERVER then
 
     local function extendDeathmatchBuy()
         -- hack to extend original Snuffles Deathmatch buy receiver (no hook)
-        _gwOGBoughRec = _gwOGBoughRec or net.Receivers["dm_customshop_buy"]
+        local OGDeathmatchBuyRec = net.Receivers["dm_customshop_buy"]
+        if not OGDeathmatchBuyRec then return end
+        dbg.Log("Extending Deathmatch mode buy methods...")
 
         net.Receive("dm_customshop_buy", function(len, ply)
             local class, isItem
@@ -313,7 +324,7 @@ elseif SERVER then
                 return isItem
             end
 
-            _gwOGBoughRec(len, ply)
+            OGDeathmatchBuyRec(len, ply)
             net.ReadString = _gwOGReadString
             net.ReadBool = _gwOGReadBool
 
@@ -324,9 +335,36 @@ elseif SERVER then
         end)
     end
 
+    local function extendPAPBuy()
+        local papItem = items.GetStored("ttt2_pap_item")
+        if not papItem or not TTTPAP then return end
+        dbg.Log("Extending Pack-a-Punch buy methods...")
+
+        local OGPAPCanOrder = TTTPAP.CanOrderPAP
+        local OGPAPBought   = papItem.Bought
+
+        TTTPAP.CanOrderPAP = function(self, ent, displayErrorMessage)
+            local wrapEnt = GetOrderingWrap(ent)
+
+            if wrapEnt then
+                dbg.Log(ent:Nick()..": Wrapping Pack-a-Punch into gift...")
+                return true
+            end
+
+            return OGPAPCanOrder(self, ent, displayErrorMessage)
+        end
+
+        papItem.Bought = function(self, ply)
+            local wrapEnt = GetOrderingWrap(ply)
+
+            if not wrapEnt then
+                OGPAPBought(self, ply)
+            end
+        end
+    end
+
     hook.Add("InitPostEntity", HOOK_INIT_FIXES, function()
         extendDeathmatchBuy()
+        extendPAPBuy()
     end)
-
-    extendDeathmatchBuy() --delme, move contents to HOOK
 end
