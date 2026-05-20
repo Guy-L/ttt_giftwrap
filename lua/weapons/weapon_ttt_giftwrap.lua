@@ -149,6 +149,7 @@ if SERVER then
             "ttt_banana_proj",
             "ttt_banana_split",
             "ttt_beacon", -- blocked later if affixed
+            "ttt_bungernade_proj",
             "ttt_decoy", -- blocked later if affixed
             "ttt_thrownflashbang",
             "ent_fortnitestructure", -- blocked later (affixed)

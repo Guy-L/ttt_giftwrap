@@ -1735,7 +1735,7 @@ local deployableSWEPs = {
 
     killer_bungers = {name = "Bunger Grenade", desc = "a bunch of angry Bungers",
                SENT_id = "ttt_bungernade_proj", SWEP_id = "weapon_ttt_bungernade",
-               SENT_setup = "grenade", --TODO fix not being able to wrap sent nade
+               SENT_setup = "grenade", SENT_setup_var = {k = "explosion_delay", v = 2},
                SENT_random = true, SENT_rarity = 5, SENT_quality = -8,
                SWEP_random = false,
                SENT_size = GiftSize.Gigantic, SWEP_size = GiftSize.Large,
@@ -3894,6 +3894,32 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
                     end
                 end)
             end
+        end
+    end
+
+    -- Make Bunger Grenade collision box match scale
+    local bungerGrenadeEnt = scripted_ents.GetStored("ttt_bungernade_proj")
+
+    if bungerGrenadeEnt then
+        bungerGrenadeEnt = bungerGrenadeEnt.t
+        local OGBungerGrenadeInit = bungerGrenadeEnt.Initialize
+
+        bungerGrenadeEnt.Initialize = function(self)
+            self.Entity:SetModelScale(2, 0)
+            OGBungerGrenadeInit(self)
+
+            self:SetSolid(SOLID_VPHYSICS)
+            self:SetMoveType(MOVETYPE_VPHYSICS)
+            self:PhysicsInit(SOLID_VPHYSICS)
+            self.Entity:Activate()
+        end
+
+        -- this code is really fucking stupid (it RELIES on a client/server mismatch over the scale)
+        local OGBungerGrenadeExplode = bungerGrenadeEnt.Explode
+
+        bungerGrenadeEnt.Explode = function(self, tr)
+            self.Entity:SetModelScale(2, 0)
+            OGBungerGrenadeExplode(self, tr)
         end
     end
 end)
