@@ -669,7 +669,7 @@ if SERVER then
     end)
 
     hook.Add("ExtinguisherDoExtinguish", HOOK_EXTINGUISH, function(prop)
-        if IsValid(prop) and prop:GetClass() == PROP_CLASS_NAME then
+        if IsValid(prop) and prop:GetClass() == PROP_CLASS_NAME and prop:GetCachedDataLabel() == "flame" then
             local giftEnt = ents.Create(SWEP_CLASS_NAME)
             giftEnt:SetPos(prop:GetPos() + Vector(0, 0, 10))
             giftEnt:Spawn()

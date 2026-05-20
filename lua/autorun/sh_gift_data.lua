@@ -18,6 +18,8 @@ local INIT_FIXES_HOOK            = "GiftWrap_InitialFixesSetup"
 local OVERRIDE_MV_HOOK           = "GiftWrapCL_OverrideMarkerVisionRenderHook"
 local ENT_TAKE_DAMAGE_HOOK       = "GiftWrapSV_VehicleOccupantsDamageFix"
 local PLAYER_USE_HOOK            = "GiftWrapSV_InternalVehicleSeatFix"
+local ENT_KILL_INPUT_HOOK        = "GiftWrapSV_PreventWrappedEntKillInputs"
+local INVALID_ID                 = "GiftWrap_InvalidID"
 
 -- cf. excel sheet in addon resources (GitHub)
 local QUALITY_MAX  = 10
@@ -827,13 +829,6 @@ local giftDataCatalog = {
         factor_rarity = 1, factor_quality = 2,
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Rusty,    attrib_feel = GiftFeel.Hollow,
-    },
-    fireball = GiftData.New {
-        name     = "Fireball",                 desc       = "fire magic",
-        category = GiftCategory.AutoEquipSWEP, identifier = "weapon_firemagic",
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Ash,       attrib_feel = GiftFeel.Magical,
     },
     flare_gun = GiftData.New {
         name     = "Flare Gun",            desc       = "a Flare Gun",
@@ -1652,6 +1647,15 @@ local deployableSWEPs = {
                SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Large,
                sound = GiftSound.Whirring, smell = GiftSmell.Dusty, feel = GiftFeel.Moving},
 
+    fireball = {name = "Fireball", desc = "a fireball", SWEP_desc = "fire magic",
+               SENT_category = GiftCategory.PhysProp, SWEP_category = GiftCategory.AutoEquipSWEP,
+               SENT_setup = "fireball_setup", SENT_setup_var = {k = "visual_override", v = {path = "effects/flame", type = "sprite"}},
+               SENT_id = INVALID_ID, SWEP_id = "weapon_firemagic",
+               SENT_random = false,
+               SWEP_random = false,
+               SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Normal,
+               sound = GiftSound.Whooshing, smell = GiftSmell.Ash, feel = GiftFeel.Magical},
+
     flashbang = {name = "Flashbang", desc = "a 5-second blinding stew",
                SENT_id = "ttt_thrownflashbang", SWEP_id = "weapon_ttt_flashbang",
                SENT_setup = "grenade_auto", SENT_setup_var = {k = "explosion_delay", v = 2},
@@ -2283,6 +2287,11 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
 
         elseif self.special_setup == "flame_setup" then
             wrappedEnt:SetDieTime(CurTime() + 1e9)
+
+        elseif self.special_setup == "fireball_setup" then
+            wrappedEnt._StoredCallback = wrappedEnt:GetCallbacks("PhysicsCollide")[1]
+            wrappedEnt:RemoveCallback("PhysicsCollide", 1)
+            timer.Pause("FireBallLife"..wrappedEnt.Time)
         end
     end
 
@@ -2747,6 +2756,20 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
 
         elseif self.special_setup == "flame_setup" then
             wrappedEnt:SetDieTime(CurTime() + 30)
+
+        elseif self.special_setup == "fireball_setup" then
+            local phys = wrappedEnt:GetPhysicsObject()
+
+            timer.Simple(0, function()
+                if phys:IsValid() then
+                    local aim = giftee:GetAimVector()
+                    phys:SetVelocity((aim + utils.GetRandomUpwardsVel(0) * 0.3):GetNormalized() * 1000)
+                    phys:ApplyForceCenter(aim * GetConVar("ttt_fire_magic_speed"):GetInt())
+                end
+            end)
+
+            wrappedEnt:AddCallback("PhysicsCollide", wrappedEnt._StoredCallback)
+            timer.UnPause("FireBallLife"..wrappedEnt.Time)
         end
     end
 
@@ -3281,6 +3304,14 @@ local giftSurfaceProps = {
     ["plastic_barrel_verybuoyant"] = {                                                feel=GiftFeel.Hollow},
 }
 
+function GiftData:Detect(ent, entIdentifier)
+    if self.special_setup == "fireball_setup" then
+        return ent:GetName() == "Fireball"
+    end
+
+    return self.identifier == entIdentifier
+end
+
 function GetEntGiftData(ent)
     local entIdentifier = ent:GetClass()
     local entModel = ent:GetModel()
@@ -3292,7 +3323,7 @@ function GetEntGiftData(ent)
     end
 
     for label, giftData in pairs(giftDataCatalog) do
-        if giftData.identifier == entIdentifier then
+        if giftData:Detect(ent, entIdentifier) then
             return label, giftData
         end
     end
@@ -3960,6 +3991,14 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             OGBungerGrenadeExplode(self, tr)
         end
     end
+
+    -- Catch-all hook to prevent kill events on wrapped entities
+    hook.Add("AcceptInput", ENT_KILL_INPUT_HOOK, function(ent, input, activator, caller, value)
+        if input == "kill" and IsValid(ent) and IsValid(ent:GetNWEntity("WrappedByGift")) then
+            dbg.Log("Prevented kill input for wrapped entity", ent)
+            return true
+        end
+    end)
 end)
 
 
