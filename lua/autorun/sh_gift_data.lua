@@ -436,6 +436,17 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.None, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Wool, attrib_feel = GiftFeel.Sus,
     },
+    flame = GiftData.New {
+        name     = "Flame",           desc       = "a flame",
+        category = GiftCategory.SENT, identifier = "ttt_flame",
+        can_be_random_gift = true,
+        factor_rarity = 2, factor_quality = -3,
+        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Small,
+        attrib_smell = GiftSmell.Ash,       attrib_feel = GiftFeel.Hot,
+        visual_override = {path = "particles/flamelet4", type = "sprite"},
+        up_vel = 300, up_min = 1, up_max = 2,
+        special_setup = "flame_setup"
+    },
     force_shield = GiftData.New {
         name     = "Live Force Shield", desc       = "a next-gen force shield",
         category = GiftCategory.SENT,   identifier = "force_shield",
@@ -2269,6 +2280,9 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
             local timerID = wrappedEnt:EntIndex().."_timer"
             wrappedEnt._storedTime = timer.TimeLeft(timerID) + 0.5
             timer.Remove(timerID)
+
+        elseif self.special_setup == "flame_setup" then
+            wrappedEnt:SetDieTime(CurTime() + 1e9)
         end
     end
 
@@ -2730,6 +2744,9 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
 
         elseif self.special_setup == "icegrenade_setup" then
             wrappedEnt:iceexplode(wrappedEnt._storedTime)
+
+        elseif self.special_setup == "flame_setup" then
+            wrappedEnt:SetDieTime(CurTime() + 30)
         end
     end
 

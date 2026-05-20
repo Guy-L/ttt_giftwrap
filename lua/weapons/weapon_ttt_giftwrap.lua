@@ -154,7 +154,7 @@ if SERVER then
             "ttt_thrownflashbang",
             "ent_fortnitestructure", -- blocked later (affixed)
             "ent_ttt_fan",
-            --"ttt_flame", --TODO: bugged
+            "ttt_flame",
             "sent_greendemon_box",
             "sent_greendemon",
             "ttt2_hat_baron",
@@ -352,7 +352,7 @@ end
 
 function SWEP:UpdateModel(reason)
     local hasGiftNow = self:HasGift()
-    dbg.Log("Updating model... ("..(hasGiftNow and "-> Gift" or "Wrap").." model; "..reason..")")
+    dbg.Log("Updating model... (-> "..(hasGiftNow and "Gift" or "Wrap").." model; "..reason..")")
     local vmChange = false
 
     if not hasGiftNow then
@@ -373,6 +373,10 @@ function SWEP:UpdateModel(reason)
             SetGiftColors(self, self:GetGiftBoxColor(), self:GetGiftRibbonColor())
         else
             ClearGiftColors(self)
+        end
+    elseif SERVER then
+        if hasGiftNow and self:GetCachedDataLabel() == "flame" then
+            self:Ignite(1e9)
         end
     end
 

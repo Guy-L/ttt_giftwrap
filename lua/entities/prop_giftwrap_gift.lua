@@ -4,6 +4,7 @@ local HOOK_GIFTWRAP_ENT_SPAWN   = "TTT_GiftWrap_EntSpawn"
 local HOOK_GIFTWRAP_MARKER_UI   = "TTT_GiftWrap_MarkerVision"
 local HOOK_GIFTWRAP_INTERACT_UI = "TTT_GiftWrap_InteractUI"
 local HOOK_ROUND_START_TIME     = "TTT_GiftWrap_RoundStartTime"
+local HOOK_EXTINGUISH           = "TTT_GiftWrapSV_Extinguish"
 local TREE_FOUND_MSG            = "TTT_GiftWrapSV_TreeFoundMsg"
 
 local dbg   = GW_DBG
@@ -94,6 +95,10 @@ function ENT:Initialize()
         self._LastBounce = 0
 
         self:SetDescriptionLine(math.random(#normalDescriptionLines))
+
+        if self:GetCachedDataLabel() == "flame" then
+            self:Ignite(1e9)
+        end
 
         -- if clients receive the MV too early, the entity
         -- might not have been created yet and thus be null
@@ -661,6 +666,16 @@ if SERVER then
 
     hook.Add("TTTBeginRound", HOOK_ROUND_START_TIME, function()
         utils.RoundStartTime = CurTime() --todo rework
+    end)
+
+    hook.Add("ExtinguisherDoExtinguish", HOOK_EXTINGUISH, function(prop)
+        if IsValid(prop) and prop:GetClass() == PROP_CLASS_NAME then
+            local giftEnt = ents.Create(SWEP_CLASS_NAME)
+            giftEnt:SetPos(prop:GetPos() + Vector(0, 0, 10))
+            giftEnt:Spawn()
+
+            prop:Remove()
+        end
     end)
 
     function ENT:OnRemove()
