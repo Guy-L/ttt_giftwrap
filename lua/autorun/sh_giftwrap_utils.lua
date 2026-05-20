@@ -353,6 +353,10 @@ function GW_Utils.TL(label) --shorthand
     return LANG.TryTranslation(label)
 end
 
+function GW_Utils.NearEquals(a, b, epsilon)
+    return math.abs(a - b) < (epsilon or 0.0001)
+end
+
 function GW_Utils.GetAvatar(sid, size)
     if not size then size = "small" end
     local avatarMat = draw.GetAvatarMaterial(sid, size)

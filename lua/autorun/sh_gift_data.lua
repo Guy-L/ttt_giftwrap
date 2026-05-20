@@ -1647,6 +1647,15 @@ local deployableSWEPs = {
                SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Large,
                sound = GiftSound.Whirring, smell = GiftSmell.Dusty, feel = GiftFeel.Moving},
 
+    fart_grenade = {name = "Fart Grenade", desc = "gas",
+               SENT_id = INVALID_ID, SWEP_id = "weapon_fartgrenade",
+               SENT_setup = "fart_grenade_setup", SENT_setup_var = {k = "visual_override", v = {path = "models/weapons/w_grenade.mdl", type = "model"}},
+               SENT_random = true, SENT_rarity = 2, SENT_quality = -7,
+               SWEP_random = false,
+               SENT_size = GiftSize.Small, SWEP_size = GiftSize.Small,
+               sound = GiftSound.Muffled, smell = GiftSmell.Rotten, feel = GiftFeel.Bursting,
+               SWEP_desc = "a cupped fart"},
+
     fireball = {name = "Fireball", desc = "a fireball", SWEP_desc = "fire magic",
                SENT_category = GiftCategory.PhysProp, SWEP_category = GiftCategory.AutoEquipSWEP,
                SENT_setup = "fireball_setup", SENT_setup_var = {k = "visual_override", v = {path = "effects/flame", type = "sprite"}},
@@ -2173,6 +2182,9 @@ function GiftData:IsSpawnable(giftee)
             end
 
             if not foundUpgradeable then return false end
+
+        elseif self.special_setup == "fart_grenade_setup" then
+            return weapons.GetStored("weapon_fartgrenade") ~= nil
         end
     end
 
@@ -2292,6 +2304,19 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
             wrappedEnt._StoredCallback = wrappedEnt:GetCallbacks("PhysicsCollide")[1]
             wrappedEnt:RemoveCallback("PhysicsCollide", 1)
             timer.Pause("FireBallLife"..wrappedEnt.Time)
+
+        elseif self.special_setup == "fart_grenade_setup" then
+            if timer.Exists("fartsmoke_"..wrappedEnt:EntIndex()) then
+                timer.Pause("fartsmoke_"..wrappedEnt:EntIndex())
+                wrappedEnt._FartingStarted = true
+
+            else
+                timer.Simple(2, function()
+                    if IsValid(wrappedEnt) and timer.Exists("fartsmoke_"..wrappedEnt:EntIndex()) then
+                        timer.Pause("fartsmoke_"..wrappedEnt:EntIndex())
+                    end
+                end)
+            end
         end
     end
 
@@ -2469,6 +2494,11 @@ function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee, giftObj)
 
         elseif self.special_setup == "perk_bottle" then
             items.GetStored(self.identifier):Bought(giftee)
+
+        elseif self.special_setup == "fart_grenade_setup" then
+            local fart_grenade = weapons.GetStored("weapon_fartgrenade")
+            fart_grenade:CreateGrenade(Vector(0, 0, 0), Angle(0, 0, 0), Vector(0, 0, 0), Vector(0, 0, 0), giftee)
+            return ents.GetAll()[#ents.GetAll()]
         end
     end
 end
@@ -2770,6 +2800,19 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
 
             wrappedEnt:AddCallback("PhysicsCollide", wrappedEnt._StoredCallback)
             timer.UnPause("FireBallLife"..wrappedEnt.Time)
+
+        elseif self.special_setup == "fart_grenade_setup" then
+            local delay = wrappedEnt._FartingStarted and 1.2 or 2.5
+            dbg.Log("Resuming fart in", delay)
+
+            timer.Simple(delay, function()
+                if timer.Exists("fartsmoke_"..wrappedEnt:EntIndex()) then
+                    timer.UnPause("fartsmoke_"..wrappedEnt:EntIndex())
+
+                    ParticleEffect("fartsmoke", wrappedEnt:GetPos() + Vector(-80, -40, 0), Angle(0, 0, 0), nil)
+                    wrappedEnt:EmitSound(Sound("fart_1.wav"))
+                end
+            end)
         end
     end
 
@@ -2870,8 +2913,10 @@ function GiftData:Spawn(giftee, giftObj)
         -- PhysProp / Vehicle
         if category == GiftCategory.PhysProp or category == GiftCategory.Vehicle then
             local giftEnt = ents.Create(self.entity_class or "prop_physics")
+            if identifier ~= INVALID_ID then
+                giftEnt:SetModel(identifier)
+            end
 
-            giftEnt:SetModel(identifier)
             self:ApplyPreSpawnAdjustments(giftEnt, giftee)
             giftEnt:Spawn()
 
@@ -2887,10 +2932,14 @@ function GiftData:Spawn(giftee, giftObj)
         elseif category == GiftCategory.SENT or category == GiftCategory.NPC or category == GiftCategory.Ammo
           or category == GiftCategory.WorldSWEP or category == GiftCategory.FloorSWEP then
             local giftEnt = ents.Create(identifier)
+            local ret = self:ApplyPreSpawnAdjustments(giftEnt, giftee)
 
-            self:ApplyPreSpawnAdjustments(giftEnt, giftee)
+            if ret ~= nil then -- only in fringe cases like Fart Grenade
+                if IsValid(giftEnt) then giftEnt:Remove() end
+                giftEnt = ret
+            end
+
             giftEnt:Spawn()
-
             return giftEnt
 
         elseif category == GiftCategory.AutoEquipSWEP then -- AutoEquipSWEP
@@ -3071,6 +3120,8 @@ end
 -- and might want later (ply can be any player)
 if SERVER then
     function GiftData:Furnish(ply)
+        if self.visual_override then return self end
+
         if not self.cachedModel and self.category == GiftCategory.SENT then
             local sent = scripted_ents.GetStored(self.identifier)
 
@@ -3307,6 +3358,10 @@ local giftSurfaceProps = {
 function GiftData:Detect(ent, entIdentifier)
     if self.special_setup == "fireball_setup" then
         return ent:GetName() == "Fireball"
+
+    elseif self.special_setup == "fart_grenade_setup" then
+        -- no better check unfortunately
+        return ent:GetModel() == "models/weapons/w_grenade.mdl" and utils.NearEquals(ent:GetGravity(), 0.4) and utils.NearEquals(ent:GetFriction(), 0.2) and utils.NearEquals(ent:GetElasticity(), 0.45)
     end
 
     return self.identifier == entIdentifier
