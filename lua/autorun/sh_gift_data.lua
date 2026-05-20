@@ -367,8 +367,9 @@ local giftDataCatalog = {
     banana_bomb = GiftData.New {
         name     = "Live Banana Bomb", desc       = "an explosive bunch",
         category = GiftCategory.SENT,  identifier = "ttt_banana_proj",
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.Squishy,   attrib_size = GiftSize.Normal,
+        can_be_random_gift = true,
+        factor_rarity = 6, factor_quality = -10,
+        attrib_sound = GiftSound.Squishy,   attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Fresh,
         special_setup = "grenade", explosion_delay = 2, set_owner = true
     },
@@ -376,8 +377,8 @@ local giftDataCatalog = {
         name     = "Live Banana Split", desc      = "dangerous levels of potassium",
         category = GiftCategory.SENT,  identifier = "ttt_banana_split",
         can_be_random_gift = true,
-        factor_rarity = 4, factor_quality = -7,
-        attrib_sound = GiftSound.Squishy,   attrib_size = GiftSize.Small,
+        factor_rarity = 3, factor_quality = -7,
+        attrib_sound = GiftSound.Squishy,   attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Fresh,
         special_setup = "grenade_auto", explosion_delay = 2, set_owner = true
     },
@@ -414,7 +415,7 @@ local giftDataCatalog = {
         name     = "Chicken",             desc       = "an aggressive pet chicken",
         category = GiftCategory.SENT,     identifier = "ttt_chicken",
         can_be_random_gift = true,
-        factor_rarity = 6, factor_quality = 2,
+        factor_rarity = 4, factor_quality = 2,
         attrib_sound = GiftSound.Rustling, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Food,     attrib_feel = GiftFeel.Alive,
     },
@@ -495,6 +496,7 @@ local giftDataCatalog = {
         factor_rarity = 2, factor_quality = -4,
         attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Woody,     attrib_feel = GiftFeel.Otherworldly,
+        up_vel = 800, up_min = 1, up_max = 3, up_angvel = 0
     },
     molotov_grenade = GiftData.New {
         name     = "Molotov Cocktail (Grenade)", desc       = "a spicy cocktail",
@@ -934,13 +936,6 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Sterile,  attrib_feel = GiftFeel.RealityWarp,
     },
-    --jammifier = GiftData.New { TODO fix paps
-    --    name     = "Jammifier",            desc       = "the gift of jam",
-    --    category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_wpnjammer",
-    --    can_be_random_gift = false,
-    --    attrib_sound = GiftSound.Glass, attrib_size = GiftSize.Normal,
-    --    attrib_smell = GiftSmell.Food,  attrib_feel = GiftFeel.Sticky,
-    --},
     jam = GiftData.New {
         name     = "Jam",                  desc       = "a jar of jam",
         category = GiftCategory.WorldSWEP, identifier = "ttt_pap_jam",
@@ -1706,9 +1701,9 @@ local deployableSWEPs = {
                sound = GiftSound.Metallic, smell = GiftSmell.Rusty, feel = GiftFeel.Long},
 
     ice_grenade = {name = "Ice Grenade", desc = "an explosive snowball",
-               SENT_id = "icegrenade_proj", SWEP_id = "icegrenade", -- todo fix remaining active on wrap
-               SENT_setup_var = {k = "set_owner"},
-               SENT_random = true, SENT_rarity = 5, SENT_quality = -5,
+               SENT_id = "icegrenade_proj", SWEP_id = "icegrenade",
+               SENT_setup = "icegrenade_setup", SENT_setup_var = {k = "set_owner"},
+               SENT_random = true, SENT_rarity = 3, SENT_quality = -5,
                SWEP_random = false,
                SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini,
                sound = GiftSound.Thudding, smell = GiftSmell.Gunpowder, feel = GiftFeel.ReallyCold},
@@ -2262,6 +2257,11 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
 
         elseif self.special_setup == "force_shield_setup" then
             wrappedEnt:StopSound("ambient/machines/combine_shield_touch_loop1.wav")
+
+        elseif self.special_setup == "icegrenade_setup" then
+            local timerID = wrappedEnt:EntIndex().."_timer"
+            wrappedEnt._storedTime = timer.TimeLeft(timerID) + 0.5
+            timer.Remove(timerID)
         end
     end
 
@@ -2709,6 +2709,9 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
                     end
                 end)
             end
+
+        elseif self.special_setup == "icegrenade_setup" then
+            wrappedEnt:iceexplode(wrappedEnt._storedTime)
         end
     end
 
@@ -2716,9 +2719,11 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
         local upMin = self.up_min or 10
         local upMax = self.up_max or upMin
         local upAmt = math.Rand(upMin, upMax)
+        local vel   = utils.GetRandomUpwardsVel(upAmt) * self.up_vel
 
         local phys = wrappedEnt:GetPhysicsObject()
-        phys:SetVelocity(utils.GetRandomUpwardsVel(upAmt) * self.up_vel)
+        phys:SetVelocity(vel)
+        wrappedEnt:SetAngles(vel:Angle())
 
         local angle_vel = self.up_angvel or -500
         phys:AddAngleVelocity(Vector(0, angle_vel, 0))
@@ -3850,7 +3855,7 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
         local hwapoonEnt = scripted_ents.GetStored("hwapoon_arrow")
 
         if hwapoonEnt then
-            hwapoonEnt = hwapoonEnt.t --TODO
+            hwapoonEnt = hwapoonEnt.t
 
             -- Make Hwapoon arrows wrappable
             local OGHwapoonPhysCollide = hwapoonEnt.PhysicsCollide
@@ -3868,6 +3873,26 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
                 if inputName == "kill" then
                     return true
                 end
+            end
+        end
+    end
+
+    -- Allow ice grenade explosion to be interrupted
+    if SERVER then
+        local iceGrenadeEnt = scripted_ents.GetStored("icegrenade_proj")
+
+        if iceGrenadeEnt then
+            iceGrenadeEnt = iceGrenadeEnt.t
+
+            iceGrenadeEnt.iceexplode = function(self, delay)
+                timer.Create(self:EntIndex().."_timer", delay or 1.8, 1, function()
+                    if IsValid(self) then
+                        ParticleEffect("ice_explosion", self:GetPos(), Angle(0, 0, 0))
+                        self:EmitSound("ice_explosion.wav", 85, 90, 1, CHAN_AUTO)
+                        self:FreezeAll()
+                        self:Remove()
+                    end
+                end)
             end
         end
     end

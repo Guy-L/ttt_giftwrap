@@ -163,6 +163,7 @@ if SERVER then
             "npc_headcrab_fast", -- bunger
             "ttt_health_station",
             "hwapoon_arrow",
+            "icegrenade_proj",
             "ttt_seekgull_bird",
             "ttt_knife_proj",
             "item_lethal_company_landmine", -- blocked later (affixed)
