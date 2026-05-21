@@ -254,7 +254,7 @@ if SERVER then
             -- give things with move children a few extra ticks to propagate their new position
             -- before restarting physics (otherwise things like vehicles go flying off randomly)
             timer.Simple(stabilize and 0.25 or 0, function()
-                if IsValid(phys) then
+                if IsValid(phys) and not ent._DontWake then
                     phys:EnableMotion(true)
                     phys:Wake()
                 end

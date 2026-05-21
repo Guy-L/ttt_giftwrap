@@ -111,6 +111,7 @@ if SERVER then
         local override_classes = {
             "ttt_chicken",
             "force_shield",
+            "ent_fortnitestructure",
             "glue_trap_paste",
             "hwapoon_arrow",
             "ttt_kfc",
@@ -152,7 +153,7 @@ if SERVER then
             "ttt_bungernade_proj",
             "ttt_decoy", -- blocked later if affixed
             "ttt_thrownflashbang",
-            "ent_fortnitestructure", -- blocked later (affixed)
+            "ent_fortnitestructure",
             "ent_ttt_fan",
             "ttt_flame",
             "sent_greendemon_box",
@@ -167,7 +168,7 @@ if SERVER then
             "icegrenade_proj",
             "ttt_seekgull_bird",
             "ttt_knife_proj",
-            "item_lethal_company_landmine", -- blocked later (affixed)
+            "item_lethal_company_landmine",
             "matryoshka", -- blocked later (affixed) (breaching charge)
             "npc_metropolice", -- wraps SuperCop, should be PaP only
             "ttt_minecraft_arrow",
@@ -790,7 +791,7 @@ if SERVER then
             end
 
             local intendedGiftee = giftObj:GetGiftee()
-            local giftDesc = giftData:GetDesc(giftEnt, gifteePly)
+            local giftDesc = giftData:GetDesc(giftObj, gifteePly)
             local rightText = "!"
 
             if not isUndo and IsValid(intendedGiftee) and gifteePly != intendedGiftee

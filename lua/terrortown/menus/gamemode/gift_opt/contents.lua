@@ -43,7 +43,8 @@ hook.Add("SpawniconGenerated", "TEST_GW_SPAWNICON", function(lastModel, imageNam
     end
 end)
 
-function SetModelImage(dImage, ent, giftData)
+function SetModelImage(dImage, giftEnt, giftData)
+    local wrappedEnt = giftEnt:GetStoredGift()
     local entModel
 
     if giftData and giftData.visual_override then
@@ -56,12 +57,12 @@ function SetModelImage(dImage, ent, giftData)
             return
         end
 
-    elseif IsValid(ent) then
-        entModel = ent:GetModel()
+    elseif IsValid(wrappedEnt) then
+        entModel = wrappedEnt:GetModel()
         dbg.Log("Got preview image from live model:", entModel)
 
     elseif giftData then
-        local giftImgPath, isMat = giftData:GetVisuals()
+        local giftImgPath, isMat = giftData:GetVisuals(giftEnt)
 
         if giftImgPath then
             dbg.Log("Got preview image from data:", giftImgPath)
@@ -231,7 +232,7 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
 
     local contentImg = vgui.Create("DImage", imgPanel)
     contentImg:Dock(FILL)
-    SetModelImage(contentImg, storedEnt, giftData)
+    SetModelImage(contentImg, giftEnt, giftData)
     contentImg:SetKeepAspect(true)
 
     -- RIGHT: status container
@@ -261,7 +262,7 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
     if giftData and giftData.placeholderEquip then
         local desc = vgui.Create("DLabel", textPanel)
         desc:Dock(TOP)
-        desc:SetText("(auto-generated)\n" .. giftData:GetDesc(storedEnt, player))
+        desc:SetText("(auto-generated)\n" .. giftData:GetDesc(giftEnt, player))
         desc:SetWrap(true)
         desc:SetAutoStretchVertical(true)
         desc:SetTextColor(curcont_graytext)
@@ -270,7 +271,7 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
     else
         local desc
         if giftData then
-            local giftDesc = giftData:GetDesc(storedEnt, player)
+            local giftDesc = giftData:GetDesc(giftEnt, player)
             desc = FancyLine(textPanel, "It's ", giftDesc, giftData.autoGen and "! (auto-generated)" or "!")
         else
             desc = FancyLine(textPanel, "Go find something they'll ", "love", "!")
@@ -281,7 +282,7 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
 
         if giftData then
             AttributeLine(textPanel, "sounds", giftData.attrib_sound and giftData.attrib_sound.desc or nil, "It doesn't make a distinct sound")
-            AttributeLine(textPanel, "smells", giftData.attrib_smell, "It doesn't smell like anything")
+            AttributeLine(textPanel, "smells", giftData:GetSmell(giftEnt), "It doesn't smell like anything")
 
             if giftEnt:GetIsContentsOnFire() then --will need to come up with a better system for attribute overrides..
                 AttributeLine(textPanel, "feels",  GiftFeel.Hot, nil, color_yellow)

@@ -427,6 +427,10 @@ function GW_Utils.TransferNetVars(fromGift, toGift)
         toGift["Set"..var.name](toGift, fromGift["Get"..var.name](fromGift))
     end
 
+    for k, v in pairs(fromGift:GetNW2VarTable()) do
+        toGift:SetNW2Var(k, v.value)
+    end
+
     local wrappedEnt = fromGift:GetStoredGift()
     if IsValid(wrappedEnt) then
         wrappedEnt:SetNWEntity("WrappedByGift", toGift)

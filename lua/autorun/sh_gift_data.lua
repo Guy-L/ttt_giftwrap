@@ -512,8 +512,8 @@ local giftDataCatalog = {
         up_vel = 800, up_min = 1, up_max = 3, up_angvel = 0
     },
     molotov_grenade = GiftData.New {
-        name     = "Molotov Cocktail (Grenade)", desc       = "a spicy cocktail",
-        category = GiftCategory.SENT,            identifier = "sent_molotov_timed",
+        name     = "Live Molotov Cocktail (Timed)", desc       = "a spicy cocktail",
+        category = GiftCategory.SENT,               identifier = "sent_molotov_timed",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Splashing, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Oily,      attrib_feel = GiftFeel.Hot,
@@ -836,13 +836,6 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Ash,      attrib_feel = GiftFeel.Cold,
-    },
-    fortnite = GiftData.New {
-        name     = "Fortnite Building",        desc       = "a Fortnite Battle Pass",
-        category = GiftCategory.AutoEquipSWEP, identifier = "weapon_ttt_fortnite_building",
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.Thudding,  attrib_size = GiftSize.Huge,
-        attrib_smell = GiftSmell.Cardboard, attrib_feel = GiftFeel.Otherworldly,
     },
     freeze_gun = GiftData.New {
         name     = "Freeze Gun",           desc       = "a really cool gun",
@@ -1674,6 +1667,16 @@ local deployableSWEPs = {
                sound = GiftSound.Metallic, smell = GiftSmell.Food, feel = GiftFeel.Bright,
                SWEP_desc = "a flashbang"},
 
+    fortnite = {name = "Fortnite Building", desc = "a Fortnite structure",
+               SWEP_category = GiftCategory.AutoEquipSWEP,
+               SENT_id = "ent_fortnitestructure", SWEP_id = "weapon_ttt_fortnite_building",
+               SENT_setup = "fortnite_struct_setup", SENT_setup_var = {{k = "no_physwake"}, {k = "dont_furnish"}},
+               SENT_random = true, SENT_rarity = 1, SENT_quality = 1,
+               SWEP_random = true, SWEP_rarity = 7, SWEP_quality = 9,
+               SENT_size = 10, SWEP_size = GiftSize.Large,
+               sound = GiftSound.Thudding, smell = GiftSmell.Cardboard, feel = GiftFeel.Otherworldly,
+               SWEP_desc = "a Fortnite Battle Pass", SENT_name = "Fortnite Structure"},
+
     frag_grenade = {name = "Frag Grenade", desc = "an actual grenade",
                SENT_id = "ttt_frag_proj", SWEP_id = "weapon_ttt_frag",
                SENT_setup = "grenade",
@@ -2137,8 +2140,10 @@ function GiftData:Inspect(giftObj)
         end
 
     elseif self.lastCheckType == 1 then -- smell
-        if self.attrib_smell then
-            return "It smells "..qualifier, self.attrib_smell, "..."
+        local smell = self:GetSmell(giftObj)
+
+        if smell then
+            return "It smells "..qualifier, smell, "..."
         else
             return noSmell[math.random(#noSmell)], "", ""
         end
@@ -2331,6 +2336,28 @@ function GiftData:ApplyOnAutoWrapAdjustments(giftObj)
         if math.random() < 0.6 then
             giftObj:SetIsContentsOnFire(true)
         end
+
+    elseif self.special_setup == "fortnite_struct_setup" then
+        local mat = math.random(0, 2)
+        local mode = math.max(math.random(-1, 3), 0) -- bias to wall
+        if mode == FORTNITE_FLOOR then mode = 0 end  -- bias to wall + floors on the floor are weird
+
+        local matStr = ({
+            [FORTNITE_WOOD]  = "wood",
+            [FORTNITE_STONE] = "brick",
+            [FORTNITE_METAL] = "metal",
+        })[mat]
+
+        local modeStr = ({
+            [FORTNITE_WALL]   = "wall",
+            [FORTNITE_FLOOR]  = "floor",
+            [FORTNITE_STAIRS] = "stairw",
+            [FORTNITE_ROOF]   = "roofc",
+        })[mode]
+
+        giftObj:SetNW2String("fortnite_model", "models/fortnitea31/buildingparts/pbw/"..matStr .."/"..matStr.."_"..modeStr..".mdl")
+        giftObj:SetNW2Int("fortnite_mode", mode)
+        giftObj:SetNW2Int("fortnite_mat", mat)
     end
 end
 
@@ -2499,6 +2526,12 @@ function GiftData:ApplyPreSpawnAdjustments(wrappedEnt, giftee, giftObj)
             local fart_grenade = weapons.GetStored("weapon_fartgrenade")
             fart_grenade:CreateGrenade(Vector(0, 0, 0), Angle(0, 0, 0), Vector(0, 0, 0), Vector(0, 0, 0), giftee)
             return ents.GetAll()[#ents.GetAll()]
+
+        elseif self.special_setup == "fortnite_struct_setup" then
+            wrappedEnt:SetModel(giftObj:GetNW2String("fortnite_model", "models/fortnitea31/buildingparts/pbw/wood/wood_wall.mdl"))
+            wrappedEnt.Mode     = giftObj:GetNW2Int("fortnite_mode", FORTNITE_WALL)
+            wrappedEnt.Material = giftObj:GetNW2Int("fortnite_mat", FORTNITE_WOOD)
+            wrappedEnt.Neighbours = {}
         end
     end
 end
@@ -2517,6 +2550,10 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
         wrappedEnt:SetMoveType(MOVETYPE_VPHYSICS)
         wrappedEnt:SetPos(giftee:GetPos())
         wrappedEnt:SetMoveType(curMoveType)
+    end
+
+    if self.no_physwake then
+        wrappedEnt._DontWake = true
     end
 
     if self.stick_to_ground and not wrappedEnt:IsOnGround() then
@@ -2540,24 +2577,24 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
     if self.ambush_giftee then
         local groundTr = utils.GetGroundHit(utils.GetEntCenter(wrappedEnt), wrappedEnt)
 
-       if groundTr.Hit then
-           local ang = groundTr.HitNormal:Angle() + Angle(90, 0, 0)
+        if groundTr.Hit then
+            local ang = groundTr.HitNormal:Angle() + Angle(90, 0, 0)
 
-           local dir = (giftee:GetPos() - wrappedEnt:GetPos()):GetNormalized()
-           dir = (dir - groundTr.HitNormal * dir:Dot(groundTr.HitNormal)):GetNormalized()
+            local dir = (giftee:GetPos() - wrappedEnt:GetPos()):GetNormalized()
+            dir = (dir - groundTr.HitNormal * dir:Dot(groundTr.HitNormal)):GetNormalized()
 
-           local forward = ang:Forward()
-           local rot = math.deg(math.atan2(
-               forward:Cross(dir):Dot(groundTr.HitNormal),
-               forward:Dot(dir)
-           ))
+            local forward = ang:Forward()
+            local rot = math.deg(math.atan2(
+                forward:Cross(dir):Dot(groundTr.HitNormal),
+                forward:Dot(dir)
+            ))
 
-           ang:RotateAroundAxis(groundTr.HitNormal, rot + (self.ambush_angle or 0))
-           wrappedEnt:SetAngles(ang)
-           wrappedEnt:SetPos(groundTr.HitPos + Vector(0, 0, self.ambush_yoff or 0))
-       else
-           wrappedEnt:SetAngles(Angle(0, ang.y - 90, 0))
-       end
+            ang:RotateAroundAxis(groundTr.HitNormal, rot + (self.ambush_angle or 0))
+            wrappedEnt:SetAngles(ang)
+            wrappedEnt:SetPos(groundTr.HitPos + Vector(0, 0, self.ambush_yoff or 0))
+        else
+            wrappedEnt:SetAngles(Angle(0, ang.y - 90, 0))
+        end
     end
 
     if IsValid(giftObj) and giftObj:GetIsContentsOnFire() then
@@ -2813,6 +2850,25 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
                     wrappedEnt:EmitSound(Sound("fart_1.wav"))
                 end
             end)
+
+        elseif self.special_setup == "fortnite_struct_setup" then
+            local model = IsValid(wrappedEnt) and wrappedEnt:GetModel() or giftEnt:GetNW2String("fortnite_model")
+            local pushDist = string.EndsWith(model, "wall.mdl") and 150 or 300
+
+            local aim = giftee:GetAimVector()
+            local targetPos = giftee:EyePos() + Vector(aim.x, aim.y, 0):GetNormalized() * pushDist
+
+            local yaw = (giftee:GetPos() - targetPos):Angle().y
+            wrappedEnt:SetAngles(Angle(0, yaw, 0))
+
+            local groundTr = utils.GetGroundHit(targetPos, wrappedEnt)
+            if groundTr.Hit and groundTr.HitPos:Distance(targetPos) <= 150 then
+                wrappedEnt:SetPos(groundTr.HitPos)
+
+            else
+                local yAdj = string.EndsWith(model, "wall.mdl") and 75 or 50
+                wrappedEnt:SetPos(targetPos - Vector(0, 0, yAdj))
+            end
         end
     end
 
@@ -2856,8 +2912,10 @@ function GiftData:GetName(giftee)
     return self.name
 end
 
-function GiftData:GetDesc(wrappedEnt, giftee)
+function GiftData:GetDesc(giftEnt, giftee)
     if self.special_setup then
+        local wrappedEnt = giftEnt:GetStoredGift()
+
         if self.special_setup == "giftwrap_desc" then
             if wrappedEnt.HasGift and wrappedEnt:HasGift() then
                 return "another gift"
@@ -2899,10 +2957,42 @@ function GiftData:GetDesc(wrappedEnt, giftee)
             elseif giftee._UpgradeGiftWep == "weapon_ttt_unarmed" then
                 return "yellow bodypaint"
             end
+
+        elseif self.special_setup == "fortnite_struct_setup" then
+            local model = IsValid(wrappedEnt) and wrappedEnt:GetModel() or giftEnt:GetNW2String("fortnite_model")
+
+            if string.EndsWith(model, "wall.mdl") then
+                return "a wall"
+            elseif string.EndsWith(model, "floor.mdl") then
+                return "a floor"
+            elseif string.EndsWith(model, "stairw.mdl") then
+                return "a staircase"
+            elseif string.EndsWith(model, "roofc.mdl") then
+                return "a roof"
+            end
         end
     end
 
     return self.desc
+end
+
+function GiftData:GetSmell(giftEnt)
+    if self.special_setup == "fortnite_struct_setup" then
+        local wrappedEnt = giftEnt:GetStoredGift()
+        local model = IsValid(wrappedEnt) and wrappedEnt:GetModel() or giftEnt:GetNW2String("fortnite_model")
+
+        if string.StartsWith(model, "models/fortnitea31/buildingparts/pbw/wood") then
+            return GiftSmell.Woody
+        elseif string.StartsWith(model, "models/fortnitea31/buildingparts/pbw/brick") then
+            return GiftSmell.Earthy
+        elseif string.StartsWith(model, "models/fortnitea31/buildingparts/pbw/metal") then
+            return GiftSmell.Metallic
+        else
+            return GiftSmell.Nondescript
+        end
+    end
+
+    return self.attrib_smell
 end
 
 function GiftData:Spawn(giftee, giftObj)
@@ -2917,7 +3007,7 @@ function GiftData:Spawn(giftee, giftObj)
                 giftEnt:SetModel(identifier)
             end
 
-            self:ApplyPreSpawnAdjustments(giftEnt, giftee)
+            self:ApplyPreSpawnAdjustments(giftEnt, giftee, giftObj)
             giftEnt:Spawn()
 
             local phys = giftEnt:GetPhysicsObject()
@@ -2932,7 +3022,7 @@ function GiftData:Spawn(giftee, giftObj)
         elseif category == GiftCategory.SENT or category == GiftCategory.NPC or category == GiftCategory.Ammo
           or category == GiftCategory.WorldSWEP or category == GiftCategory.FloorSWEP then
             local giftEnt = ents.Create(identifier)
-            local ret = self:ApplyPreSpawnAdjustments(giftEnt, giftee)
+            local ret = self:ApplyPreSpawnAdjustments(giftEnt, giftee, giftObj)
 
             if ret ~= nil then -- only in fringe cases like Fart Grenade
                 if IsValid(giftEnt) then giftEnt:Remove() end
@@ -3120,7 +3210,7 @@ end
 -- and might want later (ply can be any player)
 if SERVER then
     function GiftData:Furnish(ply)
-        if self.visual_override then return self end
+        if self.visual_override or self.dont_furnish then return self end
 
         if not self.cachedModel and self.category == GiftCategory.SENT then
             local sent = scripted_ents.GetStored(self.identifier)
@@ -3153,8 +3243,12 @@ if SERVER then
     end
 
 elseif CLIENT then
-    function GiftData:GetVisuals()
+    function GiftData:GetVisuals(giftEnt)
         local category = self.category
+
+        if self.special_setup == "fortnite_struct_setup" then
+            return giftEnt:GetNW2String("fortnite_model")
+        end
 
         if category == GiftCategory.PhysProp or category == GiftCategory.Vehicle then
             return self.identifier
