@@ -504,6 +504,11 @@ function SWEP:PrimaryAttack()
                 if SERVER then notifyHasGiftee(owner, giftee) end
                 self:Throw(owner)
 
+            -- Throw if SMB Mushroom as Swapper (community decision)
+            elseif owner:GetTeam() == TEAM_JESTER and self:GetCachedDataLabel() == "gsmb_mushroom" then
+                utils.NonSpamMessage(owner, "OpenAttempt", "Jesters are allergic to this!")
+                self:Throw(owner)
+
             else -- Open gift
                 if SERVER then
                     self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
