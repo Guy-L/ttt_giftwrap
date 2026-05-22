@@ -383,6 +383,20 @@ function GW_Utils.GetWrapper(giftEnt)
     return player.GetBySteamID64(giftEnt:GetWrapperSID())
 end
 
+function GW_Utils.GetTopmostWrap(ent)
+    local wrappedBy = ent:GetNWEntity("WrappedByGift")
+    if not IsValid(wrappedBy) then return nil end
+    wrapLevel = 0
+
+    while IsValid(wrappedBy) do
+        ent = wrappedBy
+        wrappedBy = ent:GetNWEntity("WrappedByGift")
+        wrapLevel = wrapLevel + 1
+    end
+
+    return ent, wrapLevel
+end
+
 
 GW_Utils.sharedNetTable = {
     { type = "Bool",   name = "IsRandomGift" },

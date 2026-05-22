@@ -3861,13 +3861,13 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
         end)
     end
 
-    -- Util method for gifts that can be remotely detonated while wrapped
-    local function RemoteGiftExplosion(wrappedEnt, sound, fuse, funcs)
-        local parentGift = wrappedEnt:GetNWEntity("WrappedByGift")
+    -- Util methods for gifts that can be remotely detonated while wrapped
+    local function RemoteGiftDetonation(ent, sound, fuse, funcs)
+        local parentGift, wrapLevel = utils.GetTopmostWrap(ent)
 
         if IsValid(parentGift) then
-            if wrappedEnt.isSelfDestructing then return end
-            wrappedEnt.isSelfDestructing = true
+            if ent.isSelfDestructing then return end
+            ent.isSelfDestructing = true
 
             local giftee = parentGift:GetOwner()
             if IsValid(giftee) then
@@ -3886,22 +3886,39 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             end
 
             timer.Simple(fuse, function()
-                if not IsValid(wrappedEnt) then return end
-                parentGift = wrappedEnt:GetNWEntity("WrappedByGift")
+                if not IsValid(ent) then return end
 
-                if IsValid(parentGift) then
+                local newWrapLevel
+                parentGift, newWrapLevel = utils.GetTopmostWrap(ent)
+
+                if newWrapLevel > wrapLevel then
+                    ent.isSelfDestructing = false
+                    funcs.parry(ent)
+
+                elseif IsValid(parentGift) then
                     parentGift._PreventThrow = true
                     funcs.explosion(parentGift)
                     parentGift:Remove()
 
                 else
-                    funcs.explosion(wrappedEnt)
-                    wrappedEnt:Remove()
+                    funcs.explosion(ent)
+                    ent:Remove()
                 end
             end)
 
         else
-            funcs.og()
+            funcs.ogDetonate(ent)
+        end
+    end
+
+    -- parry mechanic for entities wrapped mid-explosion
+    local function RemoteGiftExplosion(ent, ogExplode, parryFunc)
+        local parentGift = ent:GetNWEntity("WrappedByGift")
+
+        if IsValid(parentGift) then
+            parryFunc(ent)
+        else
+            ogExplode(ent)
         end
     end
 
@@ -3932,9 +3949,20 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
         if manhackSENT then
             manhackSENT = manhackSENT.t
             local OGManhackSelfDestruct = manhackSENT.SelfDestruct
+            local OGManhackExplode = manhackSENT.Explode
+
+            local function manhackParry(self)
+                local owner = self:GetPlayerController()
+                if not IsValid(owner) then owner = self.damageInfoPlayer end
+
+                owner:ChatPrint("Detonation was parried by Gift Wrap!")
+                self:SetPlayerController(owner)
+                self:SetHealth(ControllableManhack.ConVarHealth())
+                self.isSelfDestructing = false
+            end
 
             manhackSENT.SelfDestruct = function(self)
-                RemoteGiftExplosion(self, self.SoundStunned, 3, {
+                RemoteGiftDetonation(self, self.SoundStunned, 3, {
                     explosion = function(parentEnt)
                         local explode = ents.Create("env_explosion")
                         explode:SetPos(utils.GetEntCenter(parentEnt))
@@ -3944,10 +3972,13 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
                         explode:Fire("Explode", 0, 0)
                     end,
 
-                    og = function()
-                        OGManhackSelfDestruct(self)
-                    end
+                    ogDetonate = OGManhackSelfDestruct,
+                    parry = manhackParry,
                 })
+            end
+
+            manhackSENT.Explode = function(self)
+                RemoteGiftExplosion(self, OGManhackExplode, manhackParry)
             end
         end
     end
@@ -3958,9 +3989,14 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
     if sent_slam then
         sent_slam = sent_slam.t
         local OGSlamStartExplode = sent_slam.StartExplode
+        local OGSlamExplode = sent_slam.Explode
 
-        sent_slam.StartExplode = function(self, checkActive)
-            RemoteGiftExplosion(self, self.PreExplosionSound, 2, {
+        local function slamParry(self)
+            self:GetPlacer():ChatPrint("Detonation was parried by Gift Wrap!")
+        end
+
+        sent_slam.StartExplode = function(self)
+            RemoteGiftDetonation(self, self.PreExplosionSound, 2, {
                 explosion = function(parentEnt)
                     local pos = parentEnt:GetPos()
                     local radius = self.BlastRadius
@@ -3977,10 +4013,14 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
                     parentEnt:EmitSound(self.ExplosionSound, 60, math.random(125, 150))
                 end,
 
-                og = function()
-                    OGSlamStartExplode(self, checkActive)
-                end
+                ogDetonate = OGSlamStartExplode,
+                parry = slamParry,
             })
+
+        end
+
+        sent_slam.Explode = function(self)
+            RemoteGiftExplosion(self, OGSlamExplode, slamParry)
         end
     end
 

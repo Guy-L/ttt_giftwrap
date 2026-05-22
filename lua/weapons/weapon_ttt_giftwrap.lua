@@ -952,6 +952,10 @@ if SERVER then
 
                     if invGiftWrap and invGiftWrap:HasGift() and invGiftWrap:GetStoredGift() == ent then
                         owner:ChatPrint("The gift somehow disappeared, leaving the wrapping paper behind.")
+
+                        self:SetWrapperSID("")
+                        self:SetStoredGift(nil)
+                        self:SetCachedDataLabel("")
                     end
                 end
             end)
