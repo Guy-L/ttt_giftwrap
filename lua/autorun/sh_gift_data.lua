@@ -4169,6 +4169,12 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             return true
         end
     end)
+
+    -- Fortnite: ensures clients can render the custom font for structures even without SWEP initGiftCount
+    if CLIENT then
+        surface.CreateFont("Fortnite_Structure_Font", {font = "Trebuchet24", size = 18, weight = 750})
+        surface.CreateFont("Fortnite_HUD_Font", {font = "Trebuchet24", size = 20, weight = 1250})
+    end
 end)
 
 
