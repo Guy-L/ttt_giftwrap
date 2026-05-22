@@ -1590,9 +1590,11 @@ local deployableSWEPs = {
                sound = GiftSound.Beeping, smell = GiftSmell.Dusty, feel = GiftFeel.Random,
                SWEP_desc = "a rigged furniture bomb"},
 
-    conc_mine = {name = "Concussion Mine", desc = "a powerful whoopie cushion",
+    conc_mine = {name = "Concussion Mine", desc = "a whoopie cushion",
                SENT_id = "ttt_conmine", SWEP_id = "weapon_ttt_concussionmine",
-               SENT_random = false, SWEP_random = false, --TODO add
+               SENT_setup = "conc_mine_setup", SENT_setup_var = {{k = "set_owner"}, {k = "mv_hook", v = "HUDDrawMarkerVisionConmine"}},
+               SENT_random = true, SENT_rarity = 4, SENT_quality = -7,
+               SWEP_random = false,
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Beeping, smell = GiftSmell.Sterile, feel = GiftFeel.Hollow},
 
@@ -2335,6 +2337,11 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
                     end
                 end)
             end
+
+        elseif self.special_setup == "conc_mine_setup" then
+            if wrappedEnt.setoff then
+                wrappedEnt:NextThink(CurTime() + 1e9)
+            end
         end
     end
 
@@ -2889,6 +2896,12 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
             else
                 local yAdj = string.EndsWith(model, "wall.mdl") and 75 or 50
                 wrappedEnt:SetPos(targetPos - Vector(0, 0, yAdj))
+            end
+
+        elseif self.special_setup == "conc_mine_setup" then
+            if wrappedEnt.setoff then
+                wrappedEnt:StartFuse()
+                wrappedEnt:NextThink(CurTime() + 0.1)
             end
         end
     end

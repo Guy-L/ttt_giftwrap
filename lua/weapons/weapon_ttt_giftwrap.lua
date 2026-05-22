@@ -138,6 +138,7 @@ if SERVER then
             "npc_barnacle",
             "ent_ttt_ttt2_camera", -- blocked later (affixed)
             "force_shield", -- blocked later (no phys, won't budge)
+            "ttt_conmine",
             "christmas_present",
             "ttt_cse_proj",
             "ttt_chomik",
@@ -502,11 +503,6 @@ function SWEP:PrimaryAttack()
             -- Throw if not allowed due to not being giftee (failsafe)
             else]]if IsValid(giftee) and owner != giftee and not utils.ConfirmedDead(owner, giftee) then
                 if SERVER then notifyHasGiftee(owner, giftee) end
-                self:Throw(owner)
-
-            -- Throw if SMB Mushroom as Swapper (community decision)
-            elseif owner:GetTeam() == TEAM_JESTER and self:GetCachedDataLabel() == "gsmb_mushroom" then
-                utils.NonSpamMessage(owner, "OpenAttempt", "Jesters are allergic to this!")
                 self:Throw(owner)
 
             else -- Open gift
