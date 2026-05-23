@@ -3862,7 +3862,8 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
     end
 
     -- Util methods for gifts that can be remotely detonated while wrapped
-    local function RemoteGiftDetonation(ent, sound, fuse, funcs)
+    local function RemoteGiftDetonation(ent, fuse, sound, funcs)
+        dbg.Log("Starting remote detonation for", ent)
         local parentGift, wrapLevel = utils.GetTopmostWrap(ent)
 
         if IsValid(parentGift) then
@@ -3871,10 +3872,10 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
 
             local giftee = parentGift:GetOwner()
             if IsValid(giftee) then
-                giftee:EmitSound(sound)
+                giftee:EmitSound(sound.path, sound.vol, sound.pitch)
                 giftee:ChatPrint("Your gift is beeping!")
             else
-                parentGift:EmitSound(sound)
+                parentGift:EmitSound(sound.path, sound.vol, sound.pitch)
             end
 
             for _, ply in ipairs(player.GetAll()) do
@@ -3891,15 +3892,16 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
                 local newWrapLevel
                 parentGift, newWrapLevel = utils.GetTopmostWrap(ent)
 
-                if newWrapLevel > wrapLevel then
-                    ent.isSelfDestructing = false
-                    funcs.parry(ent)
+                if IsValid(parentGift) then
+                    if newWrapLevel > wrapLevel then
+                        ent.isSelfDestructing = false
+                        funcs.parry(ent)
 
-                elseif IsValid(parentGift) then
-                    parentGift._PreventThrow = true
-                    funcs.explosion(parentGift)
-                    parentGift:Remove()
-
+                    else
+                        parentGift._PreventThrow = true
+                        funcs.explosion(parentGift)
+                        parentGift:Remove()
+                    end
                 else
                     funcs.explosion(ent)
                     ent:Remove()
@@ -3913,9 +3915,7 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
 
     -- parry mechanic for entities wrapped mid-explosion
     local function RemoteGiftExplosion(ent, ogExplode, parryFunc)
-        local parentGift = ent:GetNWEntity("WrappedByGift")
-
-        if IsValid(parentGift) then
+        if IsValid(ent:GetNWEntity("WrappedByGift")) then
             parryFunc(ent)
         else
             ogExplode(ent)
@@ -3962,7 +3962,7 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
             end
 
             manhackSENT.SelfDestruct = function(self)
-                RemoteGiftDetonation(self, self.SoundStunned, 3, {
+                RemoteGiftDetonation(self, 3, {path = self.SoundStunned}, {
                     explosion = function(parentEnt)
                         local explode = ents.Create("env_explosion")
                         explode:SetPos(utils.GetEntCenter(parentEnt))
@@ -3996,7 +3996,7 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
         end
 
         sent_slam.StartExplode = function(self)
-            RemoteGiftDetonation(self, self.PreExplosionSound, 2, {
+            RemoteGiftDetonation(self, 2, {path = self.PreExplosionSound}, {
                 explosion = function(parentEnt)
                     local pos = parentEnt:GetPos()
                     local radius = self.BlastRadius
@@ -4071,7 +4071,7 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
         end
     end
 
-    -- Fix client-side clipsize discrepancy & related Lua error when spawning as worldmodel
+    -- (Star Burster) Fix client-side clipsize discrepancy & related Lua error when spawning as worldmodel
     if CLIENT then
         local starBurstWep = weapons.GetStored("ttt_plasma_burster_nade")
 
@@ -4143,7 +4143,7 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
         end
     end
 
-    if SERVER then
+    if SERVER then -- Hwapoon changes
         local hwapoonEnt = scripted_ents.GetStored("hwapoon_arrow")
 
         if hwapoonEnt then
@@ -4227,6 +4227,87 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
     if CLIENT then
         surface.CreateFont("Fortnite_Structure_Font", {font = "Trebuchet24", size = 18, weight = 750})
         surface.CreateFont("Fortnite_HUD_Font", {font = "Trebuchet24", size = 20, weight = 1250})
+    end
+
+    if SERVER then -- Prop Exploder: explode giftbox when detonating
+        local propExploderWep = weapons.GetStored("weapon_ttt_propexploder")
+
+        if propExploderWep then
+            OGPropExploderSecondary = OGPropExploderSecondary or propExploderWep.SecondaryAttack --TODO
+
+            -- this code may look overly complex, but given all the ways a rigged prop can interact with giftwrap
+            -- (and the ways a rigged giftbox can be interacted with), it's actually just as complex as it needs to be
+
+            local function OGPropExploderExplosion(ent, owner)
+                local expl = ents.Create("env_explosion")
+                expl:SetPos(ent:GetPos())
+                expl:Spawn()
+                expl:SetOwner(owner)
+                expl:SetKeyValue("iMagnitude", "0")
+                expl:Fire("Explode", 0, 0)
+                expl:EmitSound("siege/big_explosion.wav", 400, 200)
+                util.BlastDamage(ent, owner, ent:GetPos(), 400, 200)
+            end
+
+            propExploderWep.SecondaryAttack = function(self)
+                RemoteGiftDetonation(self.Owner.PEProp, 1.2, {path = "weapons/gamefreak/wtf.mp3", vol = 400, pitch = 200}, {
+                    explosion = function(parentEnt)
+                        self:SendPEMessage("Exploded")
+                        self.Owner.PEProp = nil
+
+                        OGPropExploderExplosion(parentEnt, self.Owner)
+                        self:Remove()
+
+                        --timer.Simple(0.1, function() self:Remove() end)
+                        --if self.Owner.SelectWeapon then
+                        --    self.Owner:SelectWeapon("weapon_ttt_unarmed")
+                        --end
+                    end,
+
+                    ogDetonate = function(ent)
+                        if IsValid(ent) then
+                            OGPropExploderSecondary(self)
+
+                            if ent:IsWeapon() then -- should only be possible for giftboxes
+                                local entOwner = ent:GetOwner()
+                                entOwner:EmitSound("weapons/gamefreak/wtf.mp3", 400, 200)
+                                entOwner:ChatPrint("Your gift is exploding!")
+                            end
+
+                            local exploTimerName = "PEPlanting" .. ent:EntIndex()
+                            local owner = self.Owner
+
+                            timer.Simple(timer.TimeLeft(exploTimerName), function()
+                                if not IsValid(owner) then return end
+
+                                -- if the prop was a giftbox, it could've switched state & thus not be the same entity (PEProp is transferred though)
+                                if owner.PEProp ~= ent then ent = owner.PEProp end
+                                owner.PEProp = nil
+
+                                if IsValid(ent) then
+                                    if IsValid(ent:GetNWEntity("WrappedByGift")) then
+                                        owner:ChatPrint("Detonation was parried by Gift Wrap!")
+
+                                    else
+                                        ent._PreventThrow = true -- in case its a giftbox
+                                        OGPropExploderExplosion(ent, owner)
+                                        ent:Remove()
+                                    end
+                                end
+                            end)
+
+                            timer.Remove(exploTimerName)
+                        else
+                            utils.NonSpamMessage(self.Owner, "PropExploderDet", "No prop selected!")
+                        end
+                    end,
+
+                    parry = function()
+                        self.Owner:ChatPrint("Detonation was parried by Gift Wrap!")
+                    end,
+                })
+            end
+        end
     end
 end)
 

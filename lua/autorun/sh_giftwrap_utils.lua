@@ -384,6 +384,7 @@ function GW_Utils.GetWrapper(giftEnt)
 end
 
 function GW_Utils.GetTopmostWrap(ent)
+    if not IsValid(ent) then return nil end
     local wrappedBy = ent:GetNWEntity("WrappedByGift")
     if not IsValid(wrappedBy) then return nil end
     wrapLevel = 0
@@ -448,6 +449,13 @@ function GW_Utils.TransferNetVars(fromGift, toGift)
     local wrappedEnt = fromGift:GetStoredGift()
     if IsValid(wrappedEnt) then
         wrappedEnt:SetNWEntity("WrappedByGift", toGift)
+    end
+
+    -- transfer Prop Exploder rig
+    for _, ply in ipairs(player.GetAll()) do
+        if ply.PEProp == fromGift then
+            ply.PEProp = toGift
+        end
     end
 end
 

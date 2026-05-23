@@ -97,12 +97,13 @@ function ENT:Initialize()
         self:SetDescriptionLine(math.random(#normalDescriptionLines))
 
         if self:GetCachedDataLabel() == "flame" then
-            self:Ignite(1e9)
+            self:Ignite(3600)
         end
 
         -- if clients receive the MV too early, the entity
         -- might not have been created yet and thus be null
         timer.Simple(0.1, function()
+            if not IsValid(self) then return end
             local giftee = self:GetGiftee()
 
             if IsValid(giftee) then

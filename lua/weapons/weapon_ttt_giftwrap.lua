@@ -378,7 +378,7 @@ function SWEP:UpdateModel(reason)
         end
     elseif SERVER then
         if hasGiftNow and self:GetCachedDataLabel() == "flame" then
-            self:Ignite(1e9)
+            self:Ignite(3600)
         end
     end
 
@@ -947,16 +947,18 @@ if SERVER then
             net.Broadcast()
 
             ent:CallOnRemove(WRAPPED_GIFT_REMOVE, function()
-                if IsValid(self) and IsValid(owner) then
-                    local invGiftWrap = utils.GetInventoryGiftwrap(owner)
+                local wrappedBy = ent:GetNWEntity("WrappedByGift")
 
-                    if invGiftWrap and invGiftWrap:HasGift() and invGiftWrap:GetStoredGift() == ent then
+                if IsValid(wrappedBy) then
+                    local owner = wrappedBy:GetOwner()
+
+                    if IsValid(owner) then
                         owner:ChatPrint("The gift somehow disappeared, leaving the wrapping paper behind.")
-
-                        self:SetWrapperSID("")
-                        self:SetStoredGift(nil)
-                        self:SetCachedDataLabel("")
                     end
+
+                    wrappedBy:SetWrapperSID("")
+                    wrappedBy:SetStoredGift(nil)
+                    wrappedBy:SetCachedDataLabel("")
                 end
             end)
 
