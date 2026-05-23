@@ -1196,10 +1196,6 @@ elseif CLIENT then
         formVDFix:MakeHelp({
             label = "label_vehicle_damagefix_desc"
         })
-        formVDFix:MakeCheckBox({
-            serverConvar = "ttt2_vehicle_damagefix_enable",
-            label = "label_vehicle_damagefix_enable"
-        })
         formVDFix:MakeSlider({
             serverConvar = "ttt2_vehicle_damagefix_driver_mult",
             label = "label_vehicle_damagefix_driver_mult",

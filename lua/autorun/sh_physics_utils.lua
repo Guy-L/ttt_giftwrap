@@ -590,7 +590,7 @@ if SERVER then
 
     --GW_DBG.Log("Map Stats for "..map.."...")
     --GW_DBG.Inspect(GW_Utils.mapSpawnStats)
-    if GW_AllNonWaterSpawns then GW_DBG.Log("Non-water spawns: ", #GW_AllNonWaterSpawns) end
+    --if GW_AllNonWaterSpawns then GW_DBG.Log("Non-water spawns: ", #GW_AllNonWaterSpawns) end
 
 
 elseif CLIENT then

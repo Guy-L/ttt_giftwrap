@@ -1,0 +1,678 @@
+include("sh_physics_utils.lua")
+local utils = GW_Utils
+local dbg   = GW_DBG
+
+local INIT_FIXES_HOOK            = "GiftWrap_InitThirdPartyChanges"
+local CLUTTERBOMB_LIGHT_FIX_HOOK = "GiftWrap_ClutterbombLightFix"
+local ENT_KILL_INPUT_HOOK        = "GiftWrapSV_PreventWrappedEntKillInputs"
+local ENT_TAKE_DAMAGE_HOOK       = "GiftWrapSV_VehicleOccupantsDamageFix"
+local PLAYER_USE_HOOK            = "GiftWrapSV_InternalVehicleSeatFix"
+
+local VDFIX_MULT_DRIVER = utils.Cvar("ttt2_vehicle_damagefix_driver_mult",    30, 0, 100, "Damage multiplier for driver when hitting other parts of vehicle (%).")
+local VDFIX_MULT_PASNGR = utils.Cvar("ttt2_vehicle_damagefix_passenger_mult", 20, 0, 100, "Damage multiplier for passengers when hitting any part of vehicle (%).")
+
+local ChangeCategory = {
+    SWEP      = weapons,
+    SENT      = scripted_ents,
+    Item      = "item",
+    Meta      = "meta",
+    Metatable = "metatable",
+    None      = nil,
+}
+
+if not GW_InitChangesCache then
+    GW_InitChangesCache = {}
+end
+
+-- Util methods for gifts that can be remotely detonated while wrapped
+local function RemoteGiftDetonation(ent, fuse, sound, funcs)
+    if ent._isSelfDestructing then return end
+    ent._isSelfDestructing = true
+
+    dbg.Log("Starting remote detonation for", ent)
+    local parentGift, wrapLevel = utils.GetTopmostWrap(ent)
+
+    if IsValid(parentGift) then
+        local giftee = parentGift:GetOwner()
+
+        if IsValid(giftee) then
+            giftee:EmitSound(sound.path, sound.vol, sound.pitch)
+            giftee:ChatPrint("Your gift is beeping!")
+        else
+            parentGift:EmitSound(sound.path, sound.vol, sound.pitch)
+        end
+
+        for _, ply in ipairs(player.GetAll()) do
+            if ply ~= giftee then
+                if ply:GetPos():Distance(parentGift:GetPos()) <= 300 then
+                    ply:ChatPrint("A nearby gift is beeping!")
+                end
+            end
+        end
+
+        timer.Simple(fuse, function()
+            if not IsValid(ent) then return end
+
+            local newWrapLevel
+            parentGift, newWrapLevel = utils.GetTopmostWrap(ent)
+
+            if IsValid(parentGift) then
+                if newWrapLevel > wrapLevel then
+                    ent._isSelfDestructing = false
+                    funcs.parry(ent)
+
+                else
+                    parentGift._PreventThrow = true
+                    funcs.explosion(parentGift)
+                    parentGift:Remove()
+                end
+            else
+                funcs.explosion(ent)
+                ent:Remove()
+            end
+        end)
+
+    else
+        funcs.ogDetonate(ent)
+    end
+end
+
+-- Parry mechanic for detonatable entities wrapped mid-explosion
+local function RemoteGiftExplosion(ent, ogExplode, parryFunc)
+    dbg.Log("Confirming explosion for", ent)
+
+    if IsValid(ent:GetNWEntity("WrappedByGift")) then
+        ent._isSelfDestructing = false
+        parryFunc(ent)
+    else
+        ogExplode(ent)
+    end
+end
+
+-- Catch-all hook to prevent kill events on wrapped entities (used by Fireballs & others)
+hook.Add("AcceptInput", ENT_KILL_INPUT_HOOK, function(ent, input, activator, caller, value)
+    if input == "kill" and IsValid(ent) and IsValid(ent:GetNWEntity("WrappedByGift")) then
+        dbg.Log("Prevented kill input for wrapped entity", ent)
+        return true
+    end
+end)
+
+
+
+local initChanges = {
+    --[[
+    {   addon = "Addon Name",
+        desc = "Template change", toggle = true,
+        identifier = "identifier", category = ChangeCategory.SENT,
+        original_keys = {},
+        apply = function(sent, og)
+        end
+    },]]
+
+    {   addon = "TTT2 (Base)",
+        desc = "Fix seats inside of vehicles being inaccessible even if main seat occupied", toggle = SERVER,
+        identifier = "fix_extra_seat_entry", category = ChangeCategory.None,
+        apply = function()
+
+            hook.Add("PlayerUse", PLAYER_USE_HOOK, function(ply, ent)
+                if IsValid(ent) and ent:IsVehicle() and IsValid(ent:GetDriver()) then
+                    local eyePos = ply:EyePos()
+
+                    local tr = util.TraceLine({
+                        start  = eyePos,
+                        endpos = eyePos + ply:EyeAngles():Forward() * 80,
+                        filter = function(ent)
+                            return (IsValid(ent) and ent:IsVehicle() and not ent.FixInternalSeats)
+                        end
+                    })
+
+                    if IsValid(tr.Entity) then
+                        --ply:EnterVehicle(tr.Entity) --instant
+                        tr.Entity:Use(ply)
+                    end
+                end
+            end)
+        end
+    },
+
+    {   addon = "TTT2 (Base)",
+        desc = "Fix driver taking almost no damage & other riders being invincible", toggle = SERVER,
+        identifier = "fix_vehicle_damage", category = ChangeCategory.None,
+        cvars = {VDFIX_MULT_DRIVER, VDFIX_MULT_PASNGR},
+        apply = function()
+
+            hook.Add("EntityTakeDamage", ENT_TAKE_DAMAGE_HOOK, function(target, dmgInfo)
+                local dmg = dmgInfo:GetDamage()
+
+                if IsValid(target) and target:IsVehicle() then
+                    if dmg < 0.01 then
+                        dmg = math.floor(dmg * 10000 + 0.5)
+                        dmgInfo:SetDamage(dmg * VDFIX_MULT_DRIVER:GetFloat()/100)
+
+                        local driver = target:GetDriver()
+                        if IsValid(driver) then
+                            dbg.Log("Corrected near-zero damage for driver", driver, dmgInfo)
+                        end
+                    end
+
+                    -- apply damage to passenger seats (one layer down)
+                    for _, child in ipairs(target:GetChildren()) do
+                        if IsValid(child) and child:IsVehicle() then
+                            local seatDmg = DamageInfo()
+                            seatDmg:SetDamage(dmg * VDFIX_MULT_PASNGR:GetFloat()/100)
+                            seatDmg:SetAttacker(dmgInfo:GetAttacker())
+                            child:TakeDamageInfo(seatDmg)
+
+                            local seatPsgr = child:GetDriver()
+                            if IsValid(seatPsgr) then
+                                dbg.Log("Applied damage to passenger", seatPsgr, seatDmg)
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    },
+
+    {   addon = "Pot of Greed",
+        desc = "Fix for Pot of Greedier not defaulting to Detective shop for non-shopping role pots", toggle = true,
+        identifier = "PotOfGreedier", category = ChangeCategory.Metatable,
+        original_keys = {"GetEquipmentServerSided"},
+        apply = function(meta, og)
+
+            meta.GetEquipmentServerSided = function(ply, subRole, noModification)
+                local subRoleData = utils.GetSubRoleData(subRole)
+
+                if not subRoleData or not subRoleData:IsShoppingRole() then
+                    return og.GetEquipmentServerSided(ply, ROLE_DETECTIVE, noModification)
+                else
+                    return og.GetEquipmentServerSided(ply, subRole, noModification)
+                end
+            end
+        end
+    },
+
+    {   addon = "Controllable Manhack",
+        desc = "Disable right click while it's in a Gift Wrap giftbox", toggle = SERVER,
+        identifier = "weapon_controllable_manhack", category = ChangeCategory.SWEP,
+        original_keys = {"SecondaryAttack"},
+        apply = function(swep, og)
+
+            swep.SecondaryAttack = function(slf)
+                local manhack = slf:GetSpawnedManhack()
+
+                if IsValid(manhack) then
+                    if not IsValid(manhack:GetNWEntity("WrappedByGift")) then
+                        og.SecondaryAttack(slf)
+                    else
+                        utils.NonSpamMessage(slf:GetOwner(), "wrapped_manhack", "Sorry, your manhack is wrapped inside a giftbox.")
+                    end
+                end
+            end
+        end
+    },
+
+    {   addon = "Controllable Manhack",
+        desc = "Explode giftbox when self-destructing + wrap to parry", toggle = SERVER,
+        identifier = "sent_controllable_manhack", category = ChangeCategory.SENT,
+        original_keys = {"SelfDestruct", "Explode"},
+        apply = function(sent, og)
+
+            local function manhackParry(self)
+                local owner = self:GetPlayerController()
+                if not IsValid(owner) then owner = self.damageInfoPlayer end
+
+                owner:ChatPrint("Detonation was parried by Gift Wrap!")
+                self:SetPlayerController(owner)
+                self:SetHealth(ControllableManhack.ConVarHealth())
+                self.isSelfDestructing = false
+            end
+
+            sent.SelfDestruct = function(self)
+                RemoteGiftDetonation(self, 3, {path = self.SoundStunned}, {
+                    explosion = function(parentEnt)
+                        local explode = ents.Create("env_explosion")
+                        explode:SetPos(utils.GetEntCenter(parentEnt))
+                        explode:SetOwner(self:GetPlayerController())
+                        explode:Spawn()
+                        explode:SetKeyValue("iMagnitude", self.ExplosionSize)
+                        explode:Fire("Explode", 0, 0)
+                    end,
+
+                    ogDetonate = og.SelfDestruct,
+                    parry = manhackParry,
+                })
+            end
+
+            sent.Explode = function(self)
+                RemoteGiftExplosion(self, og.Explode, manhackParry)
+            end
+        end
+    },
+
+    {   addon = "M4 SLAM",
+        desc = "Explode giftbox when self-destructing + wrap to parry", toggle = true,
+        identifier = "ttt_slam_base", category = ChangeCategory.SENT,
+        original_keys = {"StartExplode", "Explode"},
+        apply = function(sent, og)
+
+            local function slamParry(self)
+                self:GetPlacer():ChatPrint("Detonation was parried by Gift Wrap!")
+            end
+
+            sent.StartExplode = function(self)
+                RemoteGiftDetonation(self, 1.5, {path = self.PreExplosionSound}, {
+                    explosion = function(parentEnt)
+                        local pos = parentEnt:GetPos()
+                        local radius = self.BlastRadius
+                        local damage = self.BlastDamage
+
+                        local effect = EffectData()
+                        effect:SetStart(pos)
+                        effect:SetOrigin(pos)
+                        effect:SetScale(radius)
+                        effect:SetRadius(radius)
+                        effect:SetMagnitude(damage)
+                        util.Effect("Explosion", effect, true, true)
+                        util.BlastDamage(parentEnt, self:GetPlacer(), pos, radius, damage)
+                        parentEnt:EmitSound(self.ExplosionSound, 60, math.random(125, 150))
+                    end,
+
+                    ogDetonate = og.StartExplode,
+                    parry = slamParry,
+                })
+
+            end
+
+            sent.Explode = function(self)
+                RemoteGiftExplosion(self, og.Explode, slamParry)
+            end
+        end
+    },
+
+    {   addon = "Paper Plane",
+        desc = "Override targetting behavior for random gift planes", toggle = true,
+        identifier = "ttt_paper_plane_proj", category = ChangeCategory.SENT,
+        original_keys = {"GetClosestPlayer"},
+        apply = function(sent, og)
+
+            sent.GetClosestPlayer = function(self, ent, plys)
+                local spawner = self:GetNWEntity("GW_Spawner")
+
+                if IsValid(spawner) then
+                    local sphere = ents.FindInSphere(self:GetPos(), 5000)
+                    local possibleTargets = {}
+
+                    for key, v in pairs(sphere) do
+                        if v:IsPlayer() and v:Alive() and not v:IsSpec() and v ~= spawner then
+                            table.insert(possibleTargets, v)
+                        end
+                    end
+
+                    return og.GetClosestPlayer(self, ent, possibleTargets)
+                else
+                    return og.GetClosestPlayer(self, ent, plys)
+                end
+            end
+        end
+    },
+
+    {   addon = "Star Burster",
+        desc = "Fix clipsize discrepancy & related Lua error when spawning as worldmodel", toggle = CLIENT,
+        identifier = "ttt_plasma_burster_nade", category = ChangeCategory.SWEP,
+        original_keys = {"Initialize"},
+        apply = function(swep, og)
+
+            swep.Initialize = function(self)
+                local defaultClip = GetConVar("ttt_plasmaburster_ammo"):GetFloat()
+                self.Primary.ClipSize = defaultClip
+                self:SetClip1(defaultClip)
+                og.Initialize(self)
+            end
+        end
+    },
+
+    {   addon = "Star Burster",
+        desc = "Make Star Burster entity wrappable", toggle = true,
+        identifier = "plasma_burster_nade", category = ChangeCategory.SENT,
+        original_keys = {"Initialize"},
+        apply = function(sent, og)
+
+            sent.Initialize = function(self)
+                og.Initialize(self)
+
+                -- need to do this for collisions to work, surprisingly the box size doesn't change anything
+                self:SetCollisionBounds(Vector(-1, -1, -1), Vector(1, 1, 1))
+            end
+        end
+    },
+
+    {   addon = "Minecraft Bow",
+        desc = "Make Minecraft arrow entity wrappable", toggle = true,
+        identifier = "ttt_minecraft_arrow", category = ChangeCategory.SENT,
+        original_keys = {"Think"},
+        apply = function(sent, og)
+
+            sent.Think = function(self)
+                og.Think(self)
+
+                if self.Disabled and not self:IsSolid() then
+                    self:SetMoveType(MOVETYPE_VPHYSICS)
+                    self:SetNotSolid(false)
+                    self:SetColor(Color(180, 180, 180))
+                end
+            end
+        end
+    },
+
+    {   addon = "Garry's Mod",
+        desc = "Allow marking arbitrary entities as not valid (used by Lethal Mine & Force Shield wraps)", toggle = true,
+        identifier = "Entity", category = ChangeCategory.Meta,
+        original_keys = {"IsValid"},
+        apply = function(meta, og)
+
+            meta.IsValid = function(self)
+                if self._Invalid then return false end
+                return og.IsValid(self)
+            end
+        end
+    },
+
+--[[ -- seems unneeded due to above change? (mine can be set off more than once without issue)
+    {   addon = "Lethal Mine",
+        desc = "Prevent Lethal Mines exploding in giftbox", toggle = true,
+        identifier = "item_lethal_company_landmine", category = ChangeCategory.SENT,
+        original_keys = {"EndTouch"},
+        apply = function(sent, og)
+
+            sent.EndTouch = function(self, ent)
+                if IsValid(self:GetNWEntity("WrappedByGift")) then return end
+                og.EndTouch(self, ent)
+            end
+        end
+    },]]
+
+    {   addon = "Hwapoon",
+        desc = "Make Hwapoon arrows wrappable & prevent them from disappearing", toggle = SERVER,
+        identifier = "hwapoon_arrow", category = ChangeCategory.SENT,
+        original_keys = {"PhysicsCollide"},
+        apply = function(sent, og)
+
+            sent.PhysicsCollide = function(self, data, physObj)
+                og.PhysicsCollide(self, data, physObj)
+
+                if self:GetSolid() == SOLID_NONE then
+                    self:SetSolid(SOLID_VPHYSICS)
+                end
+            end
+
+            sent.AcceptInput = function(self, inputName, activator, caller, param)
+                if inputName == "kill" then
+                    return true
+                end
+            end
+        end
+    },
+
+    {   addon = "Ice Grenade",
+        desc = "Allow ice grenade explosion to be interrupted", toggle = SERVER,
+        identifier = "icegrenade_proj", category = ChangeCategory.SENT,
+        apply = function(sent)
+
+            sent.iceexplode = function(self, delay)
+                timer.Create(self:EntIndex().."_timer", delay or 1.8, 1, function()
+                    if IsValid(self) then
+                        ParticleEffect("ice_explosion", self:GetPos(), Angle(0, 0, 0))
+                        self:EmitSound("ice_explosion.wav", 85, 90, 1, CHAN_AUTO)
+                        self:FreezeAll()
+                        self:Remove()
+                    end
+                end)
+            end
+        end
+    },
+
+    {   addon = "Killer Bungers",
+        desc = "Make Bunger Grenade collision box match scale", toggle = true,
+        identifier = "ttt_bungernade_proj", category = ChangeCategory.SENT,
+        original_keys = {"Initialize", "Explode"},
+        apply = function(sent, og)
+
+            sent.Initialize = function(self)
+                self.Entity:SetModelScale(2, 0)
+                og.Initialize(self)
+
+                self:SetSolid(SOLID_VPHYSICS)
+                self:SetMoveType(MOVETYPE_VPHYSICS)
+                self:PhysicsInit(SOLID_VPHYSICS)
+                self.Entity:Activate()
+            end
+
+            -- this functions code is really fucking stupid (it RELIES on a client/server mismatch over the scale)
+            sent.Explode = function(self, tr)
+                self.Entity:SetModelScale(2, 0)
+                og.Explode(self, tr)
+            end
+        end
+    },
+
+    {   addon = "Killer Bungers",
+        desc = "Extend Killer Bungers damage method to conditionally disable damage", toggle = SERVER,
+        identifier = "weapon_ttt_bungernade", category = ChangeCategory.SWEP,
+        apply = function()
+
+            hook.Add("EntityTakeDamage", "TurtlenadeDmgHandle", function(victim, dmg)
+                local attacker = dmg:GetAttacker()
+
+                if attacker:IsValid() and attacker:GetNWBool("GWFriendlyBunger") then
+                    TurtleInnocentDamage = 0
+                    TurtleTraitorDamage  = 0
+
+                elseif victim:IsValid() and victim:GetNWBool("GWFriendlyBunger") then
+                    if dmg:GetInflictor():GetClass() == "weapon_zm_improvised" then
+                        dmg:SetInflictor(game.GetWorld())
+                    end
+
+                    local bunger = utils.GetEntChildAt(victim, 1)
+
+                    if IsValid(bunger) then
+                        local hat = utils.GetEntChildAt(bunger, 1)
+
+                        if IsValid(hat) then
+                            local oldHealth = victim:Health() - 980
+                            local newHealth = oldHealth - dmg:GetDamage()
+                            local maxHealth = victim:GetMaxHealth() - 980
+
+                            if oldHealth > maxHealth*0.75 and newHealth <= maxHealth*0.75 then
+                                hat:SetSequence("spin_fast")
+                                hat:ResetSequence("spin_fast")
+
+                            elseif oldHealth > maxHealth*0.5 and newHealth <= maxHealth*0.5 then
+                                hat:SetSequence("spin_med")
+                                hat:ResetSequence("spin_med")
+
+                            elseif oldHealth > maxHealth*0.25 and newHealth <= maxHealth*0.25 then
+                                hat:SetSequence("spin_slow")
+                                hat:ResetSequence("spin_slow")
+                            end
+                        end
+                    end
+                end
+
+                TurtleNadeDamage(victim, dmg)
+                TurtleInnocentDamage = 20 -- defaults
+                TurtleTraitorDamage  = 5
+            end)
+        end
+    },
+
+    {   addon = "Fortnite Building",
+        desc = "Ensure clients can render the custom font for structures even without SWEP init", toggle = CLIENT,
+        identifier = "weapon_ttt_fortnite_building", category = ChangeCategory.SWEP,
+        apply = function()
+
+            -- What the original addon does on SWEP init; gives a warning but works out?
+            -- (CreateFont *should* only be ran once but outside debugging, it will be, so it's fine)
+            surface.CreateFont("Fortnite_Structure_Font", {font = "Trebuchet24", size = 18, weight = 750})
+            surface.CreateFont("Fortnite_HUD_Font", {font = "Trebuchet24", size = 20, weight = 1250})
+        end
+    },
+
+    {   addon = "Prop Exploder",
+        desc = "Explode giftbox when self-destructing + wrap to parry + rigging giftboxes", toggle = SERVER,
+        identifier = "weapon_ttt_propexploder", category = ChangeCategory.SWEP,
+        original_keys = {"SecondaryAttack"},
+        apply = function(swep, og)
+
+            -- this function may look overly complex, but given all the ways a rigged prop can interact with giftwrap
+            -- (and the ways a rigged giftbox can be interacted with), it's actually just as complex as it needs to be
+
+            local function OGPropExploderExplosion(ent, owner)
+                local expl = ents.Create("env_explosion")
+                expl:SetPos(ent:GetPos())
+                expl:Spawn()
+                expl:SetOwner(owner)
+                expl:SetKeyValue("iMagnitude", "0")
+                expl:Fire("Explode", 0, 0)
+                expl:EmitSound("siege/big_explosion.wav", 400, 200)
+                util.BlastDamage(ent, owner, ent:GetPos(), 400, 200)
+            end
+
+            swep.SecondaryAttack = function(self)
+                RemoteGiftDetonation(self.Owner.PEProp, 1.2, {path = "weapons/gamefreak/wtf.mp3", vol = 400, pitch = 200}, {
+                    explosion = function(parentEnt)
+                        self:SendPEMessage("Exploded")
+                        self.Owner.PEProp = nil
+
+                        OGPropExploderExplosion(parentEnt, self.Owner)
+                        self:Remove()
+                    end,
+
+                    ogDetonate = function(ent)
+                        if IsValid(ent) then
+                            og.SecondaryAttack(self)
+
+                            if ent:IsWeapon() then -- should only be possible for giftboxes
+                                local entOwner = ent:GetOwner()
+                                entOwner:EmitSound("weapons/gamefreak/wtf.mp3", 400, 200)
+                                entOwner:ChatPrint("Your gift is exploding!")
+                            end
+
+                            local exploTimerName = "PEPlanting" .. ent:EntIndex()
+                            local owner = self.Owner
+
+                            timer.Simple(timer.TimeLeft(exploTimerName), function()
+                                if not IsValid(owner) then return end
+
+                                -- if the prop was a giftbox, it could've switched state & thus not be the same entity (PEProp is transferred though)
+                                if owner.PEProp ~= ent then ent = owner.PEProp end
+                                owner.PEProp = nil
+
+                                if IsValid(ent) then
+                                    if IsValid(ent:GetNWEntity("WrappedByGift")) then
+                                        owner:ChatPrint("Detonation was parried by Gift Wrap!")
+
+                                    else
+                                        ent._PreventThrow = true -- in case its a giftbox
+                                        OGPropExploderExplosion(ent, owner)
+                                        ent:Remove()
+                                    end
+                                end
+                            end)
+
+                            timer.Remove(exploTimerName)
+                        else
+                            utils.NonSpamMessage(self.Owner, "PropExploderDet", "No prop selected!")
+                        end
+                    end,
+
+                    parry = function()
+                        self.Owner:ChatPrint("Detonation was parried by Gift Wrap!")
+                    end,
+                })
+            end
+        end
+    },
+}
+
+local perkItems = {
+    item_ttt_doubletap = "Doubletap Root Beer",
+    item_ttt_juggernog = "Juggernog",
+    item_ttt_phd = "PHD Flopper",
+    item_ttt_speedcola = "Speed Cola",
+    item_ttt_staminup = "Stamin-Up",
+}
+
+
+for itemID, name in pairs(perkItems) do
+    table.insert(initChanges, {
+        addon = name,
+        desc = "Prevent effects happening when buying for gift", toggle = SERVER,
+        identifier = itemID, category = ChangeCategory.Item,
+        original_keys = {"Bought"},
+        apply = function(item, og)
+
+            item.Bought = function(self, ply)
+                if not ply._gwInOptMenu then
+                    og.Bought(self, ply)
+                end
+            end
+        end
+    })
+end
+
+
+
+--------------------------------
+--------------------------------
+-- Apply all third-party changes
+hook.Add("Initialize", INIT_FIXES_HOOK, function()
+    if SERVER and not dbg.Cvar:GetBool() then
+        print("[Notice] Gift Wrap is applying "..#initChanges.." changes to make third party addons work better with itself.")
+        print("         To see a full list of changes instead of this notice, turn on the ttt2_giftwrap_debug cvar.")
+    end
+
+    for i, change in ipairs(initChanges) do
+        if change.toggle then
+            if change.category then
+                local baseMeta
+
+                if change.category == ChangeCategory.Meta then
+                    baseMeta = FindMetaTable(change.identifier)
+                elseif change.category == ChangeCategory.Metatable then
+                    baseMeta = _G[change.identifier]
+                elseif change.category == ChangeCategory.Item then
+                    baseMeta = items.GetStored(change.identifier)
+                else
+                    baseMeta = change.category.GetStored(change.identifier)
+                end
+
+                if baseMeta then
+                    dbg.Log("[Change #" .. i .. "] " ..change.addon.. ": " .. change.desc)
+                    if change.category == ChangeCategory.SENT then baseMeta = baseMeta.t end
+
+                    -- store original functions of addon overriden by Gift Wrap
+                    -- for idempotency when debugging changes
+                    if change.original_keys and not GW_InitChangesCache[change.identifier] then
+                        GW_InitChangesCache[change.identifier] = {}
+
+                        for _, key in ipairs(change.original_keys) do
+                            GW_InitChangesCache[change.identifier][key] = baseMeta[key]
+                        end
+                    end
+
+                    change.apply(baseMeta, GW_InitChangesCache[change.identifier])
+                end
+
+            else
+                dbg.Log("[Change #" .. i .. "] " ..change.addon.. ": " .. change.desc)
+                change.apply()
+            end
+        end
+    end
+
+    print("Loaded all " ..#initChanges.. " third-party adjustments.")
+end)
+
+-- used when debugging only
+--hook.GetTable()["Initialize"][INIT_FIXES_HOOK]()
