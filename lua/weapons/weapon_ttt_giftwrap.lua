@@ -1192,20 +1192,7 @@ elseif CLIENT then
             min = 0, max = 5, decimal = 2
         })
 
-        local formVDFix = vgui.CreateTTT2Form(parent, "label_giftwrap_vdfix_form")
-        formVDFix:MakeHelp({
-            label = "label_vehicle_damagefix_desc"
-        })
-        formVDFix:MakeSlider({
-            serverConvar = "ttt2_vehicle_damagefix_driver_mult",
-            label = "label_vehicle_damagefix_driver_mult",
-            min = 0, max = 100, decimal = 0
-        })
-        formVDFix:MakeSlider({
-            serverConvar = "ttt2_vehicle_damagefix_passenger_mult",
-            label = "label_vehicle_damagefix_passenger_mult",
-            min = 0, max = 100, decimal = 0
-        })
+        GiftWrapThirdPartySettings(parent)
 
         local formMisc = vgui.CreateTTT2Form(parent, "label_giftwrap_misc_form")
         formMisc:MakeCheckBox({

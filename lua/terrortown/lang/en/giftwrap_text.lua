@@ -52,6 +52,11 @@ L["label_vehicle_damagefix_enable"] = "Enable vehicle damage fix"
 L["label_vehicle_damagefix_driver_mult"] = "Driver damage multiplier (%)"
 L["label_vehicle_damagefix_passenger_mult"] = "Passenger damage multiplier (%)"
 
+L["label_giftwrap_tweaks_form"] = "Third-Party Addon Tweaks"
+L["label_giftwrap_tweaks_desc"] = [[Gift Wrap packages various miscellaneous tweaks to third-party addons to make them work better with itself.
+It is not recommended to disable them, but you can do so here if any cause issues.
+The toggles will take effect on map reload.]]
+
 L["label_giftwrap_misc_form"] = "Debugging & Miscellaneous"
 L["label_giftwrap_give_guy_access"] = "Allow author to change Gift Wrap convars & shop config"
 L["label_giftwrap_debug"] = "Enable debug mode (not recommended)"

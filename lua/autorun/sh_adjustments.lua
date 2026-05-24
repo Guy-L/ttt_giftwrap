@@ -12,12 +12,18 @@ local VDFIX_MULT_DRIVER = utils.Cvar("ttt2_vehicle_damagefix_driver_mult",    30
 local VDFIX_MULT_PASNGR = utils.Cvar("ttt2_vehicle_damagefix_passenger_mult", 20, 0, 100, "Damage multiplier for passengers when hitting any part of vehicle (%).")
 
 local ChangeCategory = {
-    SWEP      = weapons,
-    SENT      = scripted_ents,
-    Item      = "item",
-    Meta      = "meta",
-    Metatable = "metatable",
+    SWEP      = "Scripted Weapon",
+    SENT      = "Scripted Entity",
+    Item      = "Passive Item",
+    Metatable = "Global Namespace",
+    Meta      = "Engine Meta",
     None      = nil,
+}
+
+local ChangeToggle = {
+    CLIENT      = {name = "Client", val = CLIENT},
+    SERVER      = {name = "Server", val = SERVER},
+    SHARED      = {name = "Shared", val = true},
 }
 
 if not GW_InitChangesCache then
@@ -102,15 +108,16 @@ end)
 local initChanges = {
     --[[
     {   addon = "Addon Name",
-        desc = "Template change", toggle = true,
+        desc = "Template change", toggle = ChangeToggle.SHARED,
         identifier = "identifier", category = ChangeCategory.SENT,
         original_keys = {},
         apply = function(sent, og)
         end
     },]]
 
-    {   addon = "TTT2 (Base)",
-        desc = "Fix seats inside of vehicles being inaccessible even if main seat occupied", toggle = SERVER,
+    {   name = "fix_extra_seat_entry",
+        addon = "TTT2 (Base)", icon = "vgui/ttt/icon_halp",
+        desc = "Fix seats inside of vehicles being inaccessible even if main seat occupied", toggle = ChangeToggle.SERVER,
         identifier = "fix_extra_seat_entry", category = ChangeCategory.None,
         apply = function()
 
@@ -135,8 +142,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "TTT2 (Base)",
-        desc = "Fix driver taking almost no damage & other riders being invincible", toggle = SERVER,
+    {   name = "fix_vehicle_damage",
+        addon = "TTT2 (Base)", icon = "vgui/ttt/icon_halp",
+        desc = "Fix driver taking almost no damage & other riders being invincible", toggle = ChangeToggle.SERVER,
         identifier = "fix_vehicle_damage", category = ChangeCategory.None,
         cvars = {VDFIX_MULT_DRIVER, VDFIX_MULT_PASNGR},
         apply = function()
@@ -174,8 +182,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "Pot of Greed",
-        desc = "Fix for Pot of Greedier not defaulting to Detective shop for non-shopping role pots", toggle = true,
+    {   name = "pog_default_det",
+        addon = "Pot of Greed", icon = "vgui/ttt/icon_weapon_ttt_potofgreedier",
+        desc = "Fix for Pot of Greedier not defaulting to Detective shop for non-shopping role pots", toggle = ChangeToggle.SHARED,
         identifier = "PotOfGreedier", category = ChangeCategory.Metatable,
         original_keys = {"GetEquipmentServerSided"},
         apply = function(meta, og)
@@ -192,8 +201,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "Controllable Manhack",
-        desc = "Disable right click while it's in a Gift Wrap giftbox", toggle = SERVER,
+    {   name = "manhack_disable_wrapped",
+        addon = "Controllable Manhack", icon = "controllable_manhack/manhack",
+        desc = "Disable right click while it's in a Gift Wrap giftbox", toggle = ChangeToggle.SERVER,
         identifier = "weapon_controllable_manhack", category = ChangeCategory.SWEP,
         original_keys = {"SecondaryAttack"},
         apply = function(swep, og)
@@ -212,8 +222,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "Controllable Manhack",
-        desc = "Explode giftbox when self-destructing + wrap to parry", toggle = SERVER,
+    {   name = "manhack_explode_wrap",
+        addon = "Controllable Manhack", icon = "controllable_manhack/manhack",
+        desc = "Explode giftbox when self-destructing + wrap to parry", toggle = ChangeToggle.SERVER,
         identifier = "sent_controllable_manhack", category = ChangeCategory.SENT,
         original_keys = {"SelfDestruct", "Explode"},
         apply = function(sent, og)
@@ -250,8 +261,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "M4 SLAM",
-        desc = "Explode giftbox when self-destructing + wrap to parry", toggle = true,
+    {   name = "slam_explode_wrap",
+        addon = "M4 SLAM", icon = "vgui/ttt/icon_slam",
+        desc = "Explode giftbox when self-destructing + wrap to parry", toggle = ChangeToggle.SHARED,
         identifier = "ttt_slam_base", category = ChangeCategory.SENT,
         original_keys = {"StartExplode", "Explode"},
         apply = function(sent, og)
@@ -290,8 +302,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "Paper Plane",
-        desc = "Override targetting behavior for random gift planes", toggle = true,
+    {   name = "paper_plane_gift_targetting",
+        addon = "Paper Plane", icon = "vgui/ttt/paper_plane_icon",
+        desc = "Override targetting behavior for random gift planes", toggle = ChangeToggle.SHARED,
         identifier = "ttt_paper_plane_proj", category = ChangeCategory.SENT,
         original_keys = {"GetClosestPlayer"},
         apply = function(sent, og)
@@ -317,8 +330,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "Star Burster",
-        desc = "Fix clipsize discrepancy & related Lua error when spawning as worldmodel", toggle = CLIENT,
+    {   name = "star_burster_ammo_fix",
+        addon = "Star Burster", icon = "vgui/ttt/ttt_plasma_icon.png",
+        desc = "Fix clipsize discrepancy & related Lua error when spawning as worldmodel", toggle = ChangeToggle.CLIENT,
         identifier = "ttt_plasma_burster_nade", category = ChangeCategory.SWEP,
         original_keys = {"Initialize"},
         apply = function(swep, og)
@@ -332,8 +346,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "Star Burster",
-        desc = "Make Star Burster entity wrappable", toggle = true,
+    {   name = "star_burster_wrap_fix",
+        addon = "Star Burster", icon = "vgui/ttt/ttt_plasma_icon.png",
+        desc = "Make Star Burster entity wrappable", toggle = ChangeToggle.SHARED,
         identifier = "plasma_burster_nade", category = ChangeCategory.SENT,
         original_keys = {"Initialize"},
         apply = function(sent, og)
@@ -347,8 +362,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "Minecraft Bow",
-        desc = "Make Minecraft arrow entity wrappable", toggle = true,
+    {   name = "minecraft_arrow_wrap_fix",
+        addon = "Minecraft Bow", icon = "vgui/ttt/icon_minecraft_bow.png",
+        desc = "Make Minecraft arrow entity wrappable", toggle = ChangeToggle.SHARED,
         identifier = "ttt_minecraft_arrow", category = ChangeCategory.SENT,
         original_keys = {"Think"},
         apply = function(sent, og)
@@ -365,8 +381,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "Garry's Mod",
-        desc = "Allow marking arbitrary entities as not valid (used by Lethal Mine & Force Shield wraps)", toggle = true,
+    {   name = "isvalid_condition",
+        addon = "Garry's Mod", icon = "vgui/titlebaricon",
+        desc = "Allow marking arbitrary entities as not valid (used by Lethal Mine & Force Shield wraps)", toggle = ChangeToggle.SHARED,
         identifier = "Entity", category = ChangeCategory.Meta,
         original_keys = {"IsValid"},
         apply = function(meta, og)
@@ -380,7 +397,7 @@ local initChanges = {
 
 --[[ -- seems unneeded due to above change? (mine can be set off more than once without issue)
     {   addon = "Lethal Mine",
-        desc = "Prevent Lethal Mines exploding in giftbox", toggle = true,
+        desc = "Prevent Lethal Mines exploding in giftbox", toggle = ChangeToggle.SHARED,
         identifier = "item_lethal_company_landmine", category = ChangeCategory.SENT,
         original_keys = {"EndTouch"},
         apply = function(sent, og)
@@ -392,8 +409,9 @@ local initChanges = {
         end
     },]]
 
-    {   addon = "Hwapoon",
-        desc = "Make Hwapoon arrows wrappable & prevent them from disappearing", toggle = SERVER,
+    {   name = "hwapoon_wrap_fix",
+        addon = "Hwapoon", icon = "vgui/ttt/tttharpoonicon.png",
+        desc = "Make Hwapoon arrows wrappable & prevent them from disappearing", toggle = ChangeToggle.SERVER,
         identifier = "hwapoon_arrow", category = ChangeCategory.SENT,
         original_keys = {"PhysicsCollide"},
         apply = function(sent, og)
@@ -414,8 +432,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "Ice Grenade",
-        desc = "Allow ice grenade explosion to be interrupted", toggle = SERVER,
+    {   name = "ice_grenade_wrap_fix",
+        addon = "Ice Grenade", icon = "vgui/ttt/icon_64_icegrenade.png",
+        desc = "Allow ice grenade explosion to be interrupted by wrap", toggle = ChangeToggle.SERVER,
         identifier = "icegrenade_proj", category = ChangeCategory.SENT,
         apply = function(sent)
 
@@ -432,8 +451,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "Killer Bungers",
-        desc = "Make Bunger Grenade collision box match scale", toggle = true,
+    {   name = "bunger_grenade_wrap_fix",
+        addon = "Killer Bungers", icon = "vgui/ttt/bungericon.png",
+        desc = "Make Bunger Grenade collision box match scale", toggle = ChangeToggle.SHARED,
         identifier = "ttt_bungernade_proj", category = ChangeCategory.SENT,
         original_keys = {"Initialize", "Explode"},
         apply = function(sent, og)
@@ -456,8 +476,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "Killer Bungers",
-        desc = "Extend Killer Bungers damage method to conditionally disable damage", toggle = SERVER,
+    {   name = "bunger_pet_dmg",
+        addon = "Killer Bungers", icon = "vgui/ttt/bungericon.png",
+        desc = "Extend Killer Bungers damage method to conditionally disable damage (pet bunger)", toggle = ChangeToggle.SERVER,
         identifier = "weapon_ttt_bungernade", category = ChangeCategory.SWEP,
         apply = function()
 
@@ -506,8 +527,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "Fortnite Building",
-        desc = "Ensure clients can render the custom font for structures even without SWEP init", toggle = CLIENT,
+    {   name = "fortnite_font_fix",
+        addon = "Fortnite Building", icon = "vgui/ttt_fortnite_icon.png",
+        desc = "Ensure clients can render the custom font for structures even without SWEP init", toggle = ChangeToggle.CLIENT,
         identifier = "weapon_ttt_fortnite_building", category = ChangeCategory.SWEP,
         apply = function()
 
@@ -518,8 +540,9 @@ local initChanges = {
         end
     },
 
-    {   addon = "Prop Exploder",
-        desc = "Explode giftbox when self-destructing + wrap to parry + rigging giftboxes", toggle = SERVER,
+    {   name = "prop_exploder_wrap_fix",
+        addon = "Prop Exploder", icon = "vgui/ttt/icon_propexploder",
+        desc = "Explode giftbox when self-destructing + wrap to parry + rigging giftboxes", toggle = ChangeToggle.SERVER,
         identifier = "weapon_ttt_propexploder", category = ChangeCategory.SWEP,
         original_keys = {"SecondaryAttack"},
         apply = function(swep, og)
@@ -595,20 +618,21 @@ local initChanges = {
     },
 }
 
+-- Add similar fixes for COD perk bottles
 local perkItems = {
-    item_ttt_doubletap = "Doubletap Root Beer",
-    item_ttt_juggernog = "Juggernog",
-    item_ttt_phd = "PHD Flopper",
-    item_ttt_speedcola = "Speed Cola",
-    item_ttt_staminup = "Stamin-Up",
+    doubletap = "Doubletap Root Beer",
+    juggernog = "Juggernog",
+    phd = "PHD Flopper",
+    speedcola = "Speed Cola",
+    staminup = "Stamin-Up",
 }
 
-
-for itemID, name in pairs(perkItems) do
+for itemID, itemName in pairs(perkItems) do
     table.insert(initChanges, {
-        addon = name,
-        desc = "Prevent effects happening when buying for gift", toggle = SERVER,
-        identifier = itemID, category = ChangeCategory.Item,
+        name = itemID.."_wrap_fix",
+        addon = itemName, icon = "vgui/ttt/ic_"..itemID,
+        desc = "Prevent effects happening when buying for gift", toggle = ChangeToggle.SERVER,
+        identifier = "item_ttt_"..itemID, category = ChangeCategory.Item,
         original_keys = {"Bought"},
         apply = function(item, og)
 
@@ -621,36 +645,54 @@ for itemID, name in pairs(perkItems) do
     })
 end
 
+-- Add cvars for toggling each change
+if SERVER then
+    for _, change in ipairs(initChanges) do
+        utils.Cvar("ttt2_giftwrap_tweak_"..change.name, 1, 0, 1, "[Tweak for "..change.addon.."] "..change.desc)
+    end
+end
 
 
 --------------------------------
 --------------------------------
 -- Apply all third-party changes
+local function GetBaseMeta(change)
+    if change.category == ChangeCategory.SENT then
+        local baseMeta = scripted_ents.GetStored(change.identifier)
+        return baseMeta and baseMeta.t or nil
+
+    elseif change.category == ChangeCategory.SWEP then
+        return weapons.GetStored(change.identifier)
+
+    elseif change.category == ChangeCategory.Item then
+        return items.GetStored(change.identifier)
+
+    elseif change.category == ChangeCategory.None then
+        return true
+
+    elseif change.category == ChangeCategory.Meta then
+        return FindMetaTable(change.identifier)
+
+    elseif change.category == ChangeCategory.Metatable then
+        return _G[change.identifier]
+    end
+end
+
 hook.Add("Initialize", INIT_FIXES_HOOK, function()
     if SERVER and not dbg.Cvar:GetBool() then
         print("[Notice] Gift Wrap is applying "..#initChanges.." changes to make third party addons work better with itself.")
         print("         To see a full list of changes instead of this notice, turn on the ttt2_giftwrap_debug cvar.")
+        print("         You can also toggle them in Gift Wrap's settings menu if necessary.")
     end
 
     for i, change in ipairs(initChanges) do
-        if change.toggle then
-            if change.category then
-                local baseMeta
+        if change.toggle.val and GetConVar("ttt2_giftwrap_tweak_"..change.name):GetBool() then
+            local baseMeta = GetBaseMeta(change)
 
-                if change.category == ChangeCategory.Meta then
-                    baseMeta = FindMetaTable(change.identifier)
-                elseif change.category == ChangeCategory.Metatable then
-                    baseMeta = _G[change.identifier]
-                elseif change.category == ChangeCategory.Item then
-                    baseMeta = items.GetStored(change.identifier)
-                else
-                    baseMeta = change.category.GetStored(change.identifier)
-                end
+            if baseMeta then
+                dbg.Log("[Change #" .. i .. "] " ..change.addon.. ": " .. change.desc)
 
-                if baseMeta then
-                    dbg.Log("[Change #" .. i .. "] " ..change.addon.. ": " .. change.desc)
-                    if change.category == ChangeCategory.SENT then baseMeta = baseMeta.t end
-
+                if change.category then
                     -- store original functions of addon overriden by Gift Wrap
                     -- for idempotency when debugging changes
                     if change.original_keys and not GW_InitChangesCache[change.identifier] then
@@ -662,17 +704,169 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
                     end
 
                     change.apply(baseMeta, GW_InitChangesCache[change.identifier])
+                else
+                    change.apply()
                 end
-
-            else
-                dbg.Log("[Change #" .. i .. "] " ..change.addon.. ": " .. change.desc)
-                change.apply()
             end
         end
     end
 
     print("Loaded all " ..#initChanges.. " third-party adjustments.")
 end)
+
+-- List changes in addon's settings menu
+function GiftWrapThirdPartySettings(parent)
+    local form = vgui.CreateTTT2Form(parent, "label_giftwrap_tweaks_form")
+
+    form:MakeHelp({
+        label = "label_giftwrap_tweaks_desc"
+    })
+
+    local boxTall = 48
+    local boxPad = 3
+    local checkBoxTall = 32
+    local cvarTall = 24
+    local materialReset = Material("vgui/ttt/vskin/icon_reset")
+
+    for _, change in ipairs(initChanges) do
+        if GetBaseMeta(change) then
+            local changeBox = vgui.Create("DPanel", form)
+            changeBox:Dock(TOP)
+            changeBox:DockMargin(10, 5, 10, 2)
+            changeBox:DockPadding(boxPad, boxPad, boxPad, 0)
+            changeBox:SetTall(boxTall + (change.cvars and (cvarTall*1.1) * #change.cvars or 0))
+
+            changeBox.Paint = function(self, w, h)
+                draw.RoundedBox(8, 0, 0, w, h, util.GetChangedColor(vskin.GetBackgroundColor(), 20))
+            end
+
+            local iconSize = boxTall - boxPad
+            local iconWrap = vgui.Create("DPanel", changeBox)
+            iconWrap:Dock(LEFT)
+            iconWrap:DockMargin(8, 0, 0, 0)
+            iconWrap:DockPadding(0, 0, 0, 0)
+            iconWrap:SetWide(iconSize)
+            iconWrap.Paint = nil
+            --dbg.HighlightUI(iconWrap)
+
+            local icon = vgui.Create("DImage", iconWrap)
+            icon:SetSize(iconSize, iconSize)
+            icon:SetImage(change.icon or "vgui/ttt/menu/icon_question")
+            if change.cvars then
+                icon:SetPos(0, (changeBox:GetTall() - iconSize) * 0.5)
+            end
+
+            local content = vgui.Create("DPanel", changeBox)
+            content:Dock(FILL)
+            content:DockMargin(8, 0, 1, boxPad)
+            content.Paint = nil
+
+            local titleRow = vgui.Create("DPanel", content)
+            titleRow:Dock(TOP)
+            titleRow:SetTall(16)
+            titleRow:DockMargin(0, 0, 0, 2)
+            titleRow.Paint = nil
+
+            local addonName = vgui.Create("DLabel", titleRow)
+            addonName:Dock(LEFT)
+            addonName:SetText(change.addon)
+            addonName:SetFont("DermaDefaultBold")
+            addonName:SetTextColor(Color(180, 180, 180))
+            addonName:SizeToContents()
+
+            local info = ""
+            if change.category then
+                info = info.." • "..change.category
+            end
+            info = info.." • "..change.toggle.name
+
+            local rightText = vgui.Create("DLabel", titleRow)
+            rightText:Dock(LEFT)
+            rightText:SetText(info)
+            rightText:SetFont("DermaDefault")
+            rightText:SetTextColor(Color(120, 120, 120))
+            rightText:SizeToContents()
+            rightText:SetPos(addonName:GetWide() + 6, 0)
+
+            local toggleRow = vgui.Create("DPanel", content)
+            toggleRow:Dock(TOP)
+            toggleRow.Paint = nil
+
+            local toggle = vgui.Create("DCheckBoxLabelTTT2", toggleRow)
+            toggle:Dock(FILL)
+            toggle.roundedCorner = true
+
+            local toggleReset = vgui.Create("DButtonTTT2", toggleRow)
+            toggleReset:SetText("button_default")
+            toggleReset:SetWide(boxTall - boxPad - 18)
+            toggleReset.Paint = function(slf, w, h)
+                derma.SkinHook("Paint", "FormButtonIconTTT2", slf, w-3, h)
+                return true
+            end
+            toggleReset.iconMaterial = materialReset
+            toggleReset.roundedCorner = true
+            toggleReset:Dock(RIGHT)
+
+            toggle:SetResetButton(toggleReset)
+            toggle:SetServerConVar("ttt2_giftwrap_tweak_"..change.name)
+            toggle:SetText(change.desc)
+
+            if change.cvars then
+                local controls = {}
+
+                for _, cv in ipairs(change.cvars) do
+                    local cvBox = vgui.Create("DPanel", content)
+                    cvBox:Dock(TOP)
+                    cvBox:DockMargin(0, 2, 3, 0)
+                    cvBox.Paint = nil
+
+                    local left = vgui.Create("DLabelTTT2", cvBox)
+                    left:SetText(cv:GetHelpText())
+                    left.Paint = function(slf, w, h)
+                        derma.SkinHook("Paint", "FormLabelTTT2", slf, w, h)
+                        return true
+                    end
+                    left:Dock(LEFT)
+                    left:SetWide(425)
+
+                    local right = vgui.Create("DNumSliderTTT2", cvBox)
+                    right:SetMinMax(cv:GetMin(), cv:GetMax())
+                    right:SetDecimals(0)
+                    right:Dock(FILL)
+                    right:SetValue(cv:GetFloat())
+                    right:SetServerConVar(cv:GetName())
+
+                    local reset = vgui.Create("DButtonTTT2", cvBox)
+                    reset:SetText("button_default")
+                    reset:SetWide(cvarTall)
+                    reset.Paint = function(slf, w, h)
+                        derma.SkinHook("Paint", "FormButtonIconTTT2", slf, w, h)
+                        return true
+                    end
+                    reset.iconMaterial = materialReset
+                    reset.roundedCorner = true
+                    reset:Dock(RIGHT)
+                    right:SetResetButton(reset)
+
+                    local cvarEnabled = GetConVar("ttt2_giftwrap_tweak_"..change.name):GetBool()
+                    right.Slider:SetEnabled(cvarEnabled)
+                    reset:SetEnabled(cvarEnabled)
+                    table.insert(controls, right.Slider)
+                    table.insert(controls, reset)
+                end
+
+                local ogOnChange = toggle.OnChange
+                toggle.OnChange = function(self, val)
+                    ogOnChange(self, val)
+
+                    for _, ctrl in ipairs(controls) do
+                        ctrl:SetEnabled(val)
+                    end
+                end
+            end
+        end
+    end
+end
 
 -- used when debugging only
 --hook.GetTable()["Initialize"][INIT_FIXES_HOOK]()
