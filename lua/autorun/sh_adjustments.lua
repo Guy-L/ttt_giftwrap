@@ -20,7 +20,7 @@ local ChangeCategory = {
     None      = nil,
 }
 
-local ChangeToggle = {
+local ChangeRealm = {
     CLIENT      = {name = "Client", val = CLIENT},
     SERVER      = {name = "Server", val = SERVER},
     SHARED      = {name = "Shared", val = true},
@@ -108,7 +108,7 @@ end)
 local initChanges = {
     --[[
     {   addon = "Addon Name",
-        desc = "Template change", toggle = ChangeToggle.SHARED,
+        desc = "Template change", realm = ChangeRealm.SHARED,
         identifier = "identifier", category = ChangeCategory.SENT,
         original_keys = {},
         apply = function(sent, og)
@@ -117,7 +117,7 @@ local initChanges = {
 
     {   name = "fix_extra_seat_entry",
         addon = "TTT2 (Base)", icon = "vgui/ttt/icon_halp",
-        desc = "Fix seats inside of vehicles being inaccessible even if main seat occupied", toggle = ChangeToggle.SERVER,
+        desc = "Fix seats inside of vehicles being inaccessible even if main seat occupied", realm = ChangeRealm.SERVER,
         identifier = "fix_extra_seat_entry", category = ChangeCategory.None,
         apply = function()
 
@@ -144,7 +144,7 @@ local initChanges = {
 
     {   name = "fix_vehicle_damage",
         addon = "TTT2 (Base)", icon = "vgui/ttt/icon_halp",
-        desc = "Fix driver taking almost no damage & other riders being invincible", toggle = ChangeToggle.SERVER,
+        desc = "Fix driver taking almost no damage & other riders being invincible", realm = ChangeRealm.SERVER,
         identifier = "fix_vehicle_damage", category = ChangeCategory.None,
         cvars = {VDFIX_MULT_DRIVER, VDFIX_MULT_PASNGR},
         apply = function()
@@ -184,7 +184,7 @@ local initChanges = {
 
     {   name = "pog_default_det",
         addon = "Pot of Greed", icon = "vgui/ttt/icon_weapon_ttt_potofgreedier",
-        desc = "Fix for Pot of Greedier not defaulting to Detective shop for non-shopping role pots", toggle = ChangeToggle.SHARED,
+        desc = "Fix for Pot of Greedier not defaulting to Detective shop for non-shopping role pots", realm = ChangeRealm.SHARED,
         identifier = "PotOfGreedier", category = ChangeCategory.Metatable,
         original_keys = {"GetEquipmentServerSided"},
         apply = function(meta, og)
@@ -203,7 +203,7 @@ local initChanges = {
 
     {   name = "manhack_disable_wrapped",
         addon = "Controllable Manhack", icon = "controllable_manhack/manhack",
-        desc = "Disable right click while it's in a Gift Wrap giftbox", toggle = ChangeToggle.SERVER,
+        desc = "Disable right click while it's in a Gift Wrap giftbox", realm = ChangeRealm.SERVER,
         identifier = "weapon_controllable_manhack", category = ChangeCategory.SWEP,
         original_keys = {"SecondaryAttack"},
         apply = function(swep, og)
@@ -224,7 +224,7 @@ local initChanges = {
 
     {   name = "manhack_explode_wrap",
         addon = "Controllable Manhack", icon = "controllable_manhack/manhack",
-        desc = "Explode giftbox when self-destructing + wrap to parry", toggle = ChangeToggle.SERVER,
+        desc = "Explode giftbox when self-destructing + wrap to parry", realm = ChangeRealm.SERVER,
         identifier = "sent_controllable_manhack", category = ChangeCategory.SENT,
         original_keys = {"SelfDestruct", "Explode"},
         apply = function(sent, og)
@@ -263,7 +263,7 @@ local initChanges = {
 
     {   name = "slam_explode_wrap",
         addon = "M4 SLAM", icon = "vgui/ttt/icon_slam",
-        desc = "Explode giftbox when self-destructing + wrap to parry", toggle = ChangeToggle.SHARED,
+        desc = "Explode giftbox when self-destructing + wrap to parry", realm = ChangeRealm.SHARED,
         identifier = "ttt_slam_base", category = ChangeCategory.SENT,
         original_keys = {"StartExplode", "Explode"},
         apply = function(sent, og)
@@ -304,7 +304,7 @@ local initChanges = {
 
     {   name = "paper_plane_gift_targetting",
         addon = "Paper Plane", icon = "vgui/ttt/paper_plane_icon",
-        desc = "Override targetting behavior for random gift planes", toggle = ChangeToggle.SHARED,
+        desc = "Override targetting behavior for random gift planes", realm = ChangeRealm.SHARED,
         identifier = "ttt_paper_plane_proj", category = ChangeCategory.SENT,
         original_keys = {"GetClosestPlayer"},
         apply = function(sent, og)
@@ -332,7 +332,7 @@ local initChanges = {
 
     {   name = "star_burster_ammo_fix",
         addon = "Star Burster", icon = "vgui/ttt/ttt_plasma_icon.png",
-        desc = "Fix clipsize discrepancy & related Lua error when spawning as worldmodel", toggle = ChangeToggle.CLIENT,
+        desc = "Fix clipsize discrepancy & related Lua error when spawning as worldmodel", realm = ChangeRealm.CLIENT,
         identifier = "ttt_plasma_burster_nade", category = ChangeCategory.SWEP,
         original_keys = {"Initialize"},
         apply = function(swep, og)
@@ -348,7 +348,7 @@ local initChanges = {
 
     {   name = "star_burster_wrap_fix",
         addon = "Star Burster", icon = "vgui/ttt/ttt_plasma_icon.png",
-        desc = "Make Star Burster entity wrappable", toggle = ChangeToggle.SHARED,
+        desc = "Make Star Burster entity wrappable", realm = ChangeRealm.SHARED,
         identifier = "plasma_burster_nade", category = ChangeCategory.SENT,
         original_keys = {"Initialize"},
         apply = function(sent, og)
@@ -364,7 +364,7 @@ local initChanges = {
 
     {   name = "minecraft_arrow_wrap_fix",
         addon = "Minecraft Bow", icon = "vgui/ttt/icon_minecraft_bow.png",
-        desc = "Make Minecraft arrow entity wrappable", toggle = ChangeToggle.SHARED,
+        desc = "Make Minecraft arrow entity wrappable", realm = ChangeRealm.SHARED,
         identifier = "ttt_minecraft_arrow", category = ChangeCategory.SENT,
         original_keys = {"Think"},
         apply = function(sent, og)
@@ -383,7 +383,7 @@ local initChanges = {
 
     {   name = "isvalid_condition",
         addon = "Garry's Mod", icon = "vgui/titlebaricon",
-        desc = "Allow marking arbitrary entities as not valid (used by Lethal Mine & Force Shield wraps)", toggle = ChangeToggle.SHARED,
+        desc = "Allow marking arbitrary entities as not valid (used by Lethal Mine & Force Shield wraps)", realm = ChangeRealm.SHARED,
         identifier = "Entity", category = ChangeCategory.Meta,
         original_keys = {"IsValid"},
         apply = function(meta, og)
@@ -397,7 +397,7 @@ local initChanges = {
 
 --[[ -- seems unneeded due to above change? (mine can be set off more than once without issue)
     {   addon = "Lethal Mine",
-        desc = "Prevent Lethal Mines exploding in giftbox", toggle = ChangeToggle.SHARED,
+        desc = "Prevent Lethal Mines exploding in giftbox", realm = ChangeRealm.SHARED,
         identifier = "item_lethal_company_landmine", category = ChangeCategory.SENT,
         original_keys = {"EndTouch"},
         apply = function(sent, og)
@@ -411,7 +411,7 @@ local initChanges = {
 
     {   name = "hwapoon_wrap_fix",
         addon = "Hwapoon", icon = "vgui/ttt/tttharpoonicon.png",
-        desc = "Make Hwapoon arrows wrappable & prevent them from disappearing", toggle = ChangeToggle.SERVER,
+        desc = "Make Hwapoon arrows wrappable & prevent them from disappearing", realm = ChangeRealm.SERVER,
         identifier = "hwapoon_arrow", category = ChangeCategory.SENT,
         original_keys = {"PhysicsCollide"},
         apply = function(sent, og)
@@ -434,7 +434,7 @@ local initChanges = {
 
     {   name = "ice_grenade_wrap_fix",
         addon = "Ice Grenade", icon = "vgui/ttt/icon_64_icegrenade.png",
-        desc = "Allow ice grenade explosion to be interrupted by wrap", toggle = ChangeToggle.SERVER,
+        desc = "Allow ice grenade explosion to be interrupted by wrap", realm = ChangeRealm.SERVER,
         identifier = "icegrenade_proj", category = ChangeCategory.SENT,
         apply = function(sent)
 
@@ -453,7 +453,7 @@ local initChanges = {
 
     {   name = "bunger_grenade_wrap_fix",
         addon = "Killer Bungers", icon = "vgui/ttt/bungericon.png",
-        desc = "Make Bunger Grenade collision box match scale", toggle = ChangeToggle.SHARED,
+        desc = "Make Bunger Grenade collision box match scale", realm = ChangeRealm.SHARED,
         identifier = "ttt_bungernade_proj", category = ChangeCategory.SENT,
         original_keys = {"Initialize", "Explode"},
         apply = function(sent, og)
@@ -478,7 +478,7 @@ local initChanges = {
 
     {   name = "bunger_pet_dmg",
         addon = "Killer Bungers", icon = "vgui/ttt/bungericon.png",
-        desc = "Extend Killer Bungers damage method to conditionally disable damage (pet bunger)", toggle = ChangeToggle.SERVER,
+        desc = "Extend Killer Bungers damage method to conditionally disable damage (pet bunger)", realm = ChangeRealm.SERVER,
         identifier = "weapon_ttt_bungernade", category = ChangeCategory.SWEP,
         apply = function()
 
@@ -529,7 +529,7 @@ local initChanges = {
 
     {   name = "fortnite_font_fix",
         addon = "Fortnite Building", icon = "vgui/ttt_fortnite_icon.png",
-        desc = "Ensure clients can render the custom font for structures even without SWEP init", toggle = ChangeToggle.CLIENT,
+        desc = "Ensure clients can render the custom font for structures even without SWEP init", realm = ChangeRealm.CLIENT,
         identifier = "weapon_ttt_fortnite_building", category = ChangeCategory.SWEP,
         apply = function()
 
@@ -542,7 +542,7 @@ local initChanges = {
 
     {   name = "prop_exploder_wrap_fix",
         addon = "Prop Exploder", icon = "vgui/ttt/icon_propexploder",
-        desc = "Explode giftbox when self-destructing + wrap to parry + rigging giftboxes", toggle = ChangeToggle.SERVER,
+        desc = "Explode giftbox when self-destructing + wrap to parry + rigging giftboxes", realm = ChangeRealm.SERVER,
         identifier = "weapon_ttt_propexploder", category = ChangeCategory.SWEP,
         original_keys = {"SecondaryAttack"},
         apply = function(swep, og)
@@ -631,7 +631,7 @@ for itemID, itemName in pairs(perkItems) do
     table.insert(initChanges, {
         name = itemID.."_wrap_fix",
         addon = itemName, icon = "vgui/ttt/ic_"..itemID,
-        desc = "Prevent effects happening when buying for gift", toggle = ChangeToggle.SERVER,
+        desc = "Prevent effects happening when buying for gift", realm = ChangeRealm.SERVER,
         identifier = "item_ttt_"..itemID, category = ChangeCategory.Item,
         original_keys = {"Bought"},
         apply = function(item, og)
@@ -646,10 +646,8 @@ for itemID, itemName in pairs(perkItems) do
 end
 
 -- Add cvars for toggling each change
-if SERVER then
-    for _, change in ipairs(initChanges) do
-        utils.Cvar("ttt2_giftwrap_tweak_"..change.name, 1, 0, 1, "[Tweak for "..change.addon.."] "..change.desc)
-    end
+for _, change in ipairs(initChanges) do
+    utils.Cvar("ttt2_giftwrap_tweak_"..change.name, 1, 0, 1, "[Tweak for "..change.addon.."] "..change.desc)
 end
 
 
@@ -686,7 +684,7 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
     end
 
     for i, change in ipairs(initChanges) do
-        if change.toggle.val and GetConVar("ttt2_giftwrap_tweak_"..change.name):GetBool() then
+        if change.realm.val and GetConVar("ttt2_giftwrap_tweak_"..change.name):GetBool() then
             local baseMeta = GetBaseMeta(change)
 
             if baseMeta then
@@ -778,7 +776,7 @@ function GiftWrapThirdPartySettings(parent)
             if change.category then
                 info = info.." • "..change.category
             end
-            info = info.." • "..change.toggle.name
+            info = info.." • "..change.realm.name
 
             local rightText = vgui.Create("DLabel", titleRow)
             rightText:Dock(LEFT)
