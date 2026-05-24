@@ -2173,12 +2173,6 @@ function GiftData:Inspect(giftObj)
 end
 
 function GiftData:IsSpawnable(giftee)
-    local gifteeAlive = utils.IsLivingPlayer(giftee)
-
-    if self.unless_has_item and gifteeAlive
-      and giftee:HasEquipmentItem(self.unless_has_item)
-        then return false end
-
     if self.special_setup then
         if self.special_setup == "snuffles_present_setup"
           and utils.RoundStartTime and CurTime() <= utils.RoundStartTime + 10 then
@@ -2220,12 +2214,12 @@ function GiftData:IsSpawnable(giftee)
         return weapons.GetStored(identifier) ~= nil
 
     elseif category == GiftCategory.AutoEquipSWEP then
-        return gifteeAlive and weapons.GetStored(identifier) ~= nil
+        return weapons.GetStored(identifier) ~= nil
           and not giftee:HasWeapon(identifier)
           and giftee:CanCarryType(WEPS.TypeForWeapon(identifier))
 
     elseif category == GiftCategory.Item then
-        return gifteeAlive and items.GetStored(identifier) ~= nil
+        return items.GetStored(identifier) ~= nil
           and (self.can_get_multiple or not giftee:HasEquipmentItem(self.identifier))
     end
 
