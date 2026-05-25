@@ -355,33 +355,6 @@ local giftDataCatalog = {
 
     ----------------------------------------------------------------------
     -- SENTs / NPCs
-    ads = GiftData.New {
-        name     = "Live ADS",        desc       = "a defensive sentry bot",
-        category = GiftCategory.SENT, identifier = "ads",
-        can_be_random_gift = false,
-        --factor_rarity = 3, factor_quality = 6,
-        attrib_sound = GiftSound.Beeping,   attrib_size = GiftSize.Larger,
-        attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Electric,
-        stick_to_ground = true
-    },
-    banana_peel = GiftData.New { --TODO link to swep
-        name     = "Banana Peel",     desc       = "an old banana peel",
-        category = GiftCategory.SENT, identifier = "ttt_banana_peel",
-        can_be_random_gift = true,
-        factor_rarity = 1, factor_quality = -5,
-        attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Rotten,  attrib_feel = GiftFeel.Slippery,
-        adjAngle = Angle(90, 0, 0)
-    },
-    banana_bomb = GiftData.New {
-        name     = "Live Banana Bomb", desc       = "an explosive bunch",
-        category = GiftCategory.SENT,  identifier = "ttt_banana_proj",
-        can_be_random_gift = true,
-        factor_rarity = 6, factor_quality = -10,
-        attrib_sound = GiftSound.Squishy,   attrib_size = GiftSize.Large,
-        attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Fresh,
-        special_setup = "grenade", explosion_delay = 2, set_owner = true
-    },
     banana_split = GiftData.New {
         name     = "Live Banana Split", desc      = "dangerous levels of potassium",
         category = GiftCategory.SENT,  identifier = "ttt_banana_split",
@@ -655,13 +628,6 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Revving,  attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Heavy,
     },
-    banana_item = GiftData.New {
-        name     = "Banana",               desc       = "a fresh banana",
-        category = GiftCategory.FloorSWEP, identifier = "ttt_banana",
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Fresh,
-    },
     huge = GiftData.New {
         name     = "H.U.G.E-249",          desc       = "a H.U.G.E",
         category = GiftCategory.FloorSWEP, identifier = "weapon_zm_sledge",
@@ -696,20 +662,6 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Paint,     attrib_feel = GiftFeel.Light,
         adjAngle = Angle(0, 0, 90)
-    },
-    ads_item = GiftData.New {
-        name     = "ADS",                  desc       = "a defensive sentry bot",
-        category = GiftCategory.WorldSWEP, identifier = "adsplacer",
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.Beeping,   attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Electric,
-    },
-    banana_bomb_item = GiftData.New {
-        name     = "Banana Bomb",          desc       = "an explosive bunch",
-        category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_banana",
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.Squishy,   attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Fresh,
     },
     binoculars = GiftData.New {
         name     = "Binoculars",           desc       = "a pair of binoculars",
@@ -1514,6 +1466,35 @@ end
 
 -- to populate the list with SWEPs that also have a SENT tied to them (cf. ADS, which should be using this)
 local deployableSWEPs = {
+    ads     = {name = "ADS", desc = "a defensive sentry bot",
+               SENT_id = "ads", SWEP_id = "adsplacer",
+               SENT_setup_var = {k = "stick_to_ground"},
+               SENT_random = false, --SENT_rarity = 3, SENT_quality = 6,
+               SWEP_random = false,
+               SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Small,
+               sound = GiftSound.Beeping, smell = GiftSmell.Gunpowder, feel = GiftFeel.Electric},
+
+    banana  = {SENT_name = "Banana Peel", SENT_desc = "an old banana peel",
+               SWEP_name = "Banana",      SWEP_desc = "a fresh banana",
+               SWEP_category = GiftCategory.FloorSWEP,
+               SENT_id = "ttt_banana_peel", SWEP_id = "ttt_banana",
+               SWEP_setup_var = {k = "visual_override", v = {path = "models/props/cs_italy/bananna.mdl", type = "model"}},
+               SENT_setup_var = {k = "adjAngle", v = Angle(90, 0, 0)},
+               SENT_random = true, SENT_rarity = 1, SENT_quality = -5,
+               SWEP_random = false,
+               SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Small,
+               sound = GiftSound.Squishy, smell = GiftSmell.Rotten, feel = GiftFeel.Slippery,
+               SWEP_smell = GiftSmell.Food, SWEP_feel = GiftFeel.Fresh},
+
+    banana_bomb = {name = "Banana Bomb", desc = "an explosive bunch",
+               SENT_id = "ttt_banana_proj", SWEP_id = "weapon_ttt_banana",
+               SENT_setup = "grenade", SENT_setup_var = {{k = "set_owner"}, {k = "explosion_delay", v = 2}},
+               SWEP_setup_var = {k = "visual_override", v = {path = "models/props/cs_italy/bananna_bunch.mdl", type = "model"}},
+               SENT_random = true, SENT_rarity = 6, SENT_quality = -10,
+               SWEP_random = false,
+               SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Large,
+               sound = GiftSound.Squishy, smell = GiftSmell.Gunpowder, feel = GiftFeel.Fresh},
+
     barnacle  = {name = "Barnacle", desc = "a hungry barnacle",
                SWEP_desc = "a hungry pet barnacle",
                SENT_category = GiftCategory.NPC,
@@ -2004,11 +1985,12 @@ local deployableSWEPs = {
 
 for label, data in pairs(deployableSWEPs) do
     -- add SENT entry
-    local SENTName     = data.SENT_name or "Live "..data.name
     local SENTCategory = data.SENT_category or GiftCategory.SENT
+    local SENTName     = data.SENT_name or "Live "..data.name
+    local SENTDesc     = data.SENT_desc or data.desc
 
     UpdateCatalog(label, GiftData.New {
-        name     = SENTName,     desc       = data.desc,
+        name     = SENTName,     desc       = SENTDesc,
         category = SENTCategory, identifier = data.SENT_id,
         can_be_random_gift = data.SENT_random,
         factor_rarity  = data.SENT_random and data.SENT_rarity or nil,
@@ -2029,17 +2011,19 @@ for label, data in pairs(deployableSWEPs) do
 
     -- add SWEP entry
     local SWEPCategory = data.SWEP_category or GiftCategory.WorldSWEP
-    local SWEPDesc  = data.SWEP_desc or data.desc
-    local SWEPSmell = data.SWEP_smell or data.smell
+    local SWEPName     = data.SWEP_name or data.name
+    local SWEPDesc     = data.SWEP_desc or data.desc
+    local SWEPSmell    = data.SWEP_smell or data.smell
+    local SWEPFeel     = data.SWEP_feel or data.feel
 
     UpdateCatalog(label.."_item", GiftData.New {
-        name     = data.name,     desc       = SWEPDesc,
+        name     = SWEPName,      desc       = SWEPDesc,
         category = SWEPCategory,  identifier = data.SWEP_id,
         can_be_random_gift = data.SWEP_random,
         factor_rarity  = data.SWEP_random and data.SWEP_rarity or nil,
         factor_quality = data.SWEP_random and data.SWEP_quality or nil,
         attrib_sound = data.sound, attrib_size = data.SWEP_size or GiftSize.Small,
-        attrib_smell = SWEPSmell,  attrib_feel = data.feel,
+        attrib_smell = SWEPSmell,  attrib_feel = SWEPFeel,
         special_setup = data.SWEP_setup
     })
     if data.SWEP_setup_var then
