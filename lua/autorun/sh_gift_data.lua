@@ -1919,8 +1919,9 @@ local deployableSWEPs = {
 
     teleport_grenade = {name = "Teleport Grenade", desc = "an Ender Pearl",
                SENT_id = "ttt_teleportgren_proj", SWEP_id = "weapon_ttt_teleportgren",
-               SENT_setup = "grenade", -- TODO test wrapping existing one midair (SOMEHOW)
-               SENT_setup_var = {{k = "up_vel", v = 1000}, {k = "up_min", v = 1}, {k = "up_max", v = 4}},
+               SENT_setup = "grenade",
+               SENT_setup_var = {{k = "special_setup2", v = "tp_grenade_setup"}, {k = "mark_invalid"},
+                    {k = "up_vel", v = 1000}, {k = "up_min", v = 1}, {k = "up_max", v = 4}},
                SENT_random = true, SENT_rarity = 1,   SENT_quality = 0,
                SWEP_random = true, SWEP_rarity = 0.6, SWEP_quality = 3,
                SENT_size = GiftSize.Small, SWEP_size = GiftSize.Small,
@@ -2311,6 +2312,9 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
                     end
                 end
             end
+
+        elseif self.special_setup2 == "tp_grenade_setup" then
+            wrappedEnt:NextThink(CurTime() + 1e9)
         end
     end
 
@@ -2870,6 +2874,12 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
                 wrappedEnt:StartFuse()
                 wrappedEnt:NextThink(CurTime() + 0.1)
             end
+        end
+    end
+
+    if self.special_setup2 then
+        if self.special_setup2 == "tp_grenade_setup" then
+            wrappedEnt:NextThink(CurTime())
         end
     end
 
