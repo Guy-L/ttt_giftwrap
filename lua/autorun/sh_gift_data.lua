@@ -1178,9 +1178,11 @@ local giftDataCatalog = {
     blue_bull = GiftData.New {
         name     = "Blue Bull",       desc       = "wings",
         category = GiftCategory.Item, identifier = "item_ttt_blue_bull",
-        can_be_random_gift = false,
+        can_be_random_gift = true,
+        factor_rarity = 6, factor_quality = 9,
         attrib_sound = GiftSound.Splashing, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Food,      attrib_feel = GiftFeel.Cold,
+        special_setup = "perk_bottle",
     },
     body_armor = GiftData.New {
         name     = "Body Armor",      desc       = "some stylish armor",
@@ -1200,7 +1202,7 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Earthy,    attrib_feel = GiftFeel.Magical,
     },
     disguiser = GiftData.New {
-        name     = "Disguiser",       desc       = "a poorly crafted disguise kit",
+        name     = "Disguiser",       desc       = "a basic disguise kit",
         category = GiftCategory.Item, identifier = "item_ttt_disguiser",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Beeping,     attrib_size = GiftSize.Normal,
@@ -1258,7 +1260,8 @@ local giftDataCatalog = {
     speedrun = GiftData.New {
         name     = "Speedrun",        desc       = "an upgraded run button",
         category = GiftCategory.Item, identifier = "item_ttt_speedrun",
-        can_be_random_gift = false,
+        can_be_random_gift = true,
+        factor_rarity = 4, factor_quality = 8,
         attrib_sound = GiftSound.Whooshing,   attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Nondescript, attrib_feel = GiftFeel.Slippery,
     },
