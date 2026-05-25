@@ -666,6 +666,14 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Revving, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Rusty,    attrib_feel = GiftFeel.Sharp,
     },
+    cigarette = GiftData.New {
+        name     = "Cigarette",            desc       = "a cigarette",
+        category = GiftCategory.WorldSWEP, identifier = "weapon_cigarro",
+        can_be_random_gift = true,
+        factor_rarity = 2, factor_quality = -10,
+        attrib_sound = GiftSound.None, attrib_size = GiftSize.Mini,
+        attrib_smell = GiftSmell.Ash,  attrib_feel = GiftFeel.Cursed,
+    },
     cloaker = GiftData.New {
         name     = "Cloaker Kick",         desc       = "a single, powerful boot",
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_cloaker",
