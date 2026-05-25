@@ -1627,8 +1627,8 @@ local deployableSWEPs = {
 
     fireball = {name = "Fireball", desc = "a fireball", SWEP_desc = "fire magic",
                SENT_category = GiftCategory.PhysProp, SWEP_category = GiftCategory.AutoEquipSWEP,
-               SENT_setup = "fireball_setup", SENT_setup_var = {k = "visual_override", v = {path = "effects/flame", type = "sprite"}},
                SENT_id = INVALID_ID, SWEP_id = "weapon_firemagic",
+               SENT_setup = "fireball_setup", SENT_setup_var = {k = "visual_override", v = {path = "effects/flame", type = "sprite"}},
                SENT_random = false,
                SWEP_random = false,
                SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Normal,
@@ -1784,7 +1784,7 @@ local deployableSWEPs = {
 
     moon_grenade = {name = "Moon Grenade", desc = "a bag of marbles",
                SENT_id = "ent_moongrenade", SWEP_id = "weapon_ttt_moongrenade",
-               SENT_setup = "moon_grenade_setup",
+               SENT_setup = "moon_grenade_setup", SENT_setup_var = {k = "visual_override", v = {path = "models/weapons/moongrenade/moongrenade.mdl", type = "model"}},
                SENT_random = true, SENT_rarity = 2, SENT_quality = -3,
                SWEP_random = false,
                SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Normal,
@@ -3469,7 +3469,10 @@ function GiftData:Detect(ent, entIdentifier)
 
     elseif self.special_setup == "fart_grenade_setup" then
         -- no better check unfortunately
-        return ent:GetModel() == "models/weapons/w_grenade.mdl" and utils.NearEquals(ent:GetGravity(), 0.4) and utils.NearEquals(ent:GetFriction(), 0.2) and utils.NearEquals(ent:GetElasticity(), 0.45)
+        return ent:GetModel() == "models/weapons/w_grenade.mdl"
+          and utils.NearEquals(ent:GetGravity(), 0.4)
+          and utils.NearEquals(ent:GetFriction(), 0.2)
+          and utils.NearEquals(ent:GetElasticity(), 0.45)
     end
 
     return self.identifier == entIdentifier
