@@ -664,7 +664,7 @@ local giftDataCatalog = {
         category = GiftCategory.WorldSWEP, identifier = "weapon_chainsaw_new",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Revving, attrib_size = GiftSize.Larger,
-        attrib_smell = GiftSmell.Rusty,    attrib_feel = GiftFeel.Sharp,
+        attrib_smell = GiftSmell.Rusty,   attrib_feel = GiftFeel.Sharp,
     },
     cigarette = GiftData.New {
         name     = "Cigarette",            desc       = "a cigarette",
@@ -2835,12 +2835,17 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
             local aim = giftee:GetAimVector()
             wrappedEnt:SetAngles(aim:Angle())
 
+            local isParry = not wrappedEnt.dt.Collided and not IsValid(wrappedEnt:GetNWEntity("GW_Spawner"))
+            local targetPos = giftee:EyePos() + Vector(aim.x, aim.y, 0):GetNormalized() * 150
+
             if phys:IsValid() then
                 phys:Sleep()
+                phys:SetPos(targetPos)
 
-                timer.Simple(0.8, function()
+                timer.Simple(isParry and 0.1 or 0.8, function()
                     if IsValid(phys) then
-                        phys:SetVelocity((aim + utils.GetRandomUpwardsVel(0) * 0.3):GetNormalized() * 1000)
+                        local rngMult = isParry and 0 or 0.3
+                        phys:SetVelocity((aim + utils.GetRandomUpwardsVel(0) * rngMult):GetNormalized() * 1000)
                         phys:Wake()
                     end
                 end)
