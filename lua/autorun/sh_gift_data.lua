@@ -619,41 +619,6 @@ local giftDataCatalog = {
     },
 
     ----------------------------------------------------------------------
-    -- FloorSWEPs
-    ares_shrike = GiftData.New {
-        name     = "Ares Shrike",          desc       = "an Ares Shrike",
-        category = GiftCategory.FloorSWEP, identifier = "weapon_hp_ares_shrike",
-        can_be_random_gift = true,
-        factor_rarity = 1, factor_quality = -1,
-        attrib_sound = GiftSound.Revving,  attrib_size = GiftSize.Larger,
-        attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Heavy,
-    },
-    huge = GiftData.New {
-        name     = "H.U.G.E-249",          desc       = "a H.U.G.E",
-        category = GiftCategory.FloorSWEP, identifier = "weapon_zm_sledge",
-        can_be_random_gift = true,
-        factor_rarity = 1, factor_quality = -1,
-        attrib_sound = GiftSound.Revving,  attrib_size = GiftSize.Huge,
-        attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Heavy,
-    },
-    honey_badger = GiftData.New {
-        name     = "Honey Badger",          desc       = "a Honey Badger",
-        category = GiftCategory.FloorSWEP, identifier = "weapon_ap_hbadger",
-        can_be_random_gift = true,
-        factor_rarity = 1, factor_quality = 0,
-        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Food,     attrib_feel = GiftFeel.Cold,
-    },
-    meow_catgun = GiftData.New {
-        name     = "M1A0 Cat Gun",         desc       = "a stray catgun",
-        category = GiftCategory.FloorSWEP, identifier = "weapon_catgun",
-        can_be_random_gift = true,
-        factor_rarity = 1, factor_quality = 2,
-        attrib_sound = GiftSound.Meowing, attrib_size = GiftSize.Large,
-        attrib_smell = GiftSmell.Fur,     attrib_feel = GiftFeel.Alive,
-    },
-
-    ----------------------------------------------------------------------
     -- WorldSWEPs / AutoEquipSWEPs
     boomerang = GiftData.New {
         name     = "Boomerang",            desc       = "a brand-new boomerang",
@@ -1365,14 +1330,17 @@ local GunType = {
     Pistol  = "pistol",
     Shotgun = "shotgun",
     Rifle   = "rifle",
+    Minigun = "minigun",
     Other   = nil,
 }
 
 -- to populate the list with standard (non-random / equiprobable) gun data
 local standardGuns = {
+    ares_shrike   = {cat = GiftCategory.FloorSWEP, name = "Ares Shrike",     id = "weapon_hp_ares_shrike",    an=true,  random=true, rarity=1, quality=-1,  type = GunType.Minigun},
     ak47          = {cat = GiftCategory.WorldSWEP, name = "AK47",            id = "weapon_ttt_ak47",          an=true,  random=false,                       type = GunType.Other,   smell = GiftSmell.Woody},
     aug           = {cat = GiftCategory.FloorSWEP, name = "AUG",             id = "weapon_ttt_aug",           an=true,  random=true, rarity=1, quality=1,   type = GunType.Other},
-    blunderbus    = {cat = GiftCategory.WorldSWEP, name = "Blunderbus",      id = "weapon_ttt_blunderbus",    an=false, random=false,                       type = GunType.Other,   sound = GiftSound.Thudding, smell = GiftSmell.Dusty, feel = GiftFeel.Powerful}, --maybe move from here?
+    blunderbus    = {cat = GiftCategory.WorldSWEP, name = "Blunderbus",      id = "weapon_ttt_blunderbus",    an=false, random=false,                       type = GunType.Other,   sound = GiftSound.Thudding, smell = GiftSmell.Dusty, feel = GiftFeel.Powerful},
+    catgun        = {cat = GiftCategory.FloorSWEP, name = "M1A0 Cat Gun",    id = "weapon_catgun",            an=false, random=true, rarity=1, quality=2,   type = GunType.Other,   sound = GiftSound.Meowing, smell = GiftSmell.Fur, feel = GiftFeel.Alive, altname = "stray catgun"},
     deagle        = {cat = GiftCategory.FloorSWEP, name = "Deagle",          id = "weapon_zm_revolver",       an=false, random=true, rarity=1, quality=3,   type = GunType.Pistol,  pistol = true},
     double_barrel = {cat = GiftCategory.WorldSWEP, name = "Double Barrel",   id = "weapon_sp_dbarrel",        an=false, random=false,                       type = GunType.Shotgun, feel = GiftFeel.Powerful},
     famas         = {cat = GiftCategory.FloorSWEP, name = "Famas",           id = "weapon_ttt_famas",         an=false, random=true, rarity=1, quality=1,   type = GunType.Other},
@@ -1380,6 +1348,8 @@ local standardGuns = {
     galil         = {cat = GiftCategory.FloorSWEP, name = "Galil",           id = "weapon_ttt_galil",         an=false, random=true, rarity=1, quality=1,   type = GunType.Other},
     glock         = {cat = GiftCategory.FloorSWEP, name = "Glock",           id = "weapon_ttt_glock",         an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol},
     hmt           = {cat = GiftCategory.FloorSWEP, name = "HMT-10",          id = "weapon_ttt_milk_hmt10",    an=true,  random=true, rarity=1, quality=0,   type = GunType.Pistol},
+    honey_badger  = {cat = GiftCategory.FloorSWEP, name = "Honey Badger",    id = "weapon_ap_hbadger",        an=false, random=true, rarity=1, quality=0,   type = GunType.Other,   smell = GiftSmell.Food},
+    huge          = {cat = GiftCategory.FloorSWEP, name = "H.U.G.E-249",     id = "weapon_zm_sledge",         an=false, random=true, rarity=1, quality=-1,  type = GunType.Minigun, size = GiftSize.Huge, altname = "H.U.G.E"},
     kr_vector     = {cat = GiftCategory.FloorSWEP, name = "Kriss Vector",    id = "weapon_ap_vector",         an=false, random=true, rarity=1, quality=1,   type = GunType.Other,   feel = GiftFeel.Futuristic},
     ksg           = {cat = GiftCategory.FloorSWEP, name = "KSG",             id = "weapon_ttt_ksg",           an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun},
     m16           = {cat = GiftCategory.FloorSWEP, name = "M16",             id = "weapon_ttt_m16",           an=true,  random=true, rarity=1, quality=0,   type = GunType.Other},
@@ -1422,18 +1392,30 @@ local standardGuns = {
 }
 
 for label, data in pairs(standardGuns) do
-    local SWEPSound = data.sound or (data.silenced and GiftSound.Muffled or GiftSound.Metallic)
     local SWEPSmell = data.smell or GiftSmell.Gunpowder
 
     local isLong  = (data.type == GunType.Rifle or data.type == GunType.Shotgun)
     local isSmall = (data.type == GunType.Pistol)
-    
+
+    local SWEPSound = data.sound
+    if not SWEPSound then
+        if data.silenced then
+            SWEPSound = GiftSound.Muffled
+        elseif data.type == GunType.Minigun then
+            SWEPSound = GiftSound.Revving
+        else
+            SWEPSound = GiftSound.Metallic
+        end
+    end
+
     local SWEPFeel = data.feel
     if not SWEPFeel then
         if isLong then
             SWEPFeel = GiftFeel.Long
         elseif isSmall then
             SWEPFeel = GiftFeel.Light
+        elseif data.type == GunType.Minigun then
+            SWEPFeel = GiftFeel.Heavy
         else
             SWEPFeel = GiftFeel.Cold
         end
@@ -1441,7 +1423,7 @@ for label, data in pairs(standardGuns) do
 
     local SWEPSize  = data.size
     if not SWEPSize then
-        if isLong then
+        if isLong or data.type == GunType.Minigun then
             SWEPSize = GiftSize.Big
         elseif isSmall then
             SWEPSize = GiftSize.Small
@@ -1451,7 +1433,7 @@ for label, data in pairs(standardGuns) do
     end
 
     UpdateCatalog(label, GiftData.New {
-        name     = data.name, desc       = (data.an and "an " or "a ")..data.name,
+        name     = data.name, desc       = (data.an and "an " or "a ")..(data.altname or data.name),
         category = data.cat,  identifier = data.id,
         can_be_random_gift = data.random,
         factor_rarity  = data.random and data.rarity  or nil,
@@ -1459,8 +1441,6 @@ for label, data in pairs(standardGuns) do
         attrib_sound = SWEPSound, attrib_size = SWEPSize,
         attrib_smell = SWEPSmell, attrib_feel = SWEPFeel,
     })
-
-    --TODO: some standard guns don't use this system only because I couldn't set shake attributes before (ie minigun floor sweps, catgun), bring em here
 end
 
 
