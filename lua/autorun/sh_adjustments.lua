@@ -99,7 +99,7 @@ end
 
 -- Catch-all hook to prevent kill events on wrapped entities (used by Fireballs & others)
 hook.Add("AcceptInput", ENT_KILL_INPUT_HOOK, function(ent, input, activator, caller, value)
-    if input == "kill" and IsValid(ent) and IsValid(ent:GetNWEntity("WrappedByGift")) then
+    if (input == "kill" or input == "Kill") and IsValid(ent) and IsValid(ent:GetNWEntity("WrappedByGift")) then
         dbg.Log("Prevented kill input for wrapped entity", ent)
         return true
     end

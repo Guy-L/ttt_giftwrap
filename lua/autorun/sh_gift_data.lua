@@ -190,6 +190,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Meowing,  attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Metallic, attrib_feel = GiftFeel.Otherworldly,
     },
+    cannonball_prop = GiftData.New {
+        name     = "Used Cannonball",     desc       = "an inert cannonball",
+        category = GiftCategory.PhysProp, identifier = "models/props_phx/misc/smallcannonball.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding,  attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Round,
+    },
     car_wreck = GiftData.New {
         name     = "Car Wreck",           desc       = "a broken down car",
         category = GiftCategory.PhysProp, identifier = "models/props_vehicles/car005b_physics.mdl",
@@ -813,14 +820,6 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Rusty,    attrib_feel = GiftFeel.Heavy,
-    },
-    hand_cannon = GiftData.New {
-        name     = "Hand Canon",           desc       = "an old-timey hand cannon",
-        category = GiftCategory.WorldSWEP, identifier = "weapon_hcannon",
-        can_be_random_gift = true,
-        factor_rarity = 6, factor_quality = 5,
-        attrib_sound = GiftSound.Wooden, attrib_size = GiftSize.Big,
-        attrib_smell = GiftSmell.Salty,  attrib_feel = GiftFeel.Hollow,
     },
     headcrab_launcher = GiftData.New {
         name     = "Headcrab Launcher",    desc       = "a crab dispenser",
@@ -1695,6 +1694,18 @@ local deployableSWEPs = {
                SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Mini,
                sound = GiftSound.Musical, smell = GiftSmell.Nondescript, feel = GiftFeel.Bright},
 
+    hand_cannon = {
+               SENT_name = "Live Cannonball", SENT_desc = "a cannonball",
+               SWEP_name = "Hand Cannon",     SWEP_desc = "an old-timey hand cannon",
+               SENT_id = "cannon_ent", SWEP_id = "weapon_hcannon",
+               SENT_setup = "cannonball_setup",
+               SWEP_setup_var = {k = "visual_override", v = {path = "models/props_phx/cannon.mdl", type = "model"}},
+               SENT_random = true, SENT_rarity = 3, SENT_quality = -5,
+               SWEP_random = true, SWEP_rarity = 5, SWEP_quality = 5,
+               SENT_size = GiftSize.Large, SWEP_size = GiftSize.Larger,
+               sound = GiftSound.Thudding, smell = GiftSmell.Gunpowder, feel = GiftFeel.Round,
+               SWEP_sound = GiftSound.Wooden, SWEP_smell = GiftSmell.Salty, SWEP_feel = GiftFeel.Hollow},
+
     health_station = {name = "Health Station", desc = "a healing microwave",
                SENT_id = "ttt_health_station", SWEP_id = "weapon_ttt_health_station",
                SENT_random = true, SENT_rarity = 5, SENT_quality = 9,
@@ -1998,6 +2009,7 @@ for label, data in pairs(deployableSWEPs) do
     local SWEPCategory = data.SWEP_category or GiftCategory.WorldSWEP
     local SWEPName     = data.SWEP_name or data.name
     local SWEPDesc     = data.SWEP_desc or data.desc
+    local SWEPSound    = data.SWEP_sound or data.sound
     local SWEPSmell    = data.SWEP_smell or data.smell
     local SWEPFeel     = data.SWEP_feel or data.feel
 
@@ -2007,7 +2019,7 @@ for label, data in pairs(deployableSWEPs) do
         can_be_random_gift = data.SWEP_random,
         factor_rarity  = data.SWEP_random and data.SWEP_rarity or nil,
         factor_quality = data.SWEP_random and data.SWEP_quality or nil,
-        attrib_sound = data.sound, attrib_size = data.SWEP_size or GiftSize.Small,
+        attrib_sound = SWEPSound, attrib_size = data.SWEP_size or GiftSize.Small,
         attrib_smell = SWEPSmell,  attrib_feel = SWEPFeel,
         special_setup = data.SWEP_setup
     })
@@ -2300,6 +2312,9 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
             if wrappedEnt.setoff then
                 wrappedEnt:NextThink(CurTime() + 1e9)
             end
+
+        elseif self.special_setup == "cannonball_setup" then
+            wrappedEnt.Stuck = true
         end
     end
 
@@ -2354,6 +2369,9 @@ function GiftData:ApplyOnAutoWrapAdjustments(giftObj)
         giftObj:SetNW2String("fortnite_model", "models/fortnitea31/buildingparts/pbw/"..matStr .."/"..matStr.."_"..modeStr..".mdl")
         giftObj:SetNW2Int("fortnite_mode", mode)
         giftObj:SetNW2Int("fortnite_mat", mat)
+
+    elseif self.special_setup == "cannonball_setup" then
+        giftObj:SetIsContentsOnFire(true)
     end
 end
 
@@ -2877,6 +2895,19 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
                 wrappedEnt:StartFuse()
                 wrappedEnt:NextThink(CurTime() + 0.1)
             end
+
+        elseif self.special_setup == "cannonball_setup" then
+            local phys = wrappedEnt:GetPhysicsObject()
+            wrappedEnt.StartPos = giftee:GetPos() + Vector(0, 0, 10000) -- ensure explosion
+            wrappedEnt.Stuck = false
+
+            timer.Simple(0, function()
+                if phys:IsValid() then
+                    local aim = giftee:GetAimVector()
+                    phys:SetVelocity((aim + utils.GetRandomUpwardsVel(0) * 0.1):GetNormalized() * 1000)
+                    phys:AddAngleVelocity(Vector(0, 2500, 0))
+                end
+            end)
         end
     end
 

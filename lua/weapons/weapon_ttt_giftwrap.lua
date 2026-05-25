@@ -137,7 +137,7 @@ if SERVER then
             "ads", -- blocked later (affixed)
             "npc_barnacle",
             "ent_ttt_ttt2_camera", -- blocked later (affixed)
-            "force_shield", -- blocked later (no phys, won't budge)
+            "cannon_ent",
             "ttt_conmine",
             "christmas_present",
             "ttt_cse_proj",
@@ -157,6 +157,7 @@ if SERVER then
             "ent_fortnitestructure",
             "ent_ttt_fan",
             "ttt_flame",
+            "force_shield", -- blocked later (no phys, won't budge)
             "sent_greendemon_box",
             "sent_greendemon",
             "ttt2_hat_baron",
