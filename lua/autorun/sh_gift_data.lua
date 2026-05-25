@@ -1075,11 +1075,12 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Sterile,  attrib_feel = GiftFeel.RealityWarp,
     },
     prop_exploder_v2 = GiftData.New {
-        name     = "Prop Exploder v2",        desc       = "an explosive chip",
+        name     = "Prop Exploder v2",     desc       = "an explosive chip",
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_propexploderv2",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Beeping,   attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Long,
+        mv_hook = "HUDDrawMarkerVisionPropExploder",
     },
     prop_exploder = GiftData.New {
         name     = "Prop Exploder",        desc       = "an explosive chip",
@@ -1698,7 +1699,6 @@ local deployableSWEPs = {
                SENT_id = PROP_CLASS_NAME, SWEP_id = SWEP_CLASS_NAME,
                SENT_name = "Wrapped Gift",
                SENT_setup = "gift_setup", SWEP_setup = "giftwrap_desc",
-               SENT_setup_var = {k = "mv_hook", v = "TTT_GiftWrap_MarkerVision"},
                SENT_random = true, SENT_rarity = 0.8, SENT_quality = 2,
                SWEP_random = true, SWEP_rarity = 2,   SWEP_quality = 4,
                SWEP_size = GiftSize.Huge,
@@ -3373,10 +3373,10 @@ elseif CLIENT then
                     hook.Add("TTT2RenderMarkerVisionInfo", giftData.mv_hook, function(mvData)
                         local ent = mvData:GetEntity()
 
-                        if not ent._HideMarks then
-                            ogHook(mvData)
-                        else
+                        if ent._HideMarks or (ent:GetClass() == SWEP_CLASS_NAME and ent:GetOwner() == LocalPlayer()) then
                             mvData.drawInfo = false
+                        else
+                            ogHook(mvData)
                         end
                     end)
                 end

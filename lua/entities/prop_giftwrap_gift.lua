@@ -744,7 +744,12 @@ elseif CLIENT then
 
     hook.Add("TTT2RenderMarkerVisionInfo", HOOK_GIFTWRAP_MARKER_UI, function(mvData)
         local ent = mvData:GetEntity()
-        if ent._HideMarks then mvData.drawInfo = false return end
+        if not utils.IsGiftBox(ent) then return end
+
+        if ent._HideMarks or ent:GetNWBool("PEPlanted") then
+            mvData.drawInfo = false
+            return
+        end
 
         local mvObject = mvData:GetMarkerVisionObject()
 
@@ -793,7 +798,7 @@ elseif CLIENT then
                 timeLeft = math.Round(timeLeft)
             }))
 
-        elseif string.sub(mvObject:GetIdentifier(), 1, 21) == MV_TREE_LABEL then
+        --[[elseif string.sub(mvObject:GetIdentifier(), 1, 21) == MV_TREE_LABEL then
             mvData:EnableText()
             mvData:SetTitle("Christmas Tree")
 
@@ -810,7 +815,7 @@ elseif CLIENT then
             }))
 
             mvData:AddIcon(matTreeIcon, COLOR_GREEN)
-        end
+        ]]end
     end)
 
     hook.Add("TTTRenderEntityInfo", HOOK_GIFTWRAP_INTERACT_UI, function(tData)

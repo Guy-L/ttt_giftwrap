@@ -451,12 +451,41 @@ function GW_Utils.TransferNetVars(fromGift, toGift)
         wrappedEnt:SetNWEntity("WrappedByGift", toGift)
     end
 
-    -- transfer Prop Exploder rig
+    -- transfer Prop Exploder (v1) rig
     for _, ply in ipairs(player.GetAll()) do
         if ply.PEProp == fromGift then
             ply.PEProp = toGift
         end
     end
+
+    -- transfer Prop Exploder (v2) rig
+    if fromGift:GetNWBool("PEPlanted") then
+        fromGift:RemoveCallOnRemove("PEEarlyRemove" .. fromGift:EntIndex())
+        toGift:CallOnRemove("propexplodemarker_" .. toGift:EntIndex(), function(goneEnt) goneEnt:RemoveMarkerVision("propexplode_owner") end)
+        toGift:SetNWBool("PEPlanted", true)
+
+        local mvOwner = markerVision.Get(fromGift, "propexplode_owner"):GetOwner()
+        timer.Simple(0.1, function() -- can't network MV before the client knows the ent exists
+            if IsValid(mvOwner) then
+                local mvObject = toGift:AddMarkerVision("propexplode_owner")
+                mvObject:SetOwner(mvOwner)
+                mvObject:SetVisibleFor(VISIBLE_FOR_TEAM)
+                mvObject:SyncToClients()
+            end
+        end)
+
+        for _, wep in ipairs(ents.GetAll()) do
+            if wep:GetClass() == "weapon_ttt_propexploderv2" and wep.PEProp == fromGift then
+                wep.PEProp = toGift
+                toGift:CallOnRemove("PEEarlyRemove" .. toGift:EntIndex(), function() EnablePEAgain(wep, toGift) end)
+            end
+        end
+    end
+end
+
+function GW_Utils.IsGiftBox(ent)
+    local class = ent:GetClass()
+    return class == PROP_CLASS_NAME or (class == SWEP_CLASS_NAME and ent:HasGift())
 end
 
 GW_CvarList = GW_CvarList or { ["ttt2_giftwrap_debug"] = "bool" }

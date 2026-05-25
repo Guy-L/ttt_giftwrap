@@ -32,8 +32,10 @@ end
 
 -- Util methods for gifts that can be remotely detonated while wrapped
 local function RemoteGiftDetonation(ent, fuse, sound, funcs)
-    if ent._isSelfDestructing then return end
-    ent._isSelfDestructing = true
+    if ent then
+        if ent._isSelfDestructing then return end
+        ent._isSelfDestructing = true
+    end
 
     dbg.Log("Starting remote detonation for", ent)
     local parentGift, wrapLevel = utils.GetTopmostWrap(ent)
@@ -118,7 +120,7 @@ local initChanges = {
     {   name = "fix_extra_seat_entry",
         addon = "TTT2 (Base)", icon = "vgui/ttt/icon_halp",
         desc = "Fix seats inside of vehicles being inaccessible even if main seat occupied", realm = ChangeRealm.SERVER,
-        identifier = "fix_extra_seat_entry", category = ChangeCategory.None,
+        identifier = nil, category = ChangeCategory.None,
         apply = function()
 
             hook.Add("PlayerUse", PLAYER_USE_HOOK, function(ply, ent)
@@ -145,7 +147,7 @@ local initChanges = {
     {   name = "fix_vehicle_damage",
         addon = "TTT2 (Base)", icon = "vgui/ttt/icon_halp",
         desc = "Fix driver taking almost no damage & other riders being invincible", realm = ChangeRealm.SERVER,
-        identifier = "fix_vehicle_damage", category = ChangeCategory.None,
+        identifier = nil, category = ChangeCategory.None,
         cvars = {VDFIX_MULT_DRIVER, VDFIX_MULT_PASNGR},
         apply = function()
 
@@ -616,6 +618,102 @@ local initChanges = {
             end
         end
     },
+
+    {   name = "prop_exploder_v2_rig_gifts",
+        addon = "Prop Exploder v2", icon = "vgui/ttt/icon_propexploderv2",
+        desc = "Add giftboxes to valid explodable classes", realm = ChangeRealm.SHARED,
+        identifier = "weapon_ttt_propexploderv2", category = ChangeCategory.SWEP,
+        original_keys = {},
+        apply = function(swep, og)
+
+            if not table.HasValue(swep.PhysicsClasses, PROP_CLASS_NAME) then
+                table.insert(swep.PhysicsClasses, PROP_CLASS_NAME)
+            end
+        end
+    },
+
+    {   name = "prop_exploder_v2_wrap_fix",
+        addon = "Prop Exploder v2", icon = "vgui/ttt/icon_propexploderv2",
+        desc = "Explode giftbox when self-destructing + wrap to parry", realm = ChangeRealm.SERVER,
+        identifier = "weapon_ttt_propexploderv2", category = ChangeCategory.SWEP,
+        original_keys = {"SecondaryAttack"},
+        apply = function(swep, og)
+
+            -- this function may look overly complex, but given all the ways a rigged prop can interact with giftwrap
+            -- (and the ways a rigged giftbox can be interacted with), it's actually just as complex as it needs to be
+
+            local function OGPropExploderExplosion(ent, owner)
+                local expl = ents.Create("env_explosion")
+                expl:SetPos(ent:GetPos())
+                expl:Spawn()
+                expl:SetOwner(owner)
+                expl:SetKeyValue("iMagnitude", "0")
+                expl:Fire("Explode", 0, 0)
+                expl:EmitSound("siege/big_explosion.wav", 400, 200)
+                util.BlastDamage(ent, owner, ent:GetPos(), 400, 200)
+            end
+
+            swep.SecondaryAttack = function(self)
+                RemoteGiftDetonation(self.PEProp, 1.2, {path = "weapons/gamefreak/wtf.mp3", vol = 400, pitch = 200}, {
+                    explosion = function(parentEnt)
+                        self:SendPEMessage("Exploded")
+                        if IsValid(self.PEProp) then
+                            self.PEProp:RemoveCallOnRemove("PEEarlyRemove" .. self.PEProp:EntIndex())
+                        end
+
+                        OGPropExploderExplosion(parentEnt, self:GetOwner())
+                        self:Remove()
+                    end,
+
+                    ogDetonate = function(ent)
+                        local owner = self:GetOwner()
+
+                        if IsValid(ent) then
+                            og.SecondaryAttack(self)
+
+                            if ent:IsWeapon() then -- should only be possible for giftboxes
+                                local entOwner = ent:GetOwner()
+                                entOwner:EmitSound("weapons/gamefreak/wtf.mp3", 400, 200)
+                                entOwner:ChatPrint("Your gift is exploding!")
+                            end
+
+                            local exploTimerName = "PEPlanting" .. ent:EntIndex()
+
+                            timer.Simple(timer.TimeLeft(exploTimerName), function()
+                                -- if the prop was a giftbox, it could've switched state & thus not be the same entity (PEProp is transferred though)
+                                if ent ~= self.PEProp then ent = self.PEProp end
+
+                                if IsValid(ent) then
+                                    if IsValid(ent:GetNWEntity("WrappedByGift")) then
+                                        --self.PEPlanting = false
+                                        ent._isSelfDestructing = false
+
+                                        if IsValid(owner) then
+                                            owner:ChatPrint("Detonation was parried by Gift Wrap!")
+                                        end
+
+                                    else
+                                        ent._PreventThrow = true -- in case its a giftbox
+                                        OGPropExploderExplosion(ent, owner)
+                                        self:Remove()
+                                        ent:Remove()
+                                    end
+                                end
+                            end)
+
+                            timer.Remove(exploTimerName)
+                        else
+                            utils.NonSpamMessage(owner, "PropExploderDet", "No prop selected!")
+                        end
+                    end,
+
+                    parry = function()
+                        self:GetOwner():ChatPrint("Detonation was parried by Gift Wrap!")
+                    end,
+                })
+            end
+        end
+    },
 }
 
 -- Add similar fixes for COD perk bottles
@@ -693,15 +791,15 @@ hook.Add("Initialize", INIT_FIXES_HOOK, function()
                 if change.category then
                     -- store original functions of addon overriden by Gift Wrap
                     -- for idempotency when debugging changes
-                    if change.original_keys and not GW_InitChangesCache[change.identifier] then
-                        GW_InitChangesCache[change.identifier] = {}
+                    if change.original_keys and not GW_InitChangesCache[change.name] then
+                        GW_InitChangesCache[change.name] = {}
 
                         for _, key in ipairs(change.original_keys) do
-                            GW_InitChangesCache[change.identifier][key] = baseMeta[key]
+                            GW_InitChangesCache[change.name][key] = baseMeta[key]
                         end
                     end
 
-                    change.apply(baseMeta, GW_InitChangesCache[change.identifier])
+                    change.apply(baseMeta, GW_InitChangesCache[change.name])
                 else
                     change.apply()
                 end
@@ -745,7 +843,6 @@ function GiftWrapThirdPartySettings(parent)
             iconWrap:DockPadding(0, 0, 0, 0)
             iconWrap:SetWide(iconSize)
             iconWrap.Paint = nil
-            --dbg.HighlightUI(iconWrap)
 
             local icon = vgui.Create("DImage", iconWrap)
             icon:SetSize(iconSize, iconSize)

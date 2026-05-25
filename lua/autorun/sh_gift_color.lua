@@ -80,9 +80,8 @@ if CLIENT then
     -- gift leaving PVS makes it lose its materials, so we re-sync
     hook.Add("NotifyShouldTransmit", HOOK_GIFTWRAP_TRANSMIT, function(ent, shouldTransmit)
         if not shouldTransmit or not ent.GetGiftBoxColor then return end
-        local class = ent:GetClass()
 
-        if class == PROP_CLASS_NAME or (class == SWEP_CLASS_NAME and ent:HasGift()) then
+        if utils.IsGiftBox(ent) then
             SyncGiftColors(ent)
         end
     end)
