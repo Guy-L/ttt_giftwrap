@@ -1522,7 +1522,7 @@ local deployableSWEPs = {
 
     c4      = {name = "C4", desc = "a bomb",
                SENT_id = "ttt_c4", SWEP_id = "weapon_ttt_c4",
-               SENT_setup = "grenade", SENT_setup_var = {k = "explosion_delay", v = 10}, --TODO throws Lua errors
+               SENT_setup = "c4_setup", SENT_setup_var = {k = "mv_hook", v = "HUDDrawMarkerVisionC4"},
                SENT_random = false, SWEP_random = false,
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Normal,
                sound = GiftSound.Beeping, smell = GiftSmell.Gunpowder, feel = GiftFeel.Heavy},
@@ -2323,6 +2323,33 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
 
         elseif self.special_setup == "cannonball_setup" then
             wrappedEnt.Stuck = true
+
+        elseif self.special_setup == "c4_setup" then
+            wrappedEnt:SetDetonateTimer(wrappedEnt:GetExplodeTime() - CurTime() + 10)
+            wrappedEnt.LastPos = wrappedEnt:GetPos()
+            wrappedEnt._OGThink = wrappedEnt.Think
+            wrappedEnt._OGExplode = wrappedEnt.Explode
+
+            wrappedEnt.Think = function(self)
+                local wrap = utils.GetTopmostWrap(self)
+                if IsValid(wrap) then
+                    local wrapPos = wrap:GetPos()
+                    self:SetPos(wrapPos)
+                    self.LastPos = wrapPos
+                end
+
+                wrappedEnt._OGThink(self)
+            end
+
+            wrappedEnt.Explode = function(self, tr)
+                local wrap = utils.GetTopmostWrap(self)
+                self:RemoveCallOnRemove(WRAPPED_GIFT_REMOVE)
+                wrappedEnt._OGExplode(self, tr)
+
+                if IsValid(wrap) then
+                    wrap:Remove()
+                end
+            end
         end
     end
 
@@ -2921,6 +2948,11 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
                     phys:AddAngleVelocity(Vector(0, 2500, 0))
                 end
             end)
+
+        elseif self.special_setup == "c4_setup" then
+            wrappedEnt.LastPos = wrappedEnt:GetPos()
+            wrappedEnt.Think = wrappedEnt._OGThink
+            wrappedEnt.Explode = wrappedEnt._OGExplode
         end
     end
 

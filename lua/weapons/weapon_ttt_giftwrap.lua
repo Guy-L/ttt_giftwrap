@@ -16,8 +16,8 @@ local HOOK_ANGLE_CORRECTION  = "TTT_GiftWrap_CorrectGiftAngle"
 local HOOK_ROUND_RESET_OPENS = "TTT_GiftWrap_ResetOpenedRandomGiftCounts"
 local HOOK_RELOAD_SOUNDS     = "TTT_GiftWrap_ReloadSounds"
 local HOOK_RESET_VM_COLORS   = "TTT_GiftWrap_ResetVMColors"
-local WRAPPED_GIFT_REMOVE    = "TTT_GiftWrap_WrappedGiftRemove"
 local GIFTWRAP_REMOVE        = "TTT_GiftWrap_XMasBeaconRemove"
+WRAPPED_GIFT_REMOVE          = "TTT_GiftWrap_WrappedGiftRemove"
 TP_GIFT_MSG                  = "TTT_GiftWrapSV_TeleportGift"
 
 local TIMEZONE_OFFSET_HOURS       = utils.Cvar("ttt2_giftwrap_timezone_offset", "0", -24, 24, "Adjusts the timezone used for determining whether it's Christmas (offset in hours).")
