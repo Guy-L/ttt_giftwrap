@@ -1341,6 +1341,7 @@ local standardGuns = {
     aug           = {cat = GiftCategory.FloorSWEP, name = "AUG",             id = "weapon_ttt_aug",           an=true,  random=true, rarity=1, quality=1,   type = GunType.Other},
     blunderbus    = {cat = GiftCategory.WorldSWEP, name = "Blunderbus",      id = "weapon_ttt_blunderbus",    an=false, random=false,                       type = GunType.Other,   sound = GiftSound.Thudding, smell = GiftSmell.Dusty, feel = GiftFeel.Powerful},
     catgun        = {cat = GiftCategory.FloorSWEP, name = "M1A0 Cat Gun",    id = "weapon_catgun",            an=false, random=true, rarity=1, quality=2,   type = GunType.Other,   sound = GiftSound.Meowing, smell = GiftSmell.Fur, feel = GiftFeel.Alive, altname = "stray catgun"},
+    dance_gun     = {cat = GiftCategory.FloorSWEP, name = "Dance Gun",       id = "dancedead",                an=false, random=false,                       type = GunType.Pistol,  sound = GiftSound.Musical, smell = GiftSmell.Sterile},
     deagle        = {cat = GiftCategory.FloorSWEP, name = "Deagle",          id = "weapon_zm_revolver",       an=false, random=true, rarity=1, quality=3,   type = GunType.Pistol,  pistol = true},
     double_barrel = {cat = GiftCategory.WorldSWEP, name = "Double Barrel",   id = "weapon_sp_dbarrel",        an=false, random=false,                       type = GunType.Shotgun, feel = GiftFeel.Powerful},
     famas         = {cat = GiftCategory.FloorSWEP, name = "Famas",           id = "weapon_ttt_famas",         an=false, random=true, rarity=1, quality=1,   type = GunType.Other},
@@ -1685,7 +1686,7 @@ local deployableSWEPs = {
 
     groovitron = {name = "Groovitron", desc = "a disco ball",
                SENT_id = "ttt_pap_groovitron_proj", SWEP_id = "ttt_pap_groovitron",
-               SENT_setup = "grenade", --todo fix stuff remaining active on wrap
+               SENT_setup = "grenade", SENT_setup_var = {{k = "special_setup2", v = "groovitron_setup"}, {k = "mark_invalid"}},
                SENT_random = true, SENT_rarity = 4, SENT_quality = -5,
                SWEP_random = false,
                SENT_size = GiftSize.Larger, SWEP_size = GiftSize.Mini,
@@ -2294,6 +2295,21 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
         elseif self.special_setup == "conc_mine_setup" then
             if wrappedEnt.setoff then
                 wrappedEnt:NextThink(CurTime() + 1e9)
+            end
+        end
+    end
+
+    if self.special_setup2 then -- this blows but this stuff is getting refactored anyways! (soonTM)
+        if self.special_setup2 == "groovitron_setup" then
+            if wrappedEnt.Collided then
+                wrappedEnt:StopSound(wrappedEnt.MusicName)
+                wrappedEnt:StopSound(wrappedEnt.MusicName)
+
+                for _, ent in ipairs(ents.FindInSphere(wrappedEnt._GWStoredPos, 3)) do
+                    if ent:GetClass() == "beam_spotlight" then
+                        ent:Remove()
+                    end
+                end
             end
         end
     end

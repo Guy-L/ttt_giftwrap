@@ -184,6 +184,7 @@ if SERVER then
         ent:SetNotSolid(true)
 
         ent:SetNWEntity("WrappedByGift", giftObj)
+        ent._GWStoredPos = ent:GetPos()
         ent._GWStoredColGroup = ent:GetCollisionGroup()
         ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 
