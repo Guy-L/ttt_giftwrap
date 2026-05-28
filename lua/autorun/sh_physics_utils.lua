@@ -232,10 +232,31 @@ if SERVER then
             end
         end
 
+        -- store data for connected physics objects
+        GW_Utils.PrepareRagdoll(ent, ent._GWStoredPos)
+
         -- hide all markervisions client-side
         net.Start(HIDE_MARK_MSG)
         net.WriteEntity(ent)
         net.Broadcast()
+    end
+
+    function GW_Utils.PrepareRagdoll(rag, rootPos)
+        if not rootPos then rootPos = rag:GetPos() end
+
+        rag:Fire("DisableMotion")
+        rag._GWStoredRelPos = {}
+
+        for i = 1, rag:GetPhysicsObjectCount() - 1 do
+            constraint.RemoveConstraints(rag, "Rope") -- break magneto pin rope
+            local phys = rag:GetPhysicsObjectNum(i)
+
+            if IsValid(phys) then
+                rag._GWStoredRelPos[phys] = phys:GetPos() - rootPos
+                phys:EnableMotion(false)
+                phys:Sleep()
+            end
+        end
     end
 
     function GW_Utils.ExitStasis(ent, pos, stabilize)
@@ -281,6 +302,16 @@ if SERVER then
             for _, t in ipairs(ent._childTrails) do
                 if IsValid(t.trailEnt) then t.trailEnt:Remove() end
                 util.SpriteTrail(ent, t.attachID, t.color, t.additive, t.startWidth, t.endWidth, t.lifetime, t.textureRes, t.texture)
+            end
+        end
+
+        -- move connected physics objects (used for ragdolls)
+        ent:Fire("EnableMotion")
+        if ent._GWStoredRelPos then
+            for phys, relPos in pairs(ent._GWStoredRelPos) do
+                if IsValid(phys) then
+                    phys:SetPos(pos + relPos)
+                end
             end
         end
 
@@ -472,6 +503,9 @@ if SERVER then
 
     -- TODO: post-teleport visibility (MV or otherwise)
     GW_Utils.mapSpawnStatsList = {
+        ["ttt_5c_plaza"]               = { radius=1000, timeout=3,  zones = {
+            { min = Vector(-2932, 837, -50), max = Vector(1322, 1305, 732), type="exit" }
+        }},
         ["ttt_bestbuy"]                = { radius=nil },
         ["ttt_ca_oilrig_edit"]         = { radius=800,  timeout=3,  waterExit=true },
         ["ttt_canyon_labs"]            = { radius=1000, timeout=3 },

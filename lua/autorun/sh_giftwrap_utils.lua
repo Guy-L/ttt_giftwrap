@@ -266,6 +266,10 @@ function GW_Utils.GetEyeTrace(ply)
         end
     end
 
+    if IsValid(tr.Entity) and tr.Entity:GetClass() == "func_breakable" then
+        tr.Entity = NULL
+    end
+
     return tr
 end
 
@@ -373,6 +377,7 @@ end
 
 function GW_Utils.ConfirmedDead(ply, other)
     if not IsValid(ply) or not IsValid(other) then return false end
+
     return not other:TTT2NETGetBool("player_was_active_in_round", false) -- spectator
         or other:TTT2NETGetBool("body_found", false) -- confirmed dead
         or (not other:Alive() and ply:GetSubRoleData().isOmniscientRole) -- omniscient player
@@ -481,6 +486,65 @@ function GW_Utils.TransferNetVars(fromGift, toGift)
             end
         end
     end
+
+    -- transfer stink from ragdolls
+    if fromGift:GetNW2Bool("GWStinky") then
+        local fromOwner = fromGift:GetOwner()
+
+        timer.Simple(0.1, function()
+            if IsValid(toGift) then
+                toGift.StinkSoundID = toGift:StartLoopingSound("giftwrap/flies_loop.wav")
+                --toGift.StinkSoundID2 = toGift:StartLoopingSound("giftwrap/flies_loop.wav")
+
+                if toGift:IsWeapon() then
+                    GW_Utils.StinkAttachPlayer(toGift:GetOwner())
+
+                else
+                    if IsValid(fromOwner) then
+                        fromOwner:StopParticles()
+                    end
+
+                    ParticleEffectAttach("flies_fx", PATTACH_ABSORIGIN_FOLLOW, toGift, 0)
+                end
+            end
+        end)
+    end
+end
+
+function GW_Utils.StartStink(giftEnt)
+    if not IsValid(giftEnt) then return end
+
+    giftEnt:SetNW2Bool("GWStinky", true)
+    giftEnt.StinkSoundID = giftEnt:StartLoopingSound("giftwrap/flies_loop.wav")
+    --giftEnt.StinkSoundID2 = giftEnt:StartLoopingSound("giftwrap/flies_loop.wav")
+
+    if giftEnt:IsWeapon() then
+        local giftOwner = giftEnt:GetOwner()
+        giftOwner:ChatPrint("Your gift is starting to stink...")
+        GW_Utils.StinkAttachPlayer(giftOwner)
+    else
+        ParticleEffectAttach("flies_fx", PATTACH_ABSORIGIN_FOLLOW, giftEnt, 0)
+    end
+end
+
+function GW_Utils.StinkAttachPlayer(ply)
+    if not IsValid(ply) then return end
+    local rhAttachmentNames = {
+        "anim_attachment_RH",
+        "primary",
+    }
+
+    for _, name in ipairs(rhAttachmentNames) do
+        local id = ply:LookupAttachment(name)
+
+        if id > 0 then
+            ParticleEffectAttach("flies_fx", PATTACH_POINT_FOLLOW, ply, id)
+            return
+        end
+    end
+
+    GW_DBG.Log("(Flies FX) Failed to find right hand for", ply, ply:GetModel())
+    ParticleEffectAttach("flies_fx", PATTACH_ABSORIGIN_FOLLOW, ply, 0)
 end
 
 function GW_Utils.IsGiftBox(ent)

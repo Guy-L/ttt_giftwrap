@@ -8,8 +8,8 @@ local ENT_KILL_INPUT_HOOK        = "GiftWrapSV_PreventWrappedEntKillInputs"
 local ENT_TAKE_DAMAGE_HOOK       = "GiftWrapSV_VehicleOccupantsDamageFix"
 local PLAYER_USE_HOOK            = "GiftWrapSV_InternalVehicleSeatFix"
 
-local VDFIX_MULT_DRIVER = utils.Cvar("ttt2_vehicle_damagefix_driver_mult",    30, 0, 100, "Damage multiplier for driver when hitting other parts of vehicle (%).")
-local VDFIX_MULT_PASNGR = utils.Cvar("ttt2_vehicle_damagefix_passenger_mult", 20, 0, 100, "Damage multiplier for passengers when hitting any part of vehicle (%).")
+local VDFIX_MULT_DRIVER = utils.Cvar("ttt2_vehicle_damagefix_driver_mult",    30, 0, 100, "Damage multiplier for driver when hitting other parts of vehicle (%)")
+local VDFIX_MULT_PASNGR = utils.Cvar("ttt2_vehicle_damagefix_passenger_mult", 20, 0, 100, "Damage multiplier for passengers when hitting any part of vehicle (%)")
 
 local ChangeCategory = {
     SWEP      = "Scripted Weapon",
@@ -109,7 +109,8 @@ end)
 
 local initChanges = {
     --[[
-    {   addon = "Addon Name",
+    {   name = "change_name",
+        addon = "Addon Name", icon = "",
         desc = "Template change", realm = ChangeRealm.SHARED,
         identifier = "identifier", category = ChangeCategory.SENT,
         original_keys = {},
@@ -711,6 +712,46 @@ local initChanges = {
                         self:GetOwner():ChatPrint("Detonation was parried by Gift Wrap!")
                     end,
                 })
+            end
+        end
+    },
+
+    {   name = "cannibalism_mark_rags",
+        addon = "Cannibalism", icon = "vgui/ttt/ttt_cannibalism.png",
+        desc = "Mark ragdolls as being eaten (to cancel it later)", realm = ChangeRealm.SHARED,
+        identifier = "weapon_ttt_cannibal", category = ChangeCategory.SWEP,
+        original_keys = {"PrimaryAttack"},
+        apply = function(swep, og)
+            swep.PrimaryAttack = function(self)
+                --og.PrimaryAttack(self)
+                -- unfortunately have to rewrite the whole thing
+                -- due to un-cancellable timer.Simple :(
+
+                if not self:CanPrimaryAttack() then return end
+                self.Weapon:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
+                self.Weapon:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
+
+                self.Owner:LagCompensation(true)
+                local tr = self.Owner:GetEyeTrace(MASK_SHOT)
+                self.Owner:LagCompensation(false)
+
+                if IsValid(tr.Entity) and tr.Entity.player_ragdoll then
+                    self.Owner:Freeze(true)
+                    self.Owner:SetColor(Color(255, 0, 0, 255))
+                    tr.Entity.BeingEaten = true
+                    tr.Entity.Cannibal = self.Owner
+
+                    timer.Create("CannibalismHeal_"..tr.Entity:EntIndex(), 0.5, 6, function()
+                        self.Owner:SetHealth(self.Owner:Health() + 5)
+                    end)
+
+                    timer.Create("CannibalismEnd_"..tr.Entity:EntIndex(), 3.1, 1, function()
+                        self.Owner:Freeze(false)
+                        self.Owner:SetColor(Color(255, 255, 255, 255))
+                        tr.Entity:Remove()
+                        self:Remove()
+                    end)
+                end
             end
         end
     },

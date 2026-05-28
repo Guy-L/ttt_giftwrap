@@ -12,6 +12,9 @@ local FLOOR_WEIGHT_MULT   = utils.Cvar(FLOOR_WEIGHT_NAME, "1", 0, 5,   "Weight m
 local SHOP_WEIGHT_MULT    = utils.Cvar(SHOP_WEIGHT_NAME, "0.5", 0, 5,  "Weight multiplier for shop items when picking random gift.")
 local SPECIAL_WEIGHT_MULT = utils.Cvar(SPECIAL_WEIGHT_NAME, "1", 0, 5, "Weight multiplier for special entities (SENTs & NPCs) when picking random gift.")
 
+local CORPSE_STINK_ENABLE = utils.Cvar("ttt2_giftwrap_corpse_stink_enable", "1", 0, 1, "Whether gifts containing fleshy ragdolls will start to stink (particles+sound).")
+local CORPSE_STINK_DELAY  = utils.Cvar("ttt2_giftwrap_corpse_stink_delay", "15", 0, 120, "Delay before gifts containing fleshy ragdolls start to stink if enabled, in seconds.")
+
 local PLACEHOLDER_DATA_REMOVE    = "GiftWrap_RemoveGiftData"
 local OVERRIDE_MV_HOOK           = "GiftWrapCL_OverrideMarkerVisionRenderHook"
 local INVALID_ID                 = "GiftWrap_InvalidID"
@@ -35,7 +38,8 @@ GiftCategory = {
     Item          = {id=7,  text="Shop Item",      icon="vgui/ttt/menu/icon_bottle",   weight=SHOP_WEIGHT_NAME},
     Ammo          = {id=8,  text="Ammo Box",       icon="vgui/ttt/menu/icon_ammo",     weight=FLOOR_WEIGHT_NAME},
     Vehicle       = {id=9,  text="Vehicle",        icon="vgui/ttt/menu/icon_car",      weight=SPECIAL_WEIGHT_NAME},
-    Unknown       = {id=10, text="Unknown",        icon="vgui/ttt/menu/icon_question", weight=SPECIAL_WEIGHT_NAME},
+    Ragdoll       = {id=10, text="Ragdoll",        icon="vgui/ttt/menu/icon_ragdoll",  weight=SPECIAL_WEIGHT_NAME},
+    Unknown       = {id=11, text="Unknown",        icon="vgui/ttt/menu/icon_question", weight=SPECIAL_WEIGHT_NAME},
 }
 
 GiftSound = {
@@ -49,6 +53,7 @@ GiftSound = {
     Talking    = {snd="", desc="like it's talking"},
     Meowing    = {snd="", desc="like it's meowing"},
     Bleating   = {snd="", desc="like it's bleating"}, -- lambert only
+    Mooing     = {snd="", desc="like it's mooing"}, -- cow only
     Thudding   = {snd="", desc="like it's thudding"},
     Whirring   = {snd="", desc="like it's whirring"},
     Revving    = {snd="", desc="like it's revving"},
@@ -58,6 +63,7 @@ GiftSound = {
     Musical    = {snd="", desc="musical"},
     Squeaky    = {snd="", desc="squeaky"}, --new, underused
     Hollow     = {snd="", desc="hollow"}, --new, underused
+    Rattling   = {snd="", desc="like it's rattling"}, --new, underused
     Splashing  = {snd="", desc="like it's splashing"},
     Squelching = {snd="", desc="like it's squelching"},
     Rustling   = {snd="", desc="like it's rustling"},
@@ -143,6 +149,7 @@ GiftFeel = {
     Magical       = "magical",
     RealityWarp   = "reality-warping",
     Futuristic    = "futuristic",
+    Scientific    = "scientific", -- new, underused
     Negative      = "negative",
     Jolly         = "jolly",
     Ghostly       = "ghostly",
@@ -198,8 +205,15 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Round,
     },
     car_wreck = GiftData.New {
-        name     = "Car Wreck",           desc       = "a broken down car",
-        category = GiftCategory.PhysProp, identifier = "models/props_vehicles/car005b_physics.mdl",
+        name     = "Wrecked Car",         desc       = "a broken down car",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props_vehicles/car002a_physics.mdl",
+            "models/props_vehicles/car002b_physics.mdl",
+            "models/props_vehicles/car003a_physics.mdl",
+            "models/props_vehicles/car004a_physics.mdl",
+            "models/props_vehicles/car005a_physics.mdl",
+            "models/props_vehicles/car005b_physics.mdl",
+        },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Max,
         attrib_smell = GiftSmell.Oily,     attrib_feel = GiftFeel.Massive,
@@ -552,6 +566,119 @@ local giftDataCatalog = {
     },
 
     ----------------------------------------------------------------------
+    -- Ragdolls
+    seekgull_corpse = GiftData.New {
+        name     = "Dead Seekgull",      desc       = "a dead seagull",
+        category = GiftCategory.Ragdoll, identifier = "models/seagull.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Salty,   attrib_feel = GiftFeel.Icky,
+    },
+    terror_corpse = GiftData.New {
+        name     = "Dead Terrorist",     desc       = "a body",
+        category = GiftCategory.Ragdoll, identifiers = {
+            "models/player/leet.mdl",
+            "models/player/phoenix.mdl",
+            "models/player/arctic.mdl",
+            "models/player/guerilla.mdl",
+            --"models/captainbleysfire/swag_leet/swag_leet.mdl",
+            --"models/hotlinemiami/russianmafia/mafia04pm.mdl",
+        },
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Heavy,
+    },
+    detective_corpse = GiftData.New {
+        name     = "Dead Detective",     desc       = "an important body",
+        category = GiftCategory.Ragdoll, identifier = "models/player/elispolice/police.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Heavy,
+    },
+    hostage_corpse = GiftData.New {
+        name     = "Dead Hostage"  ,     desc       = "a body",
+        category = GiftCategory.Ragdoll, identifiers = {
+            "models/player/hostage/hostage_01.mdl",
+            "models/player/hostage/hostage_02.mdl",
+            "models/player/hostage/hostage_03.mdl",
+            "models/player/hostage/hostage_04.mdl",
+        },
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Heavy,
+    },
+    police_corpse = GiftData.New {
+        name     = "Dead Metrocop"  ,    desc        = "a cop's body",
+        category = GiftCategory.Ragdoll, identifiers = {
+            "models/player/police.mdl",
+            "models/player/policefem.mdl",
+        },
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Heavy,
+    },
+    kleiner_corpse = GiftData.New {
+        name     = "Dead Kleiner",       desc       = "Kleiner's body",
+        category = GiftCategory.Ragdoll, identifier = "models/player/kleiner.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Scientific,
+    },
+    gordon_corpse = GiftData.New {
+        name     = "Dead Gordon",        desc       = "Gordon's body",
+        category = GiftCategory.Ragdoll, identifier = "models/halflife1/gordon_freeman_pm.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Scientific,
+    },
+    gman_corpse = GiftData.New {
+        name     = "Dead G-Man",         desc       = "the G-Man's body",
+        category = GiftCategory.Ragdoll, identifier = "models/player/gman_high.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Powerful,
+    },
+    master_eng_corpse = GiftData.New {
+        name     = "Dead Engineer",      desc       = "a body",
+        category = GiftCategory.Ragdoll, identifier = "models/dotcoockie/mastereng.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Scientific,
+    },
+    catbine_corpse = GiftData.New {
+        name     = "Dead Catbine",       desc       = "a body",
+        category = GiftCategory.Ragdoll, identifier = "models/catbineelite.mdl",
+        special_setup = "catbine_restriction",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Fur,      attrib_feel = GiftFeel.Heavy,
+    },
+    infected_corpse = GiftData.New {
+        name     = "Dead Infected",      desc       = "a dead undead",
+        category = GiftCategory.Ragdoll, identifier = "models/player/corpse1.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rotten, attrib_feel = GiftFeel.Heavy,
+    },
+    charred_corpse = GiftData.New {
+        name     = "Charred Corpse",     desc       = "a charred corpse",
+        category = GiftCategory.Ragdoll, identifier = "models/humans/charple01.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Ash,      attrib_feel = GiftFeel.Heavy,
+        disable_flies = true,
+    },
+    skeleton = GiftData.New {
+        name     = "Skeleton",           desc       = "a skeleton",
+        category = GiftCategory.Ragdoll, identifier = "models/player/skeleton.mdl",
+        can_be_random_gift = true,
+        factor_rarity = 2, factor_quality = -6,
+        attrib_sound = GiftSound.Rattling, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Dry,      attrib_feel = GiftFeel.Ghostly,
+        disable_flies = true,
+    },
+
+    ----------------------------------------------------------------------
     -- Vehicles
     airboat = GiftData.New {
         name     = "Airboat",            desc       = "an airboat",
@@ -659,6 +786,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Strange,  attrib_feel = GiftFeel.Random,
     },
+    cannibalism = GiftData.New {
+        name     = "Cannibalism",          desc       = "a craving for flesh",
+        category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_cannibal",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Sharp,
+    },
     chainsaw = GiftData.New {
         name     = "Chainsaw",             desc       = "a sick chainsaw",
         category = GiftCategory.WorldSWEP, identifier = "weapon_chainsaw_new",
@@ -710,7 +844,7 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Cold,
     },
     defib = GiftData.New {
-        name     = "Defibrillator",        desc       = "live-saving medical equipment",
+        name     = "Defibrillator",        desc       = "life-saving medical equipment",
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_defibrillator",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Whirring, attrib_size = GiftSize.Normal,
@@ -736,7 +870,7 @@ local giftDataCatalog = {
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_wtester",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Beeping, attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Electric,
+        attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Scientific,
     },
     doppelganger = GiftData.New {
         name     = "Doppelganger",         desc       = "a self-hologram maker",
@@ -938,6 +1072,13 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Pulsing,   attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Magical, -- is also Bright
+    },
+    marker_defib = GiftData.New {
+        name     = "Marker's Defib",       desc       = "life-saving medical equipment",
+        category = GiftCategory.WorldSWEP, identifier = "weapon_ttt2_markerdefi",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Whirring, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Sterile,  attrib_feel = GiftFeel.Electric,
     },
     masterton = GiftData.New {
         name     = "Masterton M-557",      desc       = "a Masterton",
@@ -1160,7 +1301,7 @@ local giftDataCatalog = {
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_virussyringe",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Otherworldly,
+        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Scientific,
     },
     weapon_jammer = GiftData.New {
         name     = "Weapon Jammer",            desc       = "a Weapon Jammer",
@@ -1587,7 +1728,7 @@ local deployableSWEPs = {
                SWEP_setup_var = {k = "worldmodel_fix"},
                SENT_random = false,   SWEP_random = false,
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
-               sound = GiftSound.Whirring, smell = GiftSmell.Sterile, feel = GiftFeel.Electric},
+               sound = GiftSound.Whirring, smell = GiftSmell.Sterile, feel = GiftFeel.Scientific},
 
     deployable_force_shield = {name = "Deployable Force Shield", desc = "a next-gen force shield",
                SWEP_category = GiftCategory.FloorSWEP,
@@ -2123,6 +2264,7 @@ function GiftData:Inspect(giftObj)
         self.lastQualifierID = math.random(#qualifiers)
     end
     self.lastQualifierID = self.lastQualifierID % #qualifiers + 1
+
     local qualifier = qualifiers[self.lastQualifierID]
     if qualifier ~= "" then qualifier = qualifier .. " " end
 
@@ -2132,8 +2274,10 @@ function GiftData:Inspect(giftObj)
     self.lastCheckType = (self.lastCheckType + 1) % 3
 
     if self.lastCheckType == 0 then -- sound
-        if self.attrib_sound then
-            return "It sounds "..qualifier, self.attrib_sound.desc, "..."
+        local sound = self:GetSound(giftObj)
+
+        if sound then
+            return "It sounds "..qualifier, sound.desc, "..."
         else
             return noSound[math.random(#noSound)], "", ""
         end
@@ -2161,7 +2305,21 @@ function GiftData:Inspect(giftObj)
     end
 end
 
-function GiftData:IsSpawnable(giftee)
+function GiftData:GetIdentifier(giftObj)
+    if self.identifiers then
+        local chosenID = IsValid(giftObj) and giftObj:GetNW2Int("chosen_id") or 0
+
+        if chosenID > 0 then
+            return self.identifiers[chosenID]
+        else
+            return self.identifiers[math.random(#self.identifiers)]
+        end
+    else
+        return self.identifier
+    end
+end
+
+function GiftData:IsSpawnable(giftee, giftObj)
     if self.special_setup then
         if self.special_setup == "snuffles_present_setup"
           and utils.RoundStartTime and CurTime() <= utils.RoundStartTime + 10 then
@@ -2183,13 +2341,17 @@ function GiftData:IsSpawnable(giftee)
 
         elseif self.special_setup == "fart_grenade_setup" then
             return weapons.GetStored("weapon_fartgrenade") ~= nil
+
+        elseif self.special_setup == "catbine_restriction" then
+            return string.StartsWith(game.GetMap(), "ttt_unsung_star")
         end
     end
 
     local category   = self.category
-    local identifier = self.identifier
+    local identifier = self:GetIdentifier(giftObj)
 
-    if category == GiftCategory.PhysProp or category == GiftCategory.Vehicle then
+    if category == GiftCategory.PhysProp or category == GiftCategory.Vehicle
+      or category == GiftCategory.Ragdoll then
         return util.IsValidModel(identifier)
 
     elseif category == GiftCategory.SENT or category == GiftCategory.Ammo then
@@ -2209,7 +2371,7 @@ function GiftData:IsSpawnable(giftee)
 
     elseif category == GiftCategory.Item then
         return items.GetStored(identifier) ~= nil
-          and (self.can_get_multiple or not giftee:HasEquipmentItem(self.identifier))
+          and (self.can_get_multiple or not giftee:HasEquipmentItem(identifier))
     end
 
     return false
@@ -2218,7 +2380,8 @@ end
 function GiftData:IsDropBlocked()
     return self.category == GiftCategory.SENT
       or self.category == GiftCategory.NPC
-      --or self.category == GiftCategory.Vehicle
+      or self.category == GiftCategory.Vehicle
+      or self.category == GiftCategory.Ragdoll
       or self.category == GiftCategory.Unknown
 end
 
@@ -2229,6 +2392,37 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
 
     if self.mark_invalid then
         wrappedEnt._Invalid = true
+    end
+
+    if self.category == GiftCategory.Ragdoll then
+        local isValidBody = CORPSE.IsValidBody(wrappedEnt)
+
+        if isValidBody then
+            -- AFAIK this can only be retrieved server-side if
+            -- the player disconnects, so we cache it here
+            wrappedEnt:SetNWString("GWStoredTeam", roles.GetByIndex(CORPSE.GetPlayerRole(wrappedEnt)).name:gsub("^%l", string.upper))
+            wrappedEnt:SetNWString("GWStoredSID", CORPSE.GetPlayerSID64(wrappedEnt))
+
+            -- handling to cancel out cannibalism
+            if wrappedEnt.BeingEaten then
+                local cannibal = wrappedEnt.Cannibal
+
+                timer.Remove("CannibalismHeal_"..wrappedEnt:EntIndex())
+                timer.Remove("CannibalismEnd_"..wrappedEnt:EntIndex())
+                cannibal:Freeze(false)
+                cannibal:SetColor(Color(255, 255, 255, 255))
+                cannibal:ChatPrint("Your meal was cut short by Gift Wrap.")
+            end
+        end
+
+        -- Start up stink sequence
+        if (not self.disable_flies or isValidBody) and CORPSE_STINK_ENABLE:GetBool() then
+            timer.Create("GWCorpseStink"..wrappedEnt:EntIndex(), CORPSE_STINK_DELAY:GetFloat(), 1, function()
+                if IsValid(wrappedEnt) then
+                    utils.StartStink(wrappedEnt:GetNWEntity("WrappedByGift"))
+                end
+            end)
+        end
     end
 
     if self.special_setup then
@@ -2378,6 +2572,14 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
 end
 
 function GiftData:ApplyOnAutoWrapAdjustments(giftObj)
+    if self.identifiers then
+        giftObj:SetNW2Int("chosen_id", math.random(#self.identifiers))
+    end
+
+    if self.category == GiftCategory.Ragdoll and not self.disable_flies and CORPSE_STINK_ENABLE:GetBool() then
+        utils.StartStink(giftObj)
+    end
+
     if self.special_setup == "explo_barrel_setup" then
         if math.random() < 0.6 then
             giftObj:SetIsContentsOnFire(true)
@@ -2590,6 +2792,10 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
         if wrappedEnt._Invalid then
             wrappedEnt._Invalid = false
         end
+
+        if wrappedEnt:GetNW2Bool("GWStinky") then -- particles need refreshing for some reason
+            ParticleEffectAttach("flies_fx", PATTACH_ABSORIGIN_FOLLOW, wrappedEnt, 0)
+        end
     end
 
     if self.move_to_giftee then
@@ -2609,6 +2815,10 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
 
     if self.no_physwake then
         wrappedEnt._DontWake = true
+    end
+
+    if self.category == GiftCategory.Ragdoll then
+        timer.Remove("GWCorpseStink"..wrappedEnt:EntIndex())
     end
 
     if self.stick_to_ground and not wrappedEnt:IsOnGround() then
@@ -2990,7 +3200,17 @@ function GiftData:ApplyPostGiftPurchaseAdjustments(giftee)
     end
 end
 
-function GiftData:GetName(giftee)
+function GiftData:GetName(giftEnt, giftee)
+    local wrappedEnt = giftEnt:GetStoredGift()
+
+    if IsValid(wrappedEnt) and self.category == GiftCategory.Ragdoll then
+        local storedTeam = wrappedEnt:GetNWString("GWStoredTeam")
+
+        if storedTeam ~= "" and (CORPSE.GetFound(wrappedEnt) or giftee:GetSubRoleData().isOmniscientRole) then
+            return "Dead "..storedTeam
+        end
+    end
+
     if self.special_setup == "poison_station_desc" then
         if PS2_Utils and PS2_Utils.IsMainEvil(giftee) then
             return "Live Poison Station"
@@ -3003,9 +3223,21 @@ function GiftData:GetName(giftee)
 end
 
 function GiftData:GetDesc(giftEnt, giftee)
-    if self.special_setup then
-        local wrappedEnt = giftEnt:GetStoredGift()
+    local wrappedEnt = giftEnt:GetStoredGift()
 
+    if IsValid(wrappedEnt) and self.category == GiftCategory.Ragdoll and CORPSE.IsValidBody(wrappedEnt) then
+        if CORPSE.GetFound(wrappedEnt) or giftee:GetSubRoleData().isOmniscientRole then
+            if CORPSE.GetPlayer(wrappedEnt) == giftee then -- death faker
+                return "your body"
+            else
+                return CORPSE.GetPlayerNick(wrappedEnt).."'s body"
+            end
+        else
+            return "an unidentified body"
+        end
+    end
+
+    if self.special_setup then
         if self.special_setup == "giftwrap_desc" then
             if wrappedEnt.HasGift and wrappedEnt:HasGift() then
                 return "another gift"
@@ -3066,6 +3298,32 @@ function GiftData:GetDesc(giftEnt, giftee)
     return self.desc
 end
 
+function GiftData:GetSound(giftEnt)
+    if self.category == GiftCategory.Ragdoll then
+        local wrappedEnt = giftEnt:GetStoredGift()
+
+        if CORPSE.IsValidBody(wrappedEnt) then
+            -- player-dependent easter eggs
+            local deadPlyNick = CORPSE.GetPlayerNick(wrappedEnt)
+            local deadPlyID = wrappedEnt:GetNWString("GWStoredSID")
+
+            if string.find(deadPlyNick, "cow", nil, true) then
+                return GiftSound.Mooing
+
+            elseif string.find(deadPlyNick, "cat", nil, true) or
+              deadPlyID == "76561197999258534" or -- Max
+              deadPlyID == "76561198068281034" then --EvKem
+                return GiftSound.Meowing
+
+            elseif string.find(deadPlyNick, "sheep", nil, true) then
+                return GiftSound.Bleating
+            end
+        end
+    end
+
+    return self.attrib_sound
+end
+
 function GiftData:GetSmell(giftEnt)
     if self.special_setup == "fortnite_struct_setup" then
         local wrappedEnt = giftEnt:GetStoredGift()
@@ -3086,13 +3344,15 @@ function GiftData:GetSmell(giftEnt)
 end
 
 function GiftData:Spawn(giftee, giftObj)
-    if self:IsSpawnable(giftee) then
+    if self:IsSpawnable(giftee, giftObj) then
         local category   = self.category
-        local identifier = self.identifier
+        local identifier = self:GetIdentifier(giftObj)
+        local isRagdoll  = category == GiftCategory.Ragdoll
 
         -- PhysProp / Vehicle
-        if category == GiftCategory.PhysProp or category == GiftCategory.Vehicle then
-            local giftEnt = ents.Create(self.entity_class or "prop_physics")
+        if category == GiftCategory.PhysProp or category == GiftCategory.Vehicle or isRagdoll then
+            local giftClass = isRagdoll and "prop_ragdoll" or "prop_physics"
+            local giftEnt = ents.Create(self.entity_class or giftClass)
             if identifier ~= INVALID_ID then
                 giftEnt:SetModel(identifier)
             end
@@ -3104,6 +3364,10 @@ function GiftData:Spawn(giftee, giftObj)
             if IsValid(phys) then
                 phys:EnableMotion(false)
                 phys:Sleep()
+            end
+
+            if isRagdoll then
+                utils.PrepareRagdoll(giftEnt)
             end
 
             return giftEnt
@@ -3340,8 +3604,8 @@ elseif CLIENT then
             return giftEnt:GetNW2String("fortnite_model")
         end
 
-        if category == GiftCategory.PhysProp or category == GiftCategory.Vehicle then
-            return self.identifier
+        if category == GiftCategory.PhysProp or category == GiftCategory.Vehicle or category == GiftCategory.Ragdoll then
+            return self:GetIdentifier(giftEnt)
 
         elseif category == GiftCategory.SENT or category == GiftCategory.Ammo then
             local sent = scripted_ents.GetStored(self.identifier)
@@ -3551,16 +3815,28 @@ function GiftData:Detect(ent, entIdentifier)
           and utils.NearEquals(ent:GetElasticity(), 0.45)
     end
 
-    return self.identifier == entIdentifier
+    if self.identifiers then
+        for _, mdl in ipairs(self.identifiers) do
+            if mdl == entIdentifier then
+                return true
+            end
+        end
+
+        return false
+    else
+        return self.identifier == entIdentifier
+    end
 end
 
 function GetEntGiftData(ent)
-    local entIdentifier = ent:GetClass()
+    local entClass = ent:GetClass()
+    local entIdentifier = entClass
     local entModel = ent:GetModel()
 
     if string.find(entIdentifier, "prop_physics", nil, true)
       or string.StartsWith(entIdentifier, "prop_vehicle")
-      or entIdentifier == "func_physbox" then
+      or entIdentifier == "func_physbox"
+      or entIdentifier == "prop_ragdoll" then
         entIdentifier = entModel
     end
 
@@ -3583,7 +3859,10 @@ function GetEntGiftData(ent)
     end
 
     -- Detect category
-    if entIdentifier == entModel then
+    if entClass == "prop_ragdoll" then
+        placeholderData.category = GiftCategory.Ragdoll
+
+    elseif entIdentifier == entModel then
         placeholderData.category = GiftCategory.PhysProp
 
     elseif ent.Base == "base_ammo_ttt" then
@@ -3606,7 +3885,7 @@ function GetEntGiftData(ent)
     end
 
     -- Find & set name if available
-    local name = "gift"
+    local name
 
     if ent.PrintName and ent.PrintName ~= "" then
         name = ent.PrintName
@@ -3619,9 +3898,13 @@ function GetEntGiftData(ent)
         end
     end
 
-    if name == "gift" then
-        placeholderData.name = string.match(string.StripExtension(entModel), "[^/\\]+$")
-        placeholderData.desc = "a " .. name
+    if not name then
+        placeholderData.name = string.match(string.StripExtension(entModel), "[^/\\]+$"):gsub("^%l", string.upper)
+        if entClass == "prop_ragdoll" then
+            placeholderData.desc = "a body"
+        else
+            placeholderData.desc = "a gift"
+        end
 
     else
         placeholderData.name = name:gsub("^%l", string.upper)
@@ -3763,8 +4046,16 @@ if SERVER then
 
     -- precache prop/vehicle models (can add other types if needed)
     for label, data in pairs(giftDataCatalog) do
-        if data.category == GiftCategory.PhysProp or data.category == GiftCategory.Vehicle then
-            util.PrecacheModel(data.identifier)
+        if data.category == GiftCategory.PhysProp or data.category == GiftCategory.Vehicle or data.category == GiftCategory.Ragdoll then
+            if data.identifier then
+                util.PrecacheModel(data.identifier)
+            end
+
+            if data.identifiers then
+                for _, mdl in ipairs(data.identifiers) do
+                    util.PrecacheModel(mdl)
+                end
+            end
         end
     end
 end

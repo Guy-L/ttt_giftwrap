@@ -46,6 +46,8 @@ local sounds = {
     pop             = Sound("garrysmod/balloon_pop_cute.wav"),
 }
 
+game.AddParticles("particles/flies_fx.pcf")
+
 ----------------------------------
 --- SERVER REALM SETUP / HOOKS ---
 ----------------------------------
@@ -54,6 +56,7 @@ if SERVER then
 
     AddCSLuaFile("weapon_ttt_giftwrap.lua")
     resource.AddFile("materials/"..GIFTWRAP_ICON..".vmt")
+    PrecacheParticleSystem("flies_fx")
 
     util.AddNetworkString(GIFTWRAP_PICKUP_MSG)
     util.AddNetworkString(GIFTWRAP_HL_CHAT_MSG)
@@ -63,12 +66,14 @@ if SERVER then
     util.PrecacheModel(WRAP_WORLDMODEL)
     util.PrecacheModel(GIFT_VIEWMODEL)
     util.PrecacheModel(GIFT_WORLDMODEL)
+    util.PrecacheSound("giftwrap/flies_loop.wav")
 
     -- reset "opened gift" states & determine random gift spawn parameters
     hook.Add("TTTBeginRound", HOOK_ROUND_RESET_OPENS, function()
         for _, ply in ipairs(player.GetAll()) do
             ply:SetNWBool("OpenedRandomGift", false)
             ply:SetNWBool("GotFirstTimeSample", false)
+            ply:StopParticles()
         end
 
         local adjTime = os.time(os.date("!*t")) + (TIMEZONE_OFFSET_HOURS:GetFloat() * 3600)
@@ -94,9 +99,6 @@ if SERVER then
         local phys  = ent:GetPhysicsObject()
         local class = ent:GetClass()
 
-        -- TODO: Remove temp and implement properly (player ragdolls + seekgulls, other things)
-        if class == "prop_ragdoll" then return "Haven't figured out how to allow this yet!" end
-
         -- weapon that's in an inventory check
         if ent:IsWeapon() then
             local entOwner = ent:GetOwner()
@@ -106,6 +108,11 @@ if SERVER then
             else
                 return nil
             end
+        end
+
+        -- func_breakables (usually filtered out, can be move parent)
+        if class == "func_breakable" then
+            return "This is too important to wrap."
         end
 
         local override_classes = {
@@ -172,7 +179,7 @@ if SERVER then
             "ttt_knife_proj",
             "item_lethal_company_landmine",
             "matryoshka", -- blocked later (affixed) (breaching charge)
-            "npc_metropolice", -- wraps SuperCop, should be PaP only
+            --"npc_metropolice", -- wraps SuperCop, should be PaP only
             "ttt_minecraft_arrow",
             "sent_molotov_timed",
             "sent_molotov",
@@ -197,6 +204,18 @@ if SERVER then
             "ttt_zombieball_proj",
             "npc_zombie",
         }
+
+        -- living player check
+        if ent:IsPlayer() then
+            return "You can't wrap a living player!"
+
+        elseif ent:GetClass() == "prop_ragdoll" then
+            for _, child in ipairs(ent:GetChildren()) do
+                if child:IsPlayer() then
+                    return "You can't wrap a living player!"
+                end
+            end
+        end
 
         -- validity check
         if not table.HasValue(valid_classes, class) and string.sub(ent:GetClass(), 1, 5) ~= "prop_" then
@@ -584,12 +603,16 @@ function SWEP:OnRemove()
 
     if SERVER and not self._PreserveGift then
         local storedGift = self:GetStoredGift()
-        --dbg.Log("Removing gift w/ stored:", storedGift)
 
         if IsValid(storedGift) then
             dbg.Log("Removing stored gift:", storedGift)
             storedGift:RemoveCallOnRemove(WRAPPED_GIFT_REMOVE)
             storedGift:Remove()
+
+            local owner = self:GetOwner()
+            if self:GetNW2Bool("GWStinky") and IsValid(owner) then
+                owner:StopParticles()
+            end
         end
     end
 end
@@ -734,10 +757,13 @@ if SERVER then
                     hitPos = gifteePly:EyePos() + gifteePly:GetAimVector() * (80 + scaleFactor)
                 end
 
-                -- Maximum extent along the hit normal (how far it sticks out in that direction)
-                local mins, maxs = giftEnt:OBBMins(), giftEnt:OBBMaxs()
-                local extent = math.max(mins:Dot(tr.HitNormal * -1),
-                                        maxs:Dot(tr.HitNormal * -1))
+                local extent = 20 -- safe default
+                if giftData.category ~= GiftCategory.Ragdoll then
+                    -- Maximum extent along the hit normal (how far it sticks out in that direction)
+                    local mins, maxs = giftEnt:OBBMins(), giftEnt:OBBMaxs()
+                    extent = math.max(mins:Dot(tr.HitNormal * -1),
+                                      maxs:Dot(tr.HitNormal * -1))
+                end
 
                 spawnPos = hitPos + tr.HitNormal * extent
             end
@@ -839,7 +865,7 @@ if SERVER then
         else
             net.Start(GIFTWRAP_HL_CHAT_MSG)
             net.WriteString("You were meant to unwrap ")
-            net.WriteString(giftDesc .. " (" .. giftData:GetName(gifteePly) ..")")
+            net.WriteString(giftDesc .. " (" .. giftData:GetName(giftObj, gifteePly) ..")")
             net.WriteString(", but it couldn't be spawned.")
             net.Send(gifteePly)
             return
@@ -881,6 +907,37 @@ if SERVER then
         util.Effect("Sparks", effectData)
     end
 
+    -- for use on either type of gift
+    function EmptyGift(giftEnt)
+        giftEnt:SetWrapperSID("")
+        giftEnt:SetStoredGift(nil)
+        giftEnt:SetCachedDataLabel("")
+
+        if giftEnt:GetNW2Bool("GWStinky") then
+            if giftEnt:IsWeapon() then
+                timer.Simple(0, function()
+                    local owner = giftEnt:GetOwner()
+
+                    if IsValid(owner) then
+                        owner:StopParticles()
+                    end
+                end)
+            else
+                giftEnt:StopParticles()
+            end
+
+            giftEnt:SetNW2Bool("GWStinky", false)
+            giftEnt:StopLoopingSound(giftEnt.StinkSoundID)
+            --giftEnt:StopLoopingSound(giftEnt.StinkSoundID2)
+        end
+
+        if giftEnt:IsWeapon() then
+            giftEnt:UpdateModel("dropped gift")
+        else
+            giftEnt:BecomeBackWrap()
+        end
+    end
+
     function SWEP:DropContents(isUndo)
         local owner = self:GetOwner()
 
@@ -888,10 +945,7 @@ if SERVER then
             SpawnGiftEnt(owner, self, nil, isUndo)
 
             dbg.Log("Dropped gift contents")
-            self:SetWrapperSID("")
-            self:SetStoredGift(nil)
-            self:SetCachedDataLabel("")
-            self:UpdateModel("dropped gift")
+            EmptyGift(self)
         end
     end
 
@@ -951,15 +1005,12 @@ if SERVER then
                 local wrappedBy = ent:GetNWEntity("WrappedByGift")
 
                 if IsValid(wrappedBy) then
+                    EmptyGift(wrappedBy)
                     local owner = wrappedBy:GetOwner()
 
                     if IsValid(owner) then
                         owner:ChatPrint("The gift somehow disappeared, leaving the wrapping paper behind.")
                     end
-
-                    wrappedBy:SetWrapperSID("")
-                    wrappedBy:SetStoredGift(nil)
-                    wrappedBy:SetCachedDataLabel("")
                 end
             end)
 
@@ -1108,6 +1159,17 @@ elseif CLIENT then
     end
 
     function SWEP:AddToSettingsMenu(parent)
+        local formBalance = vgui.CreateTTT2Form(parent, "label_giftwrap_balance_form")
+        local stinkToggle = formBalance:MakeCheckBox({
+            serverConvar = "ttt2_giftwrap_corpse_stink_enable",
+            label = "label_giftwrap_corpse_stink_enable"
+        })
+        formBalance:MakeSlider({
+            serverConvar = "ttt2_giftwrap_corpse_stink_delay",
+            label = "label_giftwrap_corpse_stink_delay",
+            min = 0, max = 120, decimal = 0, master = stinkToggle
+        })
+
         local formRNGift = vgui.CreateTTT2Form(parent, "label_giftwrap_random_gifts_form")
         formRNGift:MakeHelp({
             label = "label_giftwrap_random_gifts_desc"

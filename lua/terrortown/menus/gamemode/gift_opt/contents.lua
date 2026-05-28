@@ -256,7 +256,7 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
     local name = vgui.Create("DLabel", textPanel)
     name:Dock(TOP)
     name:SetFont("DermaLarge")
-    name:SetText(giftData and giftData:GetName(player) or "Nothing yet")
+    name:SetText(giftData and giftData:GetName(giftEnt, player) or "Nothing yet")
     name:SetTall(30)
 
     if giftData and giftData.placeholderEquip then
@@ -281,7 +281,8 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
         desc:SetWrap(true)
 
         if giftData then
-            AttributeLine(textPanel, "sounds", giftData.attrib_sound and giftData.attrib_sound.desc or nil, "It doesn't make a distinct sound")
+            local sound = giftData:GetSound(giftEnt)
+            AttributeLine(textPanel, "sounds", sound and sound.desc or nil, "It doesn't make a distinct sound")
             AttributeLine(textPanel, "smells", giftData:GetSmell(giftEnt), "It doesn't smell like anything")
 
             if giftEnt:GetIsContentsOnFire() then --will need to come up with a better system for attribute overrides..

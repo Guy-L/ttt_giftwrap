@@ -671,13 +671,19 @@ if SERVER then
 
     hook.Add("ExtinguisherDoExtinguish", HOOK_EXTINGUISH, function(prop)
         if IsValid(prop) and prop:GetClass() == PROP_CLASS_NAME and prop:GetCachedDataLabel() == "flame" then
-            local giftEnt = ents.Create(SWEP_CLASS_NAME)
-            giftEnt:SetPos(prop:GetPos() + Vector(0, 0, 10))
-            giftEnt:Spawn()
-
-            prop:Remove()
+            prop:BecomeBackWrap()
         end
     end)
+
+    function ENT:BecomeBackWrap() -- edmund mcmillen you little fucker
+        -- TODO: for some reason it doesn't use the right collision model?
+        --       also should transfer color/note etc.
+        local newWrap = ents.Create(SWEP_CLASS_NAME)
+        newWrap:SetPos(self:GetPos() + Vector(0, 0, 10))
+        newWrap:Spawn()
+
+        self:Remove()
+    end
 
     function ENT:OnRemove()
         if self._PreserveGift then return end
