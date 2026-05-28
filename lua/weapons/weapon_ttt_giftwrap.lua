@@ -13,7 +13,8 @@ local GIFTWRAP_GIFT_DATA_MSG = "TTT_GiftWrap_SendWrapperData"
 local HOOK_GIFTWRAP_PICKUP   = "TTT_GiftWrap_PickUp"
 local HOOK_GIFTWRAP_TREE_USE = "TTT_GiftWrap_UseTree"
 local HOOK_ANGLE_CORRECTION  = "TTT_GiftWrap_CorrectGiftAngle"
-local HOOK_ROUND_RESET_OPENS = "TTT_GiftWrap_ResetOpenedRandomGiftCounts"
+local HOOK_ROUND_RESET_OPENS = "TTT_GiftWrapSV_ResetOpenedRandomGiftCounts"
+local HOOK_ROUND_END         = "TTT_GiftWrapSV_RemoveGiftEntCallOnRemoves"
 local HOOK_RELOAD_SOUNDS     = "TTT_GiftWrap_ReloadSounds"
 local HOOK_RESET_VM_COLORS   = "TTT_GiftWrap_ResetVMColors"
 local GIFTWRAP_REMOVE        = "TTT_GiftWrap_XMasBeaconRemove"
@@ -89,6 +90,18 @@ if SERVER then
         dbg.Log("Day of Year:", dayOfYear, "; Hour", os.date("!%H", adjTime),
             "; Christmas:", isChristmas, "; matched playercount round:", GW_matchPlayerCountRound,
             "; second gift chance:", GW_secondGiftChance, "; third gift chance:", GW_thirdGiftChance)
+    end)
+
+    hook.Add("PreCleanupMap", HOOK_ROUND_END, function()
+        -- otherwise entities that are removed before weapons (i.e. ragdolls)
+        -- trigger the OnRemove chat message
+        for _, wep in ipairs(ents.FindByClass(SWEP_CLASS_NAME)) do
+            local storedEnt = wep:GetStoredGift()
+
+            if IsValid(storedEnt) then
+                storedEnt:RemoveCallOnRemove(WRAPPED_GIFT_REMOVE)
+            end
+        end
     end)
 
     function GetWrapConstraint(ent, wrapper)
