@@ -124,7 +124,7 @@ if SERVER then
         end
 
         -- func_breakables (usually filtered out, can be move parent)
-        if class == "func_breakable" then
+        if utils.IsMapClass(ent) then
             return "This is too important to wrap."
         end
 

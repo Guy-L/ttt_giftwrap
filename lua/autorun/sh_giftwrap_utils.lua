@@ -266,11 +266,31 @@ function GW_Utils.GetEyeTrace(ply)
         end
     end
 
-    if IsValid(tr.Entity) and tr.Entity:GetClass() == "func_breakable" then
-        tr.Entity = NULL
+     -- don't acknowledge wrap on dynamic map elements
+    if IsValid(tr.Entity) and GW_Utils.IsMapClass(tr.Entity) then
+        tr.Entity = game.GetWorld()
     end
 
     return tr
+end
+
+function GW_Utils.IsMapClass(ent)
+    if not IsValid(ent) then return false end
+    local class = ent:GetClass()
+
+    return string.StartsWith(class, "func_breakable")
+        or string.StartsWith(class, "func_door")
+        or string.StartsWith(class, "prop_door")
+        or class == "func_reflective_glass"
+        or class == "func_movelinear"
+        or class == "func_button"
+        or class == "momentary_rot_button"
+        or class == "class C_BaseToggle" -- the hell even
+        or class == "func_tanktrain"
+        or class == "func_tracktrain"
+        --or class == "prop_dynamic" --TODO check if any of what we want to wrap is this (lots of stationary map elements are)
+        --or class == "func_brush" --TODO check if any of what we want to wrap is this (lots of stationary map elements are)
+        or GW_Utils.IsMapClass(ent:GetMoveParent())
 end
 
 

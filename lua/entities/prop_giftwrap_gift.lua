@@ -277,8 +277,18 @@ if SERVER then
         --debugoverlay.Line(self._LastPos, curPos, 3, Color(255,0,0), true)
         --if tr.Hit then print(tr.Hit, tr.Entity) end
 
-        if tr.Hit and tr.HitPos and not tr.StartSolid and not tr.AllSolid and vel:Dot(tr.HitNormal) < 0 then
-            if curTime < self._LastBounce + 1 then
+        local startZone = utils.PointZone(self._LastPos)
+        local endZone = utils.PointZone(curPos)
+
+        local isBounceZone = function(zone)
+            return zone == "exit" or zone == "troom"
+        end
+
+        local clipbrushCol = tr.Hit and tr.HitPos and not tr.StartSolid and not tr.AllSolid and vel:Dot(tr.HitNormal) < 0
+        local oobZoneCol      = not isBounceZone(startZone) and isBounceZone(endZone) and self._LastPos:Distance(curPos) < 150
+
+        if clipbrushCol or oobZoneCol then
+            if curTime < self._LastBounce + (clipbrushCol and 1 or 0.5) then
                 dbg.Log("Bounce detected but skipped due to cooldown; ", curTime, self._LastBounce)
                 self._LastPos = curPos
                 return
@@ -374,20 +384,28 @@ if SERVER then
         --dbg.DebugSpawns(self, spawnRad, true)
         --dbg.ShowNearbySpawns(spawnRad, 2, 0.2)
 
-        local exitedMap = function()
+        local exitedMap = function(curZone)
             local pos = self:GetPos()
-            local curZone = utils.PointZone(self:GetPos())
-            if curZone == "safe" then return false end
 
-            return curZone == "exit"
-              or (spawnRad and not utils.IsNearAnySpawn(pos, spawnRad))
-              or (utils.mapSpawnStats.waterExit and self:WaterLevel() > 0)
+            if not curZone then
+                curZone = utils.PointZone(pos)
+            end
+
+            if curZone == "safe" then
+                return false
+            else
+                return curZone == "exit" or curZone == "troom"
+                  or (spawnRad and not utils.IsNearAnySpawn(pos, spawnRad))
+                  or (utils.mapSpawnStats.waterExit and self:WaterLevel() > 0)
+            end
         end
 
         if not self.LastMapExit then
-            if exitedMap() then
+            local curZone = utils.PointZone(self:GetPos())
+
+            if exitedMap(curZone) then
                 dbg.Log("Map exit check started...")
-                self.LastMapExit = curTime
+                self.LastMapExit = (curZone == "troom" and (curTime + 3) or curTime)
             end
 
         elseif curTime > self.LastMapExit + utils.mapSpawnStats.timeout then
@@ -417,6 +435,7 @@ if SERVER then
                 if phys:HasGameFlag(FVPHYSICS_PLAYER_HELD) then
                     for _, magneto in ipairs(ents.FindByClass("weapon_zm_carry")) do
                         if magneto:GetCarryTarget() == self then
+                            magneto:Drop()
                             utils.NonSpamMessage(magneto:GetOwner(), "GIFT_TP", "The gift you were holding seemed to be out of bounds and was teleported back in-bounds.")
                             break
                         end

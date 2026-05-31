@@ -64,6 +64,7 @@ GiftSound = {
     Squeaky    = {snd="", desc="squeaky"}, --new, underused
     Hollow     = {snd="", desc="hollow"}, --new, underused
     Rattling   = {snd="", desc="like it's rattling"}, --new, underused
+    Hissing    = {snd="", desc="like it's hissing"}, --new, underused
     Splashing  = {snd="", desc="like it's splashing"},
     Squelching = {snd="", desc="like it's squelching"},
     Rustling   = {snd="", desc="like it's rustling"},
@@ -210,6 +211,7 @@ local giftDataCatalog = {
             "models/props_vehicles/car002a_physics.mdl",
             "models/props_vehicles/car002b_physics.mdl",
             "models/props_vehicles/car003a_physics.mdl",
+            "models/props_vehicles/car003b_physics.mdl",
             "models/props_vehicles/car004a_physics.mdl",
             "models/props_vehicles/car005a_physics.mdl",
             "models/props_vehicles/car005b_physics.mdl",
@@ -617,6 +619,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
         attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Heavy,
     },
+    ct_corpse = GiftData.New {
+        name     = "Dead Counter-Terrorist",       desc       = "a body",
+        category = GiftCategory.Ragdoll, identifier = "models/player/urban.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Heavy,
+    },
     kleiner_corpse = GiftData.New {
         name     = "Dead Kleiner",       desc       = "Kleiner's body",
         category = GiftCategory.Ragdoll, identifier = "models/player/kleiner.mdl",
@@ -655,7 +664,10 @@ local giftDataCatalog = {
     },
     infected_corpse = GiftData.New {
         name     = "Dead Infected",      desc       = "a dead undead",
-        category = GiftCategory.Ragdoll, identifier = "models/player/corpse1.mdl",
+        category = GiftCategory.Ragdoll, identifiers = {
+            "models/player/corpse1.mdl",
+            "models/humans/corpse1.mdl",
+        },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Gigantic,
         attrib_smell = GiftSmell.Rotten, attrib_feel = GiftFeel.Heavy,
@@ -675,6 +687,39 @@ local giftDataCatalog = {
         factor_rarity = 2, factor_quality = -6,
         attrib_sound = GiftSound.Rattling, attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Dry,      attrib_feel = GiftFeel.Ghostly,
+        disable_flies = true,
+    },
+    mc_skeleton = GiftData.New {
+        name     = "Skeleton",           desc       = "a skeleton",
+        category = GiftCategory.Ragdoll, identifier = "models/mcmodelpack/mobs/skeleton.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Rattling, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Dry,      attrib_feel = GiftFeel.Fragile,
+        disable_flies = true,
+    },
+    mc_cavespider = GiftData.New {
+        name     = "Cave Spider",        desc       = "a cave spider",
+        category = GiftCategory.Ragdoll, identifier = "models/mcmodelpack/mobs/cavespider.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Hissing, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Toxic,   attrib_feel = GiftFeel.Alive,
+        disable_flies = true,
+    },
+    mc_creeper = GiftData.New {
+        name     = "Creeper",            desc       = "a creeper",
+        category = GiftCategory.Ragdoll, identifier = "models/minecraft/mobs/creeper.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Hissing,   attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Box,
+        disable_flies = true,
+    },
+    mattress = GiftData.New {
+        name     = "Mattress",           desc       = "an old mattress",
+        category = GiftCategory.Ragdoll, identifier = "models/props_c17/furnituremattress001a.mdl",
+        can_be_random_gift = true,
+        factor_rarity = 1, factor_quality = -4,
+        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Stinky,  attrib_feel = GiftFeel.Heavy,
         disable_flies = true,
     },
 
@@ -1392,7 +1437,7 @@ local giftDataCatalog = {
         name     = "Pack-a-Punch",    desc       = "a fresh coat of paint",
         category = GiftCategory.Item, identifier = "ttt2_pap_item",
         can_be_random_gift = true,
-        factor_rarity = 1, factor_quality = 5,
+        factor_rarity = 5, factor_quality = 5,
         attrib_sound = GiftSound.Musical, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Paint,   attrib_feel = GiftFeel.Powerful,
         special_setup = "pap_setup", can_get_multiple = true
