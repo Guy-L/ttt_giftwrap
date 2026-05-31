@@ -269,7 +269,15 @@ if SERVER then
         end
 
         -- store data for connected physics objects
-        GW_Utils.PrepareRagdoll(ent, ent._GWStoredPos)
+        if ent:IsRagdoll() then
+            GW_Utils.PrepareRagdoll(ent, ent._GWStoredPos)
+
+        elseif ent:IsNPC() then -- freeze NPC
+            ent._GWStoredNPCState = ent:GetNPCState()
+            ent._GWStoredSchedule = ent:GetCurrentSchedule()
+            ent:SetNPCState(NPC_STATE_NONE)
+            ent:SetSchedule(SCHED_NPC_FREEZE)
+        end
 
         -- hide all markervisions client-side
         net.Start(HIDE_MARK_MSG)
@@ -362,6 +370,12 @@ if SERVER then
                     phys:SetPos(pos + relPos)
                 end
             end
+        end
+
+        -- restore NPC schedule/state
+        if ent:IsNPC() and ent._GWStoredSchedule then
+            ent:SetSchedule(ent._GWStoredSchedule)
+            ent:SetNPCState(ent._GWStoredNPCState)
         end
 
         -- unhide all markervisions client-side

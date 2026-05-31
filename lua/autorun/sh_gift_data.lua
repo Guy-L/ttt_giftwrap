@@ -478,8 +478,15 @@ local giftDataCatalog = {
         category = GiftCategory.NPC, identifier = "npc_headcrab",
         can_be_random_gift = true,
         factor_rarity = 3, factor_quality = -8,
-        attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Normal,
+        attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Rotten, attrib_feel = GiftFeel.Alive,
+    },
+    headcrab_black = GiftData.New {
+        name     = "Black Headcrab", desc       = "a poisonous crab",
+        category = GiftCategory.NPC, identifier = "npc_headcrab_black",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Toxic,  attrib_feel = GiftFeel.Alive,
     },
     kfc = GiftData.New {
         name     = "KFC Bucket",      desc       = "a bucket o' chicken",

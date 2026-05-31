@@ -184,6 +184,7 @@ if SERVER then
             "ttt_hat_deerstalker",
             "env_headcrabcanister", -- blocked later (affixed)
             "npc_headcrab",
+            "npc_headcrab_black",
             "npc_headcrab_fast", -- bunger
             "ttt_health_station",
             "hwapoon_arrow",
