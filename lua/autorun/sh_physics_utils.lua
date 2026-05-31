@@ -279,12 +279,25 @@ if SERVER then
 
     function GW_Utils.PrepareRagdoll(rag, rootPos)
         if not rootPos then rootPos = rag:GetPos() end
-
-        rag:Fire("DisableMotion")
         rag._GWStoredRelPos = {}
 
+        rag:Fire("DisableMotion")
+        constraint.RemoveConstraints(rag, "Rope") -- break magneto pin rope
+
+        -- remove map phys_ragdollconstraint
+        -- only known case is a kleiner on 67th way, if this breaks any map
+        -- then we should simply prevent wrapping these instead!
+        for _, ent in ipairs(ents.GetAll()) do
+            if IsValid(ent) and ent:GetClass() == "phys_ragdollconstraint" then
+                local ent1, ent2 = ent:GetConstrainedEntities()
+
+                if ent1 == rag or ent2 == rag then
+                    ent:Remove()
+                end
+            end
+        end
+
         for i = 1, rag:GetPhysicsObjectCount() - 1 do
-            constraint.RemoveConstraints(rag, "Rope") -- break magneto pin rope
             local phys = rag:GetPhysicsObjectNum(i)
 
             if IsValid(phys) then

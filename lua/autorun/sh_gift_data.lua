@@ -628,7 +628,10 @@ local giftDataCatalog = {
     },
     kleiner_corpse = GiftData.New {
         name     = "Dead Kleiner",       desc       = "Kleiner's body",
-        category = GiftCategory.Ragdoll, identifier = "models/player/kleiner.mdl",
+        category = GiftCategory.Ragdoll, identifiers = {
+            "models/player/kleiner.mdl",
+            "models/kleiner.mdl",
+        },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
         attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Scientific,
