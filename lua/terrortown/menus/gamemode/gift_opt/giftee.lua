@@ -22,17 +22,22 @@ function CLGAMEMODESUBMENU:Populate(parent)
     -- Giftee Selection ----------------
     local client = LocalPlayer()
     local gifteeForm = vgui.CreateTTT2Form(parent, "gift_opt_giftee_form")
-    local gifteeFormAnyName = utils.TL("gift_opt_giftee_form_any")
     local prevGiftee = gwRef:GetGiftee()
 
     local gifteeChoices = {
-        { title = gifteeFormAnyName, value = "any" }
+        { title = utils.TL("gift_opt_giftee_form_any"), value = "any" }
     }
 
     for _, ply in ipairs(player.GetAll()) do
         if ply != client and not utils.ConfirmedDead(client, ply) then
+            local nick = ply:Nick()
+
+            if client:GetSubRoleData().isOmniscientRole and client:GetTeam() == ply:GetTeam() then
+                nick = nick .. " (Team)"
+            end
+
             table.insert(gifteeChoices, {
-                title = ply:Nick(),
+                title = nick,
                 value = ply:SteamID64(),
                 select = prevGiftee == ply
             })
@@ -68,20 +73,31 @@ function CLGAMEMODESUBMENU:Populate(parent)
     gifteeSelect.OpenMenu = function(self, pControlOpener)
         ogOpenFunc(self, pControlOpener)
 
-        for _, el in ipairs(utils.GetChildNamed(self.menu, "Panel"):GetChildren()) do
-            local optName = el:GetText()
+        for i, el in ipairs(utils.GetChildNamed(self.menu, "Panel"):GetChildren()) do
+            local optVal = gifteeSelect:GetOptionValue(i)
 
-            if optName == gifteeFormAnyName then
+            if optVal == "any" then
                 el:SetIcon("vgui/ttt/menu/icon_globe")
 
             else
                 for _, ply in ipairs(player.GetAll()) do
-                    if ply:Nick() == optName then
+                    if ply:SteamID64() == optVal then
                         local pfpM, pfpT = utils.GetAvatar(ply:SteamID64())
                         el:SetMaterial(pfpM)
                     end
                 end
             end
+        end
+    end
+
+    -- disable selecting giftee for unID'd bodies
+    local wrappedEnt = gwRef:GetStoredGift()
+    if CORPSE.IsValidBody(wrappedEnt) and CORPSE.IsRealPlayerCorpse(wrappedEnt) and not CORPSE.GetFound(wrappedEnt) then
+        --gifteeSelect.SetEnabled(false)
+        --gifteeSelect.SetTooltip("!!!!!!!!")
+        for _, el in ipairs(gifteeSelect:GetParent():GetChildren()) do
+            el:SetEnabled(false)
+            el:SetTooltip(LANG.TryTranslation("gift_opt_giftee_form_unident"))
         end
     end
 

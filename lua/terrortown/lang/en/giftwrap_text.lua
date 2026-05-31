@@ -110,6 +110,7 @@ L["gift_opt_giftee_form"] = "Giftee Selection"
 L["gift_opt_giftee_form_select_desc"] = "If you select a giftee, only that player will be able to pick up and open the gift.\nThey'll also be pointed towards it!"
 L["gift_opt_giftee_form_select"] = "Who's this gift for?"
 L["gift_opt_giftee_form_any"] = "Anyone"
+L["gift_opt_giftee_form_unident"] = "You can't select a giftee for an unidentified body gift."
 L["gift_opt_unwrap_form"] = "Unwrap Effects"
 L["gift_opt_unwrap_form_note"] = "Leave them a note!"
 
