@@ -832,7 +832,6 @@ if SERVER then
             end
 
             local intendedGiftee = giftObj:GetGiftee()
-            local giftDesc = giftData:GetDesc(giftObj, gifteePly)
             local rightText = "!"
 
             if not isUndo and IsValid(intendedGiftee) and gifteePly != intendedGiftee
@@ -842,14 +841,14 @@ if SERVER then
 
             net.Start(GIFTWRAP_HL_CHAT_MSG)
             net.WriteString("You unwrapped ")
-            net.WriteString(giftDesc)
+            net.WriteString(giftData:GetDesc(giftObj, gifteePly))
             net.WriteString(rightText)
             net.Send(gifteePly)
 
             if not isUndo then
                 net.Start(GIFTWRAP_HL_CHAT_MSG)
                 net.WriteString("Someone nearby unwrapped ")
-                net.WriteString(giftDesc:gsub("lets you", "lets them"):gsub("your", "their"):gsub("you", "they"))
+                net.WriteString(giftData:GetDesc(giftObj, gifteePly, true))
                 net.WriteString(rightText)
                 net.Send(nearbyPlayers)
 
@@ -878,7 +877,7 @@ if SERVER then
         else
             net.Start(GIFTWRAP_HL_CHAT_MSG)
             net.WriteString("You were meant to unwrap ")
-            net.WriteString(giftDesc .. " (" .. giftData:GetName(giftObj, gifteePly) ..")")
+            net.WriteString(giftData:GetDesc(giftObj, gifteePly) .. " (" .. giftData:GetName(giftObj, gifteePly) ..")")
             net.WriteString(", but it couldn't be spawned.")
             net.Send(gifteePly)
             return

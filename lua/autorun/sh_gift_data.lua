@@ -3267,13 +3267,13 @@ function GiftData:GetName(giftEnt, giftee)
     return self.name
 end
 
-function GiftData:GetDesc(giftEnt, giftee)
+function GiftData:GetDesc(giftEnt, giftee, forOthers)
     local wrappedEnt = giftEnt:GetStoredGift()
 
     if IsValid(wrappedEnt) and self.category == GiftCategory.Ragdoll and CORPSE.IsValidBody(wrappedEnt) then
-        if CORPSE.GetFound(wrappedEnt) or giftee:GetSubRoleData().isOmniscientRole then
+        if CORPSE.GetFound(wrappedEnt) or (giftee:GetSubRoleData().isOmniscientRole and not forOthers) then
             if CORPSE.GetPlayer(wrappedEnt) == giftee then -- death faker
-                return "your body"
+                return (forOthers and "their" or "your").." own body"
             else
                 return CORPSE.GetPlayerNick(wrappedEnt).."'s body"
             end
@@ -3292,7 +3292,7 @@ function GiftData:GetDesc(giftEnt, giftee)
 
         elseif self.special_setup == "sopd_setup" then
             if giftee:SteamID64() == swordTarget.SID64 then
-                return "a sword meant just for you"
+                return "a sword meant just for "..(forOthers and "them" or "you")
             elseif swordTarget.name and swordTarget.name ~= "" then
                 if IsPlayer(swordTarget.player) 
                   and not utils.IsLivingPlayer(swordTarget.player) then
@@ -3320,7 +3320,7 @@ function GiftData:GetDesc(giftEnt, giftee)
 
         elseif self.special_setup == "pap_setup" and giftee._UpgradeGiftWep then
             if giftee._UpgradeGiftWep == "weapon_zm_improvised" then
-                return "a fresh coat of paint for your crowbar"
+                return "a fresh coat of paint for "..(forOthers and "their" or "your").." crowbar"
             elseif giftee._UpgradeGiftWep == "weapon_ttt_unarmed" then
                 return "yellow bodypaint"
             end
@@ -3340,7 +3340,8 @@ function GiftData:GetDesc(giftEnt, giftee)
         end
     end
 
-    return self.desc
+    return forOthers and self.desc:gsub("lets you", "lets them"):gsub("your", "their"):gsub("you", "they")
+                      or self.desc
 end
 
 function GiftData:GetSound(giftEnt)
