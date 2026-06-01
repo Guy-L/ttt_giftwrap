@@ -404,7 +404,7 @@ function GW_Utils.ConfirmedDead(ply, other)
 
     return not other:TTT2NETGetBool("player_was_active_in_round", false) -- spectator
         or other:TTT2NETGetBool("body_found", false) -- confirmed dead
-        or (not other:Alive() and ply:GetSubRoleData().isOmniscientRole) -- omniscient player
+        or (not other:Alive() and GW_Utils.IsOmniscient(ply)) -- omniscient player
 end
 
 function GW_Utils.GetWrapper(giftEnt)
@@ -576,6 +576,10 @@ function GW_Utils.IsGiftBox(ent)
     return class == PROP_CLASS_NAME or (class == SWEP_CLASS_NAME and ent:HasGift())
 end
 
+function GW_Utils.IsOmniscient(ply)
+    return ply:GetSubRoleData().isOmniscientRole or not GW_Utils.IsLivingPlayer(ply)
+end
+
 GW_CvarList = GW_CvarList or { ["ttt2_giftwrap_debug"] = "bool" }
 GW_Utils.CvarFlags = {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}
 
@@ -613,6 +617,8 @@ GIFT_VIEWMODEL  = "models/ttt/gift/v_gift.mdl"
 GIFT_WORLDMODEL = "models/ttt/gift/w_gift.mdl"
 GIFT_PROPMODEL  = "models/ttt/gift/prop_gift.mdl"
 SNUFFLE_TREE_MODEL = "models/props_snowville/tree_pine_small.mdl"
+
+MAT_GIFT_ICON = Material("vgui/ttt/menu/icon_gift")
 
 ERROR_ALREADY_OPENED = "You already opened a random gift this round!"
 XMAS_DAY = 359

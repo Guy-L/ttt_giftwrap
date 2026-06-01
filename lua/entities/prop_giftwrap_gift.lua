@@ -1,9 +1,10 @@
 local SNUFFLE_PRESENT_CLASS = "christmas_present"
 
-local HOOK_GIFTWRAP_ENT_SPAWN   = "TTT_GiftWrap_EntSpawn"
-local HOOK_GIFTWRAP_MARKER_UI   = "TTT_GiftWrap_MarkerVision"
-local HOOK_GIFTWRAP_INTERACT_UI = "TTT_GiftWrap_InteractUI"
-local HOOK_ROUND_START_TIME     = "TTT_GiftWrap_RoundStartTime"
+local HOOK_GIFTWRAP_MARKER_UI   = "TTT_GiftWrapCL_MarkerVision"
+local HOOK_GIFTWRAP_INTERACT_UI = "TTT_GiftWrapCL_InteractUI"
+local HOOK_GIFTWRAP_SPEC_USE    = "TTT_GiftWrapCL_SpectatorUseKey"
+local HOOK_GIFTWRAP_ENT_SPAWN   = "TTT_GiftWrapSV_EntSpawn"
+local HOOK_ROUND_START_TIME     = "TTT_GiftWrapSV_RoundStartTime"
 local HOOK_EXTINGUISH           = "TTT_GiftWrapSV_Extinguish"
 local TREE_FOUND_MSG            = "TTT_GiftWrapSV_TreeFoundMsg"
 
@@ -737,7 +738,6 @@ if SERVER then
 ----------------------------------
 elseif CLIENT then
     local matTreeIcon = Material("vgui/ttt/marker_vision/c4")
-    local giftIcon = Material("vgui/ttt/menu/icon_gift")
 
     net.Receive(TREE_FOUND_MSG, function()
         christmasTree = net.ReadEntity()
@@ -782,7 +782,7 @@ elseif CLIENT then
             local dist = mvData:GetEntityDistance()
             if dist < 150 then return end
 
-            mvData:AddIcon(giftIcon, Color(150, 150, 150))
+            mvData:AddIcon(MAT_GIFT_ICON, Color(150, 150, 150))
             mvData:EnableText()
 
             local giftee = ent:GetGiftee()
@@ -802,7 +802,7 @@ elseif CLIENT then
             local dist = mvData:GetEntityDistance()
             if dist < 150 then return end
 
-            mvData:AddIcon(giftIcon, COLOR_WHITE)
+            mvData:AddIcon(MAT_GIFT_ICON, COLOR_WHITE)
             mvData:EnableText()
             mvData:SetTitle(utils.TL("gift_mv_giftee"))
 
@@ -815,7 +815,7 @@ elseif CLIENT then
             local timeLeft = ent:GetTPNoticeDisableTime() - CurTime()
             if timeLeft < 0 then return end
 
-            mvData:AddIcon(giftIcon, COLOR_WHITE)
+            mvData:AddIcon(MAT_GIFT_ICON, COLOR_WHITE)
             mvData:EnableText()
             mvData:SetTitle(utils.TL("gift_mv_tp"))
             mvData:AddDescriptionLine(utils.TL("gift_mv_tp_desc"))
@@ -845,7 +845,7 @@ elseif CLIENT then
 
     hook.Add("TTTRenderEntityInfo", HOOK_GIFTWRAP_INTERACT_UI, function(tData)
         local client = LocalPlayer()
-        if not utils.IsLivingPlayer(client) then return end
+        local clientAlive = utils.IsLivingPlayer(client)
 
         local ent = tData:GetEntity()
         if not IsValid(ent) then return end
@@ -863,28 +863,33 @@ elseif CLIENT then
                 tData:SetOutlineColor(UnpackColor(ent:GetGiftRibbonColor()))
                 tData:SetTitle(not isGiftee and ("Gift for "..giftee:Nick()) or "Gift")
 
-                if isGiftee or isWrapper or knownDeadGiftee then
+                if isGiftee or isWrapper or knownDeadGiftee or not clientAlive then
                     tData:SetKeyBinding("+use")
-                    tData:SetSubtitle(LANG.GetParamTranslation("target_pickup", {
+                    tData:SetSubtitle(LANG.GetParamTranslation(clientAlive and "target_pickup" or "gift_instruction_spec", {
                         usekey = Key("+use", "USE")
                     }))
                 end
 
                 if isWrapper then
                     tData:AddDescriptionLine("You wrapped this gift.")
-                    tData:AddDescriptionLine(selfDescriptionLines[ent:GetDescriptionLine()])
+
+                    if clientAlive then
+                        tData:AddDescriptionLine(selfDescriptionLines[ent:GetDescriptionLine()])
+                    end
 
                 else
                     if not isGiftee then
                         tData:AddDescriptionLine("The gift tag reads \""..giftee:Nick().."\"")
 
-                        if knownDeadGiftee then
-                            tData:AddDescriptionLine(deadGifteeHintLines[ent:GetDescriptionLine()])
-                        else
-                            tData:AddDescriptionLine(gifteeHintLines[ent:GetDescriptionLine()])
+                        if clientAlive then
+                            if knownDeadGiftee then
+                                tData:AddDescriptionLine(deadGifteeHintLines[ent:GetDescriptionLine()])
+                            else
+                                tData:AddDescriptionLine(gifteeHintLines[ent:GetDescriptionLine()])
+                            end
                         end
 
-                    else
+                    elseif clientAlive then
                         tData:AddDescriptionLine("Can also open with melee attack.")
                         tData:AddDescriptionLine(normalDescriptionLines[ent:GetDescriptionLine()])
                     end
@@ -908,6 +913,28 @@ elseif CLIENT then
         end
     end)
 
+    -- allow spectators to peek into gifts
+    hook.Add("PlayerBindPress", HOOK_GIFTWRAP_SPEC_USE, function(ply, bind, pressed, code)
+        if not pressed or utils.IsLivingPlayer(ply) then return end
+
+        if bind == "+use" then
+            local tr = utils.GetEyeTrace(ply)
+
+            if IsValid(tr.Entity) and tr.Entity:GetClass() == PROP_CLASS_NAME and tr.StartPos:Distance(tr.HitPos) <= 93.7 then
+                ToggleGiftOptions(tr.Entity)
+            end
+
+        elseif bind == "gm_showspare2" then
+            tgt = ply:GetObserverTarget()
+            if not IsValid(tgt) or not tgt:IsPlayer() then return end
+
+            local gift = utils.GetInventoryGiftwrap(tgt)
+            if not IsValid(gift) or not gift:HasGift() then return end
+
+            ToggleGiftOptions(gift)
+        end
+    end)
+
     -- ugly; unfortunately needed to work on external servers
     function ENT:Draw()
         if self._spawning then
@@ -915,6 +942,12 @@ elseif CLIENT then
         end
 
         self:DrawModel()
+    end
+
+    function ENT:OnRemove()
+        if IsValid(HELPSCRN._gwOptMenu) and HELPSCRN._gwRef == self then
+            HELPSCRN._gwOptMenu:Close()
+        end
     end
 end
 

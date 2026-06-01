@@ -10,23 +10,26 @@ GIFTWRAP_DELETE_SELF_MSG    = "TTT_GiftWrapCL_DebugDeleteSelfMsg"
 GIFTWRAP_REMOVE_WRAPPER_MSG = "TTT_GiftWrapCL_DebugRemoveWrapperTagMsg"
 GIFTWRAP_DBG_SELECT_MSG     = "TTT_GiftWrapCL_DebugSelectGiftLabelMsg"
 
-local GIFTWRAP_CLEAR_BUY_MSG = "TTT_GiftWrapSV_ClearGiftBoughtFlag"
-local GIFTWRAP_CLOSE_DMS_MSG = "TTT_GiftWrapSV_CloseDeathMatchShop"
-local GIFTWRAP_IN_OPTS_MSG   = "TTT_GiftWrapCL_InOptionsMenu"
-local HOOK_ORDER_EQUIPMENT   = "TTT_GiftWrapSV_OrderedEquipment"
-local HOOK_INIT_FIXES        = "TTT_GiftWrapSV_InitDoFixes"
+local GIFTWRAP_CLEAR_BUY_MSG   = "TTT_GiftWrapSV_ClearGiftBoughtFlag"
+local GIFTWRAP_CLOSE_DMS_MSG   = "TTT_GiftWrapSV_CloseDeathMatchShop"
+local GIFTWRAP_CLOSE_MENUS_MSG = "TTT_GiftWrapSV_CloseGiftWrapMenus"
+local GIFTWRAP_IN_OPTS_MSG     = "TTT_GiftWrapCL_InOptionsMenu"
+local HOOK_ORDER_EQUIPMENT     = "TTT_GiftWrapSV_OrderedEquipment"
+local HOOK_INIT_FIXES          = "TTT_GiftWrapSV_InitDoFixes"
+local HOOK_CLOSE_ON_DEATH      = "TTT_GiftWrapSV_CloseMenusOnDeath"
 
 
 if CLIENT then
     -- note: inspired by but mostly separate from the HELPSCRN menu,
     --       only uses its table to store some references
-    local navWidth = 175
     local frameWidth  = 800
-    local frameHeight = 500
     local padding = 5
 
     function OpenGiftOptions(gw)
         if IsValid(HELPSCRN._gwOptMenu) then return end
+        local peekMode = not utils.IsLivingPlayer(LocalPlayer())
+        local navWidth    = peekMode and 0 or 175
+        local frameHeight = peekMode and 275 or 500
 
         dbg.Log("Opening gift options...")
         HELPSCRN._gwRef = gw -- Make gift reference global for menu (bad but idk)
@@ -117,11 +120,22 @@ if CLIENT then
         end
     end
 
-    function UpdateGiftContentMenu(owner)
-        if IsValid(owner) and owner ~= LocalPlayer() then return end
+    function ToggleGiftOptions(gw)
+        if HELPSCRN._gwOptMenu then
+            HELPSCRN._gwOptMenu:Close()
+        else
+            OpenGiftOptions(gw)
+        end
+    end
 
-        if IsValid(HELPSCRN._gwOptMenu) and IsValid(HELPSCRN._gwOptMenu.contentsBtn) then
-            dbg.Log("Reloading content menu due to change for owner", owner)
+    function UpdateGiftContentMenu(owner)
+        if not IsValid(owner) or not IsValid(HELPSCRN._gwOptMenu) then return end
+
+        if owner ~= LocalPlayer() then
+            HELPSCRN._gwOptMenu:Close()
+
+        elseif IsValid(HELPSCRN._gwOptMenu.contentsBtn) then
+            dbg.Log("Reloading content menu due to change")
             HELPSCRN._gwOptMenu.contentsBtn.DoClick(HELPSCRN._gwOptMenu.contentsBtn)
         end
     end
@@ -154,10 +168,18 @@ if CLIENT then
         end
     end)
 
+    net.Receive(GIFTWRAP_CLOSE_MENUS_MSG, function()
+        if IsValid(HELPSCRN._gwOptMenu) then
+            HELPSCRN._gwOptMenu:Close()
+            RunConsoleCommand("ttt_cl_traitorpopup_close")
+        end
+    end)
+
 
 elseif SERVER then
     util.AddNetworkString(GIFTWRAP_CLEAR_BUY_MSG)
     util.AddNetworkString(GIFTWRAP_CLOSE_DMS_MSG)
+    util.AddNetworkString(GIFTWRAP_CLOSE_MENUS_MSG)
     util.AddNetworkString(GIFTWRAP_DROP_CONT_MSG)
     util.AddNetworkString(GIFTWRAP_RANDOM_GIFT_MSG)
     util.AddNetworkString(GIFTWRAP_UPDATE_GIFTEE_MSG)
@@ -299,6 +321,13 @@ elseif SERVER then
                 ply:AddCredits(1)
                 ply:SetNWBool("GotFirstTimeSample", true)
             end
+        end
+    end)
+
+    hook.Add("PlayerDeath", HOOK_CLOSE_ON_DEATH, function(ply)
+        if ply._gwInOptMenu then
+            net.Start(GIFTWRAP_CLOSE_MENUS_MSG)
+            net.Send(ply)
         end
     end)
 

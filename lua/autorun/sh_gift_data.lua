@@ -64,6 +64,7 @@ GiftSound = {
     Musical    = {snd="", desc="musical"},
     Squeaky    = {snd="", desc="squeaky"}, --new, underused
     Hollow     = {snd="", desc="hollow"}, --new, underused
+    Clicky     = {snd="", desc="clicky"}, --new, underused
     Rattling   = {snd="", desc="like it's rattling"}, --new, underused
     Hissing    = {snd="", desc="like it's hissing"}, --new, underused
     Ringing    = {snd="", desc="like it's ringing"}, --new, underused
@@ -212,10 +213,13 @@ local giftDataCatalog = {
     binder = GiftData.New {
         name     = "Binder",              desc       = "a binder",
         category = GiftCategory.PhysProp, identifiers = {
-            "models/props_lab/bindergraylabel01a.mdl",
-            "models/props_lab/binderredlabel.mdl",
+            "models/props_lab/binderblue.mdl",
             "models/props_lab/binderbluelabel.mdl",
+            "models/props_lab/bindergraylabel01a.mdl",
+            "models/props_lab/bindergraylabel01b.mdl",
+            "models/props_lab/bindergreen.mdl",
             "models/props_lab/bindergreenlabel.mdl",
+            "models/props_lab/binderredlabel.mdl",
         },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Plastic, attrib_size = GiftSize.Large,
@@ -246,6 +250,7 @@ local giftDataCatalog = {
             "models/props_vehicles/car003a_physics.mdl",
             "models/props_vehicles/car003b_physics.mdl",
             "models/props_vehicles/car004a_physics.mdl",
+            "models/props_vehicles/car004b_physics.mdl",
             "models/props_vehicles/car005a_physics.mdl",
             "models/props_vehicles/car005b_physics.mdl",
         },
@@ -259,6 +264,20 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.None,      attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Cardboard, attrib_feel = GiftFeel.Fragile,
+    },
+    chair_desk = GiftData.New {
+        name     = "Desk Chair",          desc       = "a discount desk chair",
+        category = GiftCategory.PhysProp, identifier = "models/props_c17/chair_office01a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Stinky,   attrib_feel = GiftFeel.Soft,
+    },
+    cinder_block = GiftData.New {
+        name     = "Cinder Block",        desc       = "a cinder block",
+        category = GiftCategory.PhysProp, identifier = "models/props/de_inferno/cinderblock.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Mineral,  attrib_feel = GiftFeel.Heavy,
     },
     cirno_fumo = GiftData.New {
         name     = "Cirno Fumo",          desc       = "a fumo",
@@ -292,12 +311,36 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.None,   attrib_size = GiftSize.Max,
         attrib_smell = GiftSmell.Cotton, attrib_feel = GiftFeel.Massive,
     },
+    computer_keyboard = GiftData.New {
+        name     = "Keyboard",         desc       = "a keyboard",
+        category = GiftCategory.PhysProp, identifier = "models/props_c17/computer01_keyboard.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Clicky,   attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Caffeine, attrib_feel = GiftFeel.Flat,
+    },
+    computer_monitor = GiftData.New {
+        name     = "CRT Monitor",          desc       = "a CRT monitor",
+        category = GiftCategory.PhysProp, identifier = "models/props_lab/monitor02.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Whirring, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Dusty,    attrib_feel = GiftFeel.Electric,
+    },
     dead_bunger = GiftData.New {
         name     = "Dead Bunger",         desc       = "a dead Bunger",
         category = GiftCategory.PhysProp, identifier = "models/betterbunger.mdl",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Squishy,
+    },
+    desk = GiftData.New {
+        name     = "Desk",                desc        = "an old desk",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props_wasteland/controlroom_desk001a.mdl",
+            "models/props_wasteland/controlroom_desk001b.mdl",
+        },
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Max,
+        attrib_smell = GiftSmell.Dusty,    attrib_feel = GiftFeel.Long,
     },
     door = GiftData.New {
         name     = "Door",                desc       = "a door",
@@ -315,6 +358,13 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Oily,     attrib_feel = GiftFeel.Round,
         special_setup = "explo_barrel_setup"
     },
+    file_cabinet = GiftData.New {
+        name     = "File Cabinet",        desc       = "a file cabinet",
+        category = GiftCategory.PhysProp, identifier = "models/props_wasteland/controlroom_filecabinet002a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Paper,    attrib_feel = GiftFeel.Massive,
+    },
     goober = GiftData.New {
         name     = "Goober",              desc       = "a goober",
         category = GiftCategory.PhysProp, identifier = "models/goobers/goober/goober_0.mdl",
@@ -331,6 +381,20 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Bleating, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Wool,     attrib_feel = GiftFeel.Otherworldly,
         adjMass = 40,
+    },
+    lamp_desk = GiftData.New {
+        name     = "Desk Lamp",           desc       = "a desk lamp",
+        category = GiftCategory.PhysProp, identifier = "models/props_lab/desklamp01.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Paint,    attrib_feel = GiftFeel.Bright,
+    },
+    lamp_floor = GiftData.New {
+        name     = "Floor Lamp",          desc       = "a lamp",
+        category = GiftCategory.PhysProp, identifier = "models/props_interiors/furniture_lamp01a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Dusty,    attrib_feel = GiftFeel.Bright,
     },
     lamp_hanging = GiftData.New {
         name     = "Hanging Lamp",        desc       = "a lamp",
@@ -362,8 +426,11 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Ash,      attrib_feel = GiftFeel.Hollow,
     },
     milk_jug = GiftData.New {
-        name     = "Milk Jug",            desc       = "an old milk jug",
-        category = GiftCategory.PhysProp, identifier = "models/props_junk/garbage_milkcarton001a.mdl",
+        name     = "Milk Jug",            desc        = "an old milk jug",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props_junk/garbage_milkcarton001a.mdl",
+            "models/props_junk/garbage_milkcarton002a.mdl",
+        },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Plastic, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Cold,
@@ -3421,7 +3488,7 @@ function GiftData:GetName(giftEnt, giftee)
     if IsValid(wrappedEnt) and self.category == GiftCategory.Ragdoll then
         local storedTeam = wrappedEnt:GetNWString("GWStoredTeam")
 
-        if storedTeam ~= "" and (CORPSE.GetFound(wrappedEnt) or giftee:GetSubRoleData().isOmniscientRole) then
+        if storedTeam ~= "" and (CORPSE.GetFound(wrappedEnt) or utils.IsOmniscient(giftee)) then
             return "Dead "..storedTeam
         end
     end
@@ -3441,7 +3508,7 @@ function GiftData:GetDesc(giftEnt, giftee, forOthers)
     local wrappedEnt = giftEnt:GetStoredGift()
 
     if IsValid(wrappedEnt) and self.category == GiftCategory.Ragdoll and CORPSE.IsValidBody(wrappedEnt) then
-        if CORPSE.GetFound(wrappedEnt) or (giftee:GetSubRoleData().isOmniscientRole and not forOthers) then
+        if CORPSE.GetFound(wrappedEnt) or (utils.IsOmniscient(giftee) and not forOthers) then
             if CORPSE.GetPlayer(wrappedEnt) == giftee then -- death faker
                 return (forOthers and "their" or "your").." own body"
             else

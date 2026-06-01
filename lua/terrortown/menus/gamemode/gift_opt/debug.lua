@@ -6,7 +6,7 @@ local utils = GW_Utils
 local dbg   = GW_DBG
 
 function CLGAMEMODESUBMENU:ShouldShow()
-    return dbg.AllowDebugMenu()
+    return dbg.AllowDebugMenu() and utils.IsLivingPlayer(LocalPlayer())
 end
 
 function CLGAMEMODESUBMENU:Populate(parent)

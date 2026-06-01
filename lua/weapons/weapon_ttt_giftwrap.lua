@@ -7,6 +7,7 @@ local utils = GW_Utils
 local WRAP_NAME = "Gift Wrap"
 local GIFT_NAME = "Gift"
 
+local HOOK_SPEC_GIFT_INDIC   = "TTT_GiftWrapCL_DrawSpectatorGiftHUD"
 local GIFTWRAP_PICKUP_MSG    = "TTT_GiftWrap_PickUpMsg"
 local GIFTWRAP_HL_CHAT_MSG   = "TTT_GiftWrap_HighlightChatMsg"
 local GIFTWRAP_GIFT_DATA_MSG = "TTT_GiftWrap_SendWrapperData"
@@ -347,6 +348,78 @@ Gifts made by others can be opened with LMB (while holding them or via crowbar),
             COLOR_NORMAL,    postHighlight
         )
     end)
+
+    hook.Add("HUDPaint", HOOK_SPEC_GIFT_INDIC, function()
+        local ply = LocalPlayer()
+        local tgt = ply:GetObserverTarget()
+        if utils.IsLivingPlayer(ply) or not IsValid(tgt) or not tgt:IsPlayer() then return end
+
+        local gift = utils.GetInventoryGiftwrap(tgt)
+        if not IsValid(gift) or not gift:HasGift() then return end
+
+        -- checks passed, start drawing gift indicator
+        local curHUD = HUDManager.GetHUD()
+        local hud = huds.GetStored(curHUD)
+
+        -- positioning & drawing background box
+        local x = 10
+        local y = ScrH() - 230
+        local bgSize = 30
+        local iconScale = 0.59
+        local textScale = 0.7
+        local bgCol = Color(49, 71, 94)
+        local xOffset = 0
+
+        if curHUD == "pure_skin" then
+            local playerInfoHUD = hudelements.GetStored("pure_skin_playerinfo")
+            local infoPos = playerInfoHUD:GetPos()
+            local infoSize = playerInfoHUD:GetSize()
+            infoPos.y = infoPos.y + infoSize.h - playerInfoHUD.lpw
+            infoSize.h = playerInfoHUD.lpw
+
+            x = infoPos.x + infoSize.w + playerInfoHUD.pad
+            y = infoPos.y
+            bgSize = infoSize.h
+            bgCol = hud.basecolor
+
+        elseif curHUD == "old_ttt" then
+            local playerInfoHUD = hudelements.GetStored("old_ttt_info")
+            local infoPos = playerInfoHUD:GetPos()
+            local infoSize = playerInfoHUD:GetSize()
+
+            x = infoPos.x + infoSize.w + 10
+            y = infoPos.y + infoSize.h - bgSize
+            bgCol = playerInfoHUD.bg_colors.background_main
+            xOffset = 1
+        end
+
+        surface.SetDrawColor(clr(bgCol))
+        if curHUD ~= "old_ttt" then
+            surface.DrawRect(x, y, bgSize, bgSize)
+            DrawHUDElementLines(x, y, bgSize, bgSize, 255)
+        else
+            draw.RoundedBox(8, x, y, bgSize, bgSize, bgCol)
+        end
+
+        -- drawing gift icon
+        draw.FilteredShadowedTexture(
+            x + (bgSize/2) * (1 - iconScale) + xOffset,
+            y + 2,
+            bgSize * iconScale, bgSize * iconScale,
+            MAT_GIFT_ICON, 255, COLOR_WHITE, 1
+        )
+
+        -- drawing keybind
+        draw.AdvancedText(
+            Key("gm_showspare2"),
+            "weapon_hud_help_key",
+            x + (bgSize/2) - 1 + xOffset,
+            y + bgSize - 10,
+            COLOR_WHITE,
+            TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP,
+            true, textScale
+        )
+    end)
 end
 
 ----------------------------------
@@ -627,6 +700,10 @@ function SWEP:OnRemove()
             if self:GetNW2Bool("GWStinky") and IsValid(owner) then
                 owner:StopParticles()
             end
+        end
+    elseif CLIENT then
+        if IsValid(HELPSCRN._gwOptMenu) and HELPSCRN._gwRef == self then
+            HELPSCRN._gwOptMenu:Close()
         end
     end
 end
@@ -1088,7 +1165,7 @@ elseif CLIENT then
 
     hook.Add("Think", HOOK_RESET_VM_COLORS, function()
         local ply = LocalPlayer()
-        if not IsValid(ply) then return end
+        if not utils.IsLivingPlayer(ply) then return end
         local heldWep = ply:GetActiveWeapon()
 
         if not utils.IsGiftWrap(heldWep) then

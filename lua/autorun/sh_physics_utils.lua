@@ -185,6 +185,10 @@ if SERVER then
         print("WRAPPABLE ENTITIES")
         local hasDataCnt = 0
         local classCounts  = {}
+        local modelSetSizeND = 0
+        local modelSetND = {}
+        local modelSetSizeWD = 0
+        local modelSetWD = {}
 
         for _, ent in ipairs(wrappables) do
             local giftLabel, giftData = GetEntGiftData(ent, true)
@@ -196,15 +200,27 @@ if SERVER then
                 class = "ammo boxes"
             end
             classCounts[class] = (classCounts[class] or 0) + 1
+            local model = ent:GetModel()
 
             if giftData and giftData.autoGen then
-                print("-> Missing data:", ent, GW_DBG.PosStr(ent:GetPos()), ent:GetModel())
+                print("-> Missing data:", ent, GW_DBG.PosStr(ent:GetPos()), model)
                 debugoverlay.Sphere(ent:GetPos(), 50, 15, GW_DBG.Green)
+
+                if not modelSetND[model] then
+                    modelSetND[model] = true
+                    modelSetSizeND = modelSetSizeND + 1
+                end
             else
                 hasDataCnt = hasDataCnt + 1
+
+                if not modelSetWD[model] then
+                    modelSetWD[model] = true
+                    modelSetSizeWD = modelSetSizeWD + 1
+                end
             end
         end
         print("Has data: "..hasDataCnt.."/"..#wrappables .." ("..(string.format("%.1f", 100 * hasDataCnt / math.max(#wrappables, 1))).."%)")
+        print("Unique models: "..modelSetSizeWD.."/"..(modelSetSizeND + modelSetSizeWD).." have data ("..modelSetSizeND.." missing)")
 
         local uniqueClasses = {}
         for class, count in pairs(classCounts) do

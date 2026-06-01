@@ -7,6 +7,7 @@ L["giftwrap_instruction_rmb"] = "Gift options"
 L["gift_instruction_wrapper_lmb"] = "Throw gift"
 L["gift_instruction_all_lmb"] = "Open gift"
 L["gift_instruction_all_rmb"] = "Shake gift"
+L["gift_instruction_spec"] = "Press {usekey} to look inside"
 
 L["gift_mv_giftee"] = "A gift just for you!"
 L["gift_mv_wrapper"] = "Your thrown gift"

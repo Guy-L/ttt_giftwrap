@@ -5,6 +5,9 @@ CLGAMEMODESUBMENU.priority = 98
 local utils = GW_Utils
 local dbg   = GW_DBG
 
+function CLGAMEMODESUBMENU:ShouldShow()
+    return utils.IsLivingPlayer(LocalPlayer())
+end
 
 function CLGAMEMODESUBMENU:Populate(parent)
     local gwRef = HELPSCRN._gwRef

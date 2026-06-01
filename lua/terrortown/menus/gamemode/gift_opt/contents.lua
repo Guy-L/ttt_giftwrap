@@ -387,6 +387,7 @@ end
 
 function CLGAMEMODESUBMENU:Populate(parent)
     local gwRef = HELPSCRN._gwRef
+    local ply = LocalPlayer()
 
     if not IsValid(gwRef) then
         local error_line = vgui.Create("DLabel", parent)
@@ -401,6 +402,7 @@ function CLGAMEMODESUBMENU:Populate(parent)
     -- Current Contents ---------------------------
     local giftData = GetGiftDataFromLabel(gwRef:GetCachedDataLabel())
     CreateCurrentContentsBox(gwRef, giftData, parent)
+    if not utils.IsLivingPlayer(ply) then return end
 
     ------------------------------------------------
     ---- Change Contents ---------------------------
@@ -458,7 +460,6 @@ function CLGAMEMODESUBMENU:Populate(parent)
         shopBtn:SetTooltip(TL("gift_opt_change_form_error_full"))
 
     elseif not GetGlobalBool("ttt2_deathmatch_active", false) then
-        local ply = LocalPlayer()
         local rd = roles.GetByIndex(GetShopFallback(ply:GetSubRole()))
         local noShop = GetGlobalString("ttt_" .. rd.abbr .. "_shop_fallback") == SHOP_DISABLED
         local noCreds = ply:GetCredits() <= 0
