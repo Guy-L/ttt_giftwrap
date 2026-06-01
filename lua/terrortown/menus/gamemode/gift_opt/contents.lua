@@ -18,7 +18,7 @@ local queuedSpawnIcons = {}
 local lastRequestingImg = nil
 
 local function GenerateSpawnIcon(model)
-    dbg.Log("Building icon for "..model.."...")
+    dbg.Log("Building spawn icon for "..model.."...")
 
     local wipSpawnIcon = vgui.Create("SpawnIcon", HELPSCRN._gwOptMenu)
     wipSpawnIcon:SetPos(-1000, -1000)
@@ -43,7 +43,39 @@ hook.Add("SpawniconGenerated", "TEST_GW_SPAWNICON", function(lastModel, imageNam
     end
 end)
 
-function SetModelImage(dImage, giftEnt, giftData)
+local contentsRT = GetRenderTarget("gw_contents_icon_rt", 512, 512)
+local contentsMat = CreateMaterial("gw_contents_icon_mat", "UnlitGeneric", {
+    ["$basetexture"] = contentsRT:GetName(),
+    ["$translucent"] = "1"
+})
+
+local function GenerateRenderIcon(ent, giftData)
+    dbg.Log("Manually rendering icon for " .. tostring(ent))
+
+    -- camera offset so we see the whole box
+    local center = ent:GetPos()
+    --local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+    --local size = (maxs - mins):Length()
+    local size = giftData.attrib_size * 700 -- offsets the near-zero FOV
+
+    local offset = ent:GetForward() + ent:GetRight() + ent:GetUp()
+    local camPos = center + offset * size
+    local camAng = (center - camPos):Angle()
+
+    render.PushRenderTarget(contentsRT)
+    render.Clear(0, 0, 0, 0, true, true)
+
+    cam.Start3D(camPos, camAng, 1, 0, 0, 512, 512)
+    render.SetLightingMode(1)
+    ent:DrawModel()
+    render.SetLightingMode(0)
+    cam.End3D()
+
+    render.PopRenderTarget()
+    lastRequestingImg:SetMaterial(contentsMat)
+end
+
+local function SetModelImage(dImage, giftEnt, giftData)
     local wrappedEnt = giftEnt:GetStoredGift()
     local entModel
 
@@ -90,7 +122,12 @@ function SetModelImage(dImage, giftEnt, giftData)
     else
         dImage:SetImage("icon16/help.png")
         lastRequestingImg = dImage
-        GenerateSpawnIcon(entModel)
+
+        if giftData.category == GiftCategory.PhysBox then
+            GenerateRenderIcon(wrappedEnt, giftData)
+        else
+            GenerateSpawnIcon(entModel)
+        end
     end
 end
 

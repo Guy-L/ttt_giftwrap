@@ -15,7 +15,7 @@ local SPECIAL_WEIGHT_MULT = utils.Cvar(SPECIAL_WEIGHT_NAME, "1", 0, 5, "Weight m
 local CORPSE_STINK_ENABLE = utils.Cvar("ttt2_giftwrap_corpse_stink_enable", "1", 0, 1, "Whether gifts containing fleshy ragdolls will start to stink (particles+sound).")
 local CORPSE_STINK_DELAY  = utils.Cvar("ttt2_giftwrap_corpse_stink_delay", "15", 0, 120, "Delay before gifts containing fleshy ragdolls start to stink if enabled, in seconds.")
 
-local PLACEHOLDER_DATA_REMOVE    = "GiftWrap_RemoveGiftData"
+local PLACEHOLDER_DATA_REMOVE    = "GiftWrap_RemovePlaceholderGiftData"
 local OVERRIDE_MV_HOOK           = "GiftWrapCL_OverrideMarkerVisionRenderHook"
 local INVALID_ID                 = "GiftWrap_InvalidID"
 
@@ -30,16 +30,17 @@ local SCORE_INTERCEPT = -5
 
 GiftCategory = {
     PhysProp      = {id=1,  text="Prop",           icon="vgui/ttt/menu/icon_box",      weight=PROP_WEIGHT_NAME},
-    SENT          = {id=2,  text="Special Entity", icon="vgui/ttt/menu/icon_sparkles", weight=SPECIAL_WEIGHT_NAME},
-    NPC           = {id=3,  text="NPC",            icon="vgui/ttt/menu/icon_headcrab", weight=SPECIAL_WEIGHT_NAME},
-    FloorSWEP     = {id=4,  text="Floor Weapon",   icon="vgui/ttt/menu/icon_gun",      weight=FLOOR_WEIGHT_NAME},
-    WorldSWEP     = {id=5,  text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME},
-    AutoEquipSWEP = {id=6,  text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME},
-    Item          = {id=7,  text="Shop Item",      icon="vgui/ttt/menu/icon_bottle",   weight=SHOP_WEIGHT_NAME},
-    Ammo          = {id=8,  text="Ammo Box",       icon="vgui/ttt/menu/icon_ammo",     weight=FLOOR_WEIGHT_NAME},
-    Vehicle       = {id=9,  text="Vehicle",        icon="vgui/ttt/menu/icon_car",      weight=SPECIAL_WEIGHT_NAME},
-    Ragdoll       = {id=10, text="Ragdoll",        icon="vgui/ttt/menu/icon_ragdoll",  weight=SPECIAL_WEIGHT_NAME},
-    Unknown       = {id=11, text="Unknown",        icon="vgui/ttt/menu/icon_question", weight=SPECIAL_WEIGHT_NAME},
+    PhysBox       = {id=2,  text="Map Prop",       icon="vgui/ttt/menu/icon_box",      weight=PROP_WEIGHT_NAME},
+    SENT          = {id=3,  text="Special Entity", icon="vgui/ttt/menu/icon_sparkles", weight=SPECIAL_WEIGHT_NAME},
+    NPC           = {id=4,  text="NPC",            icon="vgui/ttt/menu/icon_headcrab", weight=SPECIAL_WEIGHT_NAME},
+    FloorSWEP     = {id=5,  text="Floor Weapon",   icon="vgui/ttt/menu/icon_gun",      weight=FLOOR_WEIGHT_NAME},
+    WorldSWEP     = {id=6,  text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME},
+    AutoEquipSWEP = {id=7,  text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME},
+    Item          = {id=8,  text="Shop Item",      icon="vgui/ttt/menu/icon_bottle",   weight=SHOP_WEIGHT_NAME},
+    Ammo          = {id=9,  text="Ammo Box",       icon="vgui/ttt/menu/icon_ammo",     weight=FLOOR_WEIGHT_NAME},
+    Vehicle       = {id=10, text="Vehicle",        icon="vgui/ttt/menu/icon_car",      weight=SPECIAL_WEIGHT_NAME},
+    Ragdoll       = {id=11, text="Ragdoll",        icon="vgui/ttt/menu/icon_ragdoll",  weight=SPECIAL_WEIGHT_NAME},
+    Unknown       = {id=12, text="Unknown",        icon="vgui/ttt/menu/icon_question", weight=SPECIAL_WEIGHT_NAME},
 }
 
 GiftSound = {
@@ -101,6 +102,7 @@ GiftSmell = {
     Caffeine    = "like caffeine",
     Cotton      = "like cotton", -- currently props only
     Wool        = "like wool", -- new, underused
+    Clay        = "like clay", -- new, underused
     Leather     = "like leather",
     Nice        = "nice",
     Stinky      = "stinky",
@@ -151,6 +153,7 @@ GiftFeel = {
     RealityWarp   = "reality-warping",
     Futuristic    = "futuristic",
     Scientific    = "scientific", -- new, underused
+    Informative   = "informative", -- new, underused
     Negative      = "negative",
     Jolly         = "jolly",
     Ghostly       = "ghostly",
@@ -198,6 +201,25 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Meowing,  attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Metallic, attrib_feel = GiftFeel.Otherworldly,
     },
+    barrel = GiftData.New {
+        name     = "Barrel",              desc       = "a barrel",
+        category = GiftCategory.PhysProp, identifier = "models/props_c17/oildrum001.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = 4.3,
+        attrib_smell = GiftSmell.Oily,     attrib_feel = GiftFeel.Round,
+    },
+    binder = GiftData.New {
+        name     = "Binder",              desc       = "a binder",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props_lab/bindergraylabel01a.mdl",
+            "models/props_lab/binderredlabel.mdl",
+            "models/props_lab/binderbluelabel.mdl",
+            "models/props_lab/bindergreenlabel.mdl",
+        },
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Plastic, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Paper,   attrib_feel = GiftFeel.Heavy,
+    },
     cannonball_prop = GiftData.New {
         name     = "Used Cannonball",     desc       = "an inert cannonball",
         category = GiftCategory.PhysProp, identifier = "models/props_phx/misc/smallcannonball.mdl",
@@ -206,7 +228,7 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Round,
     },
     car_wreck = GiftData.New {
-        name     = "Wrecked Car",         desc       = "a broken down car",
+        name     = "Wrecked Car",         desc        = "a broken down car",
         category = GiftCategory.PhysProp, identifiers = {
             "models/props_vehicles/car002a_physics.mdl",
             "models/props_vehicles/car002b_physics.mdl",
@@ -220,6 +242,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Max,
         attrib_smell = GiftSmell.Oily,     attrib_feel = GiftFeel.Massive,
     },
+    cardboard_box = GiftData.New {
+        name     = "Cardboard Box",       desc       = "a cardboard box",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/cardboard_box001a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.None,      attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Cardboard, attrib_feel = GiftFeel.Fragile,
+    },
     cirno_fumo = GiftData.New {
         name     = "Cirno Fumo",          desc       = "a fumo",
         category = GiftCategory.PhysProp, identifier = "models/goobers/cirno/cirno.mdl",
@@ -228,6 +257,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.None,   attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Cotton, attrib_feel = GiftFeel.Cold,
         adjMass = 40,
+    },
+    coffee_mug = GiftData.New {
+        name     = "Coffee Mug",          desc       = "a coffee mug",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/garbage_coffeemug001a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Glass,    attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Caffeine, attrib_feel = GiftFeel.Round,
     },
     companion_doll = GiftData.New {
         name     = "Companion Doll",      desc       = "a plush doll",
@@ -257,7 +293,7 @@ local giftDataCatalog = {
         category = GiftCategory.PhysProp, identifier = "models/props_c17/oildrum001_explosive.mdl",
         can_be_random_gift = true,
         factor_rarity = 3, factor_quality = -9,
-        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Huge,
+        attrib_sound = GiftSound.Metallic, attrib_size = 4.3,
         attrib_smell = GiftSmell.Oily,     attrib_feel = GiftFeel.Round,
         special_setup = "explo_barrel_setup"
     },
@@ -278,6 +314,13 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Wool,     attrib_feel = GiftFeel.Otherworldly,
         adjMass = 40,
     },
+    lamp_hanging = GiftData.New {
+        name     = "Hanging Lamp",        desc       = "a lamp",
+        category = GiftCategory.PhysProp, identifier = "models/props_wasteland/prison_lamp001c.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Glass,    attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Metallic, attrib_feel = GiftFeel.Bright,
+    },
     maxwell_prop = GiftData.New {
         name     = "Maxwell",             desc       = "a dapper gentleman",
         category = GiftCategory.PhysProp, identifier = "models/goobers/dingus/dingus.mdl",
@@ -286,6 +329,20 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Meowing, attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Fur,     attrib_feel = GiftFeel.Soft,
     },
+    metal_pan = GiftData.New {
+        name     = "Metal Pan",           desc       = "a cooking pan",
+        category = GiftCategory.PhysProp, identifier = "models/props_c17/metalpot002a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Ash,      attrib_feel = GiftFeel.Flat,
+    },
+    metal_pot = GiftData.New {
+        name     = "Metal Pot",           desc       = "a metal pot",
+        category = GiftCategory.PhysProp, identifier = "models/props_c17/metalpot001a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Ash,      attrib_feel = GiftFeel.Hollow,
+    },
     neco_arc = GiftData.New {
         name     = "Neco Arc Plushie",    desc       = "a weird cat",
         category = GiftCategory.PhysProp, identifier = "models/goobers/necoarc/neko_arc_plush.mdl",
@@ -293,6 +350,20 @@ local giftDataCatalog = {
         factor_rarity = 1, factor_quality = 3,
         attrib_sound = GiftSound.Meowing, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Stinky,  attrib_feel = GiftFeel.Otherworldly,
+    },
+    newspaper = GiftData.New {
+        name     = "Newspaper",           desc       = "the newspaper",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/garbage_newspaper001a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Rustling, attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Dry,      attrib_feel = GiftFeel.Informative,
+    },
+    plastic_crate = GiftData.New {
+        name     = "Plastic Crate",       desc       = "a plastic crate",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/plasticcrate01a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Plastic, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Hollow,
     },
     plush_turtle = GiftData.New {
         name     = "Plush Turtle",        desc       = "a turtle plushie",
@@ -358,7 +429,7 @@ local giftDataCatalog = {
         can_be_random_gift = true,
         factor_rarity = 5, factor_quality = 2,
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Salty,  attrib_feel = GiftFeel.Cursed,
+        attrib_smell = GiftSmell.Salty,    attrib_feel = GiftFeel.Cursed,
     },
     used_sopd = GiftData.New {
         name     = "Used Sword of Player Defeat",
@@ -374,6 +445,37 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Round,
+    },
+    wooden_chair = GiftData.New {
+        name     = "Wooden Chair",        desc        = "a wooden chair",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/nova/chair_wood01.mdl",
+            "models/props_interiors/furniture_chair01a.mdl",
+        },
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Wooden, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Light,
+    },
+    wooden_crate = GiftData.New {
+        name     = "Wooden Crate",        desc       = "a wooden crate",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/wood_crate001a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Wooden, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Box,
+    },
+    wooden_crate_big = GiftData.New {
+        name     = "Wooden Crate (Big)",  desc       = "a large wooden crate",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/wood_crate002a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Wooden, attrib_size = 6,
+        attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Massive,
+    },
+    wooden_pallet = GiftData.New {
+        name     = "Wooden Pallet",       desc       = "a wooden pallet",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/wood_pallet001a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Wooden, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Flat,
     },
 
     ----------------------------------------------------------------------
@@ -561,8 +663,8 @@ local giftDataCatalog = {
         category = GiftCategory.SENT, identifier = "ttt_shard_of_greed",
         can_be_random_gift = true,
         factor_rarity = 0.7, factor_quality = 2,
-        attrib_sound = GiftSound.Glass,  attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Earthy, attrib_feel = GiftFeel.Cursed,
+        attrib_sound = GiftSound.Glass, attrib_size = GiftSize.Small,
+        attrib_smell = GiftSmell.Clay,  attrib_feel = GiftFeel.Cursed,
         special_setup = "pog_shard_setup", up_vel = 400, up_min = 0, up_max = 2,
     },
     zombie = GiftData.New {
@@ -575,6 +677,17 @@ local giftDataCatalog = {
     },
 
     ----------------------------------------------------------------------
+    -- Func PhysBoxes (map-bound model-less props)
+    seliana_carpet = GiftData.New {
+        name     = "Carpet",             desc       = "a fancy carpet",
+        category = GiftCategory.PhysBox, identifier = "Carpet",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Max,
+        attrib_smell = GiftSmell.Dusty,    attrib_feel = GiftFeel.Soft,
+        available_on_map = "ttt_seliana",
+    },
+
+    ----------------------------------------------------------------------
     -- Ragdolls
     seekgull_corpse = GiftData.New {
         name     = "Dead Seekgull",      desc       = "a dead seagull",
@@ -584,7 +697,7 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Salty,   attrib_feel = GiftFeel.Icky,
     },
     terror_corpse = GiftData.New {
-        name     = "Dead Terrorist",     desc       = "a body",
+        name     = "Dead Terrorist",     desc        = "a body",
         category = GiftCategory.Ragdoll, identifiers = {
             "models/player/leet.mdl",
             "models/player/phoenix.mdl",
@@ -605,7 +718,7 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Heavy,
     },
     hostage_corpse = GiftData.New {
-        name     = "Dead Hostage"  ,     desc       = "a body",
+        name     = "Dead Hostage",       desc        = "a body",
         category = GiftCategory.Ragdoll, identifiers = {
             "models/player/hostage/hostage_01.mdl",
             "models/player/hostage/hostage_02.mdl",
@@ -634,7 +747,7 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Heavy,
     },
     kleiner_corpse = GiftData.New {
-        name     = "Dead Kleiner",       desc       = "Kleiner's body",
+        name     = "Dead Kleiner",       desc        = "Kleiner's body",
         category = GiftCategory.Ragdoll, identifiers = {
             "models/player/kleiner.mdl",
             "models/kleiner.mdl",
@@ -667,13 +780,13 @@ local giftDataCatalog = {
     catbine_corpse = GiftData.New {
         name     = "Dead Catbine",       desc       = "a body",
         category = GiftCategory.Ragdoll, identifier = "models/catbineelite.mdl",
-        special_setup = "catbine_restriction",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
         attrib_smell = GiftSmell.Fur,      attrib_feel = GiftFeel.Heavy,
+        available_on_map = "ttt_unsung_star",
     },
     infected_corpse = GiftData.New {
-        name     = "Dead Infected",      desc       = "a dead undead",
+        name     = "Dead Infected",      desc        = "a dead undead",
         category = GiftCategory.Ragdoll, identifiers = {
             "models/player/corpse1.mdl",
             "models/humans/corpse1.mdl",
@@ -1439,8 +1552,8 @@ local giftDataCatalog = {
         name     = "Pot of Greedier (Instant)", desc       = "Pot of Greed, which lets you draw two additional gifts from your deck",
         category = GiftCategory.Item,           identifier = "item_ttt_potofgreedier",
         can_be_random_gift = false,
-        attrib_sound = GiftSound.Glass,  attrib_size = GiftSize.Large,
-        attrib_smell = GiftSmell.Earthy, attrib_feel = GiftFeel.Random,
+        attrib_sound = GiftSound.Glass, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Clay,  attrib_feel = GiftFeel.Random,
         can_get_multiple = true,
     },
     pap = GiftData.New {
@@ -1542,60 +1655,61 @@ local GunType = {
 
 -- to populate the list with standard (non-random / equiprobable) gun data
 local standardGuns = {
-    ares_shrike   = {cat = GiftCategory.FloorSWEP, name = "Ares Shrike",     id = "weapon_hp_ares_shrike",    an=true,  random=true, rarity=1, quality=-1,  type = GunType.Minigun},
-    ak47          = {cat = GiftCategory.WorldSWEP, name = "AK47",            id = "weapon_ttt_ak47",          an=true,  random=false,                       type = GunType.Other,   smell = GiftSmell.Woody},
-    aug           = {cat = GiftCategory.FloorSWEP, name = "AUG",             id = "weapon_ttt_aug",           an=true,  random=true, rarity=1, quality=1,   type = GunType.Other},
-    blunderbus    = {cat = GiftCategory.WorldSWEP, name = "Blunderbus",      id = "weapon_ttt_blunderbus",    an=false, random=false,                       type = GunType.Other,   sound = GiftSound.Thudding, smell = GiftSmell.Dusty, feel = GiftFeel.Powerful},
-    catgun        = {cat = GiftCategory.FloorSWEP, name = "M1A0 Cat Gun",    id = "weapon_catgun",            an=false, random=true, rarity=1, quality=2,   type = GunType.Other,   sound = GiftSound.Meowing, smell = GiftSmell.Fur, feel = GiftFeel.Alive, altname = "stray catgun"},
-    dance_gun     = {cat = GiftCategory.FloorSWEP, name = "Dance Gun",       id = "dancedead",                an=false, random=false,                       type = GunType.Pistol,  sound = GiftSound.Musical, smell = GiftSmell.Sterile},
-    deagle        = {cat = GiftCategory.FloorSWEP, name = "Deagle",          id = "weapon_zm_revolver",       an=false, random=true, rarity=1, quality=3,   type = GunType.Pistol,  pistol = true},
-    double_barrel = {cat = GiftCategory.WorldSWEP, name = "Double Barrel",   id = "weapon_sp_dbarrel",        an=false, random=false,                       type = GunType.Shotgun, feel = GiftFeel.Powerful},
-    famas         = {cat = GiftCategory.FloorSWEP, name = "Famas",           id = "weapon_ttt_famas",         an=false, random=true, rarity=1, quality=1,   type = GunType.Other},
-    g3sg1         = {cat = GiftCategory.FloorSWEP, name = "G3SG1",           id = "weapon_ttt_g3sg1",         an=false, random=true, rarity=1, quality=1,   type = GunType.Rifle},
-    galil         = {cat = GiftCategory.FloorSWEP, name = "Galil",           id = "weapon_ttt_galil",         an=false, random=true, rarity=1, quality=1,   type = GunType.Other},
-    glock         = {cat = GiftCategory.FloorSWEP, name = "Glock",           id = "weapon_ttt_glock",         an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol},
-    hmt           = {cat = GiftCategory.FloorSWEP, name = "HMT-10",          id = "weapon_ttt_milk_hmt10",    an=true,  random=true, rarity=1, quality=0,   type = GunType.Pistol},
-    honey_badger  = {cat = GiftCategory.FloorSWEP, name = "Honey Badger",    id = "weapon_ap_hbadger",        an=false, random=true, rarity=1, quality=0,   type = GunType.Other,   smell = GiftSmell.Food},
-    huge          = {cat = GiftCategory.FloorSWEP, name = "H.U.G.E-249",     id = "weapon_zm_sledge",         an=false, random=true, rarity=1, quality=-1,  type = GunType.Minigun, size = GiftSize.Huge, altname = "H.U.G.E"},
-    kr_vector     = {cat = GiftCategory.FloorSWEP, name = "Kriss Vector",    id = "weapon_ap_vector",         an=false, random=true, rarity=1, quality=1,   type = GunType.Other,   feel = GiftFeel.Futuristic},
-    ksg           = {cat = GiftCategory.FloorSWEP, name = "KSG",             id = "weapon_ttt_ksg",           an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun},
-    m16           = {cat = GiftCategory.FloorSWEP, name = "M16",             id = "weapon_ttt_m16",           an=true,  random=true, rarity=1, quality=0,   type = GunType.Other},
-    m3s90         = {cat = GiftCategory.FloorSWEP, name = "M3S90",           id = "weapon_ttt_m3s90",         an=true,  random=true, rarity=1, quality=1,   type = GunType.Shotgun, sound = GiftSound.Thudding},
-    mac10         = {cat = GiftCategory.FloorSWEP, name = "MAC10",           id = "weapon_zm_mac10",          an=false, random=true, rarity=1, quality=0,   type = GunType.Other},
-    mauser        = {cat = GiftCategory.FloorSWEP, name = "Mauser C96",      id = "weapon_mauser",            an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol,  smell = GiftSmell.Woody, feel = GiftFeel.Bursting},
-    mp5           = {cat = GiftCategory.FloorSWEP, name = "MP5 Navy",        id = "weapon_ttt_mp5",           an=true,  random=true, rarity=1, quality=0,   type = GunType.Other},
-    mp5k          = {cat = GiftCategory.WorldSWEP, name = "MP5K",            id = "weapon_ttt_mp5k",          an=true,  random=false, rarity=1, quality=3,  type = GunType.Other},
-    mp7           = {cat = GiftCategory.FloorSWEP, name = "MP7",             id = "weapon_ttt_smg",           an=true,  random=true, rarity=1, quality=0,   type = GunType.Other},
-    mrca1         = {cat = GiftCategory.FloorSWEP, name = "MR-CA1",          id = "weapon_ap_mrca1",          an=true,  random=true, rarity=1, quality=0,   type = GunType.Other},
-    p228          = {cat = GiftCategory.FloorSWEP, name = "P228",            id = "weapon_ttt_p228",          an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol},
-    p90           = {cat = GiftCategory.WorldSWEP, name = "P90",             id = "weapon_ttt_p90",           an=false, random=true, rarity=3, quality=6,   type = GunType.Other},
-    pistol        = {cat = GiftCategory.FloorSWEP, name = "Pistol",          id = "weapon_zm_pistol",         an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol},
-    pocket_rifle  = {cat = GiftCategory.FloorSWEP, name = "Pocket Rifle",    id = "weapon_rp_pocket",         an=false, random=true, rarity=1, quality=1,   type = GunType.Rifle,   size = GiftSize.Mini, feel = GiftFeel.VerySmall},
-    pp19          = {cat = GiftCategory.FloorSWEP, name = "PP-19 Bizon",     id = "weapon_ap_pp19",           an=false, random=true, rarity=1, quality=0,   type = GunType.Other},
-    pump_shotgun  = {cat = GiftCategory.FloorSWEP, name = "Pump Shotgun",    id = "weapon_ttt_pump",          an=false, random=true, rarity=1, quality=0,   type = GunType.Shotgun, smell = GiftSmell.Dusty},
-    raging_bull   = {cat = GiftCategory.FloorSWEP, name = "Raging Bull",     id = "weapon_pp_rbull",          an=false, random=true, rarity=1, quality=1,   type = GunType.Pistol,  smell = GiftSmell.Dusty},
-    railgun       = {cat = GiftCategory.WorldSWEP, name = "Railgun",         id = "weapon_rp_railgun",        an=false, random=true, rarity=6, quality=8,   type = GunType.Rifle,   sound = GiftSound.Revving},
-    railrifle     = {cat = GiftCategory.WorldSWEP, name = "Railrifle",       id = "weapon_ttt_railslug",      an=false, random=false,                       type = GunType.Rifle,   sound = GiftSound.Revving},
-    reming_pistol = {cat = GiftCategory.FloorSWEP, name = "Remington 1858",  id = "weapon_pp_remington",      an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol,  smell = GiftSmell.Dusty},
-    reming_shgun  = {cat = GiftCategory.FloorSWEP, name = "Remington AE870", id = "weapon_ttt_milk_870",      an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun, smell = GiftSmell.Woody},
-    rifle         = {cat = GiftCategory.FloorSWEP, name = "Rifle",           id = "weapon_zm_rifle",          an=false, random=true, rarity=1, quality=2,   type = GunType.Rifle},
-    s357          = {cat = GiftCategory.WorldSWEP, name = "'SUPER' 357",     id = "weapon_ttt_s357",          an=false, random=false, rarity=1, quality=-8, type = GunType.Pistol,  feel = GiftFeel.Cursed},
-    sw500         = {cat = GiftCategory.WorldSWEP, name = "S&W 500",         id = "weapon_ttt_revolver",      an=true,  random=false,                       type = GunType.Pistol,  feel = GiftFeel.Powerful},
-    sg550         = {cat = GiftCategory.FloorSWEP, name = "SG-550",          id = "weapon_ttt_sg550",         an=true,  random=true, rarity=1, quality=0,   type = GunType.Rifle},
-    shotgun       = {cat = GiftCategory.FloorSWEP, name = "Shotgun",         id = "weapon_zm_shotgun",        an=false, random=true, rarity=1, quality=0,   type = GunType.Shotgun},
-    silent_awp    = {cat = GiftCategory.WorldSWEP, name = "Silenced AWP",    id = "weapon_ttt_awp",           an=false, random=false,                       type = GunType.Rifle,   silenced = true},
-    silent_m4a1   = {cat = GiftCategory.WorldSWEP, name = "Silenced M4A1",   id = "weapon_ttt_silm4a1",       an=false, random=false,                       type = GunType.Other,   silenced = true},
-    silent_pistol = {cat = GiftCategory.WorldSWEP, name = "Silenced Pistol", id = "weapon_ttt_sipistol",      an=false, random=false,                       type = GunType.Pistol,  silenced = true},
-    silent_smg    = {cat = GiftCategory.FloorSWEP, name = "Silent Fox",      id = "weapon_ttt_tmp_s",         an=false, random=true, rarity=5, quality=3,   type = GunType.Other,   silenced = true, smell = GiftSmell.Fur},
-    striker       = {cat = GiftCategory.WorldSWEP, name = "Striker-12",      id = "weapon_sp_striker",        an=false, random=true, rarity=5, quality=3,   type = GunType.Other},
-    tec9          = {cat = GiftCategory.FloorSWEP, name = "TEC-9",           id = "weapon_ap_tec9",           an=false, random=true, rarity=1, quality=3,   type = GunType.Other,   feel = GiftFeel.Meta},
-    thompson      = {cat = GiftCategory.FloorSWEP, name = "1928 Thompson",   id = "weapon_ttt_milk_tommygun", an=false, random=true, rarity=1, quality=0,   type = GunType.Other,   smell = GiftSmell.Woody},
-    tmp           = {cat = GiftCategory.FloorSWEP, name = "TMP",             id = "weapon_ttt_tmp",           an=false, random=true, rarity=1, quality=2,   type = GunType.Other,   feel = GiftFeel.Muffled},
-    typhon        = {cat = GiftCategory.WorldSWEP, name = "'TYHPHON' AMR",   id = "weapon_ttt_typhon",        an=false, random=false,                       type = GunType.Rifle,   feel = GiftFeel.Powerful},
-    us_dmr        = {cat = GiftCategory.FloorSWEP, name = "U.S DMR",         id = "weapon_ttt_m14",           an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun}, --shhh
-    ump_prototype = {cat = GiftCategory.WorldSWEP, name = "UMP Prototype",   id = "weapon_ttt_stungun",       an=false, random=true, rarity=8, quality=7, type = GunType.Other,     sound = GiftSound.Whirring, feel = GiftFeel.Electric},
-    usp           = {cat = GiftCategory.FloorSWEP, name = "USP",             id = "weapon_ttt_pistol",        an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol},
-    winchester    = {cat = GiftCategory.FloorSWEP, name = "Winchester 1873", id = "weapon_sp_winchester",     an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun, sound = GiftSound.Wooden, smell = GiftSmell.Dusty},
+    ares_shrike   = {cat = GiftCategory.FloorSWEP, name = "Ares Shrike",     id = "weapon_hp_ares_shrike",      an=true,  random=true, rarity=1, quality=-1,  type = GunType.Minigun},
+    ak47          = {cat = GiftCategory.WorldSWEP, name = "AK47",            id = "weapon_ttt_ak47",            an=true,  random=false,                       type = GunType.Other,   smell = GiftSmell.Woody},
+    aug           = {cat = GiftCategory.FloorSWEP, name = "AUG",             id = "weapon_ttt_aug",             an=true,  random=true, rarity=1, quality=1,   type = GunType.Other},
+    blunderbus    = {cat = GiftCategory.WorldSWEP, name = "Blunderbus",      id = "weapon_ttt_blunderbus",      an=false, random=false,                       type = GunType.Other,   sound = GiftSound.Thudding, smell = GiftSmell.Dusty, feel = GiftFeel.Powerful},
+    catgun        = {cat = GiftCategory.FloorSWEP, name = "M1A0 Cat Gun",    id = "weapon_catgun",              an=false, random=true, rarity=1, quality=2,   type = GunType.Other,   sound = GiftSound.Meowing, smell = GiftSmell.Fur, feel = GiftFeel.Alive, altname = "stray catgun"},
+    dance_gun     = {cat = GiftCategory.FloorSWEP, name = "Dance Gun",       id = "dancedead",                  an=false, random=false,                       type = GunType.Pistol,  sound = GiftSound.Musical, smell = GiftSmell.Sterile},
+    deagle        = {cat = GiftCategory.FloorSWEP, name = "Deagle",          id = "weapon_zm_revolver",         an=false, random=true, rarity=1, quality=3,   type = GunType.Pistol,  pistol = true},
+    double_barrel = {cat = GiftCategory.WorldSWEP, name = "Double Barrel",   id = "weapon_sp_dbarrel",          an=false, random=false,                       type = GunType.Shotgun, feel = GiftFeel.Powerful},
+    famas         = {cat = GiftCategory.FloorSWEP, name = "Famas",           id = "weapon_ttt_famas",           an=false, random=true, rarity=1, quality=1,   type = GunType.Other},
+    g3sg1         = {cat = GiftCategory.FloorSWEP, name = "G3SG1",           id = "weapon_ttt_g3sg1",           an=false, random=true, rarity=1, quality=1,   type = GunType.Rifle},
+    galil         = {cat = GiftCategory.FloorSWEP, name = "Galil",           id = "weapon_ttt_galil",           an=false, random=true, rarity=1, quality=1,   type = GunType.Other},
+    glock         = {cat = GiftCategory.FloorSWEP, name = "Glock",           id = "weapon_ttt_glock",           an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol},
+    hmt           = {cat = GiftCategory.FloorSWEP, name = "HMT-10",          id = "weapon_ttt_milk_hmt10",      an=true,  random=true, rarity=1, quality=0,   type = GunType.Pistol},
+    honey_badger  = {cat = GiftCategory.FloorSWEP, name = "Honey Badger",    id = "weapon_ap_hbadger",          an=false, random=true, rarity=1, quality=0,   type = GunType.Other,   smell = GiftSmell.Food},
+    huge          = {cat = GiftCategory.FloorSWEP, name = "H.U.G.E-249",     id = "weapon_zm_sledge",           an=false, random=true, rarity=1, quality=-1,  type = GunType.Minigun, size = GiftSize.Huge, altname = "H.U.G.E"},
+    kr_vector     = {cat = GiftCategory.FloorSWEP, name = "Kriss Vector",    id = "weapon_ap_vector",           an=false, random=true, rarity=1, quality=1,   type = GunType.Other,   feel = GiftFeel.Futuristic},
+    ksg           = {cat = GiftCategory.FloorSWEP, name = "KSG",             id = "weapon_ttt_ksg",             an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun},
+    m16           = {cat = GiftCategory.FloorSWEP, name = "M16",             id = "weapon_ttt_m16",             an=true,  random=true, rarity=1, quality=0,   type = GunType.Other},
+    m3s90         = {cat = GiftCategory.FloorSWEP, name = "M3S90",           id = "weapon_ttt_m3s90",           an=true,  random=true, rarity=1, quality=1,   type = GunType.Shotgun, sound = GiftSound.Thudding},
+    mac10         = {cat = GiftCategory.FloorSWEP, name = "MAC10",           id = "weapon_zm_mac10",            an=false, random=true, rarity=1, quality=0,   type = GunType.Other},
+    mauser        = {cat = GiftCategory.FloorSWEP, name = "Mauser C96",      id = "weapon_mauser",              an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol,  smell = GiftSmell.Woody, feel = GiftFeel.Bursting},
+    mp5           = {cat = GiftCategory.FloorSWEP, name = "MP5 Navy",        id = "weapon_ttt_mp5",             an=true,  random=true, rarity=1, quality=0,   type = GunType.Other},
+    mp5k          = {cat = GiftCategory.WorldSWEP, name = "MP5K",            id = "weapon_ttt_mp5k",            an=true,  random=false, rarity=1, quality=3,  type = GunType.Other},
+    mp7           = {cat = GiftCategory.FloorSWEP, name = "MP7",             id = "weapon_ttt_smg",             an=true,  random=true, rarity=1, quality=0,   type = GunType.Other},
+    mrca1         = {cat = GiftCategory.FloorSWEP, name = "MR-CA1",          id = "weapon_ap_mrca1",            an=true,  random=true, rarity=1, quality=0,   type = GunType.Other},
+    p228          = {cat = GiftCategory.FloorSWEP, name = "P228",            id = "weapon_ttt_p228",            an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol},
+    p90           = {cat = GiftCategory.WorldSWEP, name = "P90",             id = "weapon_ttt_p90",             an=false, random=true, rarity=3, quality=6,   type = GunType.Other},
+    pistol        = {cat = GiftCategory.FloorSWEP, name = "Pistol",          id = "weapon_zm_pistol",           an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol},
+    pocket_rifle  = {cat = GiftCategory.FloorSWEP, name = "Pocket Rifle",    id = "weapon_rp_pocket",           an=false, random=true, rarity=1, quality=1,   type = GunType.Rifle,   size = GiftSize.Mini, feel = GiftFeel.VerySmall},
+    pp19          = {cat = GiftCategory.FloorSWEP, name = "PP-19 Bizon",     id = "weapon_ap_pp19",             an=false, random=true, rarity=1, quality=0,   type = GunType.Other},
+    pump_shotgun  = {cat = GiftCategory.FloorSWEP, name = "Pump Shotgun",    id = "weapon_ttt_pump",            an=false, random=true, rarity=1, quality=0,   type = GunType.Shotgun, smell = GiftSmell.Dusty},
+    r8_revolver   = {cat = GiftCategory.FloorSWEP, name = "R8 Revolver",     id = "weapon_ttt_csgo_r8revolver", an=true,  random=true, rarity=1, quality=0,   type = GunType.Pistol,  size = GiftSize.Normal},
+    raging_bull   = {cat = GiftCategory.FloorSWEP, name = "Raging Bull",     id = "weapon_pp_rbull",            an=false, random=true, rarity=1, quality=1,   type = GunType.Pistol,  smell = GiftSmell.Dusty},
+    railgun       = {cat = GiftCategory.WorldSWEP, name = "Railgun",         id = "weapon_rp_railgun",          an=false, random=true, rarity=6, quality=8,   type = GunType.Rifle,   sound = GiftSound.Revving},
+    railrifle     = {cat = GiftCategory.WorldSWEP, name = "Railrifle",       id = "weapon_ttt_railslug",        an=false, random=false,                       type = GunType.Rifle,   sound = GiftSound.Revving},
+    reming_pistol = {cat = GiftCategory.FloorSWEP, name = "Remington 1858",  id = "weapon_pp_remington",        an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol,  smell = GiftSmell.Dusty},
+    reming_shgun  = {cat = GiftCategory.FloorSWEP, name = "Remington AE870", id = "weapon_ttt_milk_870",        an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun, smell = GiftSmell.Woody},
+    rifle         = {cat = GiftCategory.FloorSWEP, name = "Rifle",           id = "weapon_zm_rifle",            an=false, random=true, rarity=1, quality=2,   type = GunType.Rifle},
+    s357          = {cat = GiftCategory.WorldSWEP, name = "'SUPER' 357",     id = "weapon_ttt_s357",            an=false, random=false, rarity=1, quality=-8, type = GunType.Pistol,  feel = GiftFeel.Cursed},
+    sw500         = {cat = GiftCategory.WorldSWEP, name = "S&W 500",         id = "weapon_ttt_revolver",        an=true,  random=false,                       type = GunType.Pistol,  feel = GiftFeel.Powerful},
+    sg550         = {cat = GiftCategory.FloorSWEP, name = "SG-550",          id = "weapon_ttt_sg550",           an=true,  random=true, rarity=1, quality=0,   type = GunType.Rifle},
+    shotgun       = {cat = GiftCategory.FloorSWEP, name = "Shotgun",         id = "weapon_zm_shotgun",          an=false, random=true, rarity=1, quality=0,   type = GunType.Shotgun},
+    silent_awp    = {cat = GiftCategory.WorldSWEP, name = "Silenced AWP",    id = "weapon_ttt_awp",             an=false, random=false,                       type = GunType.Rifle,   silenced = true},
+    silent_m4a1   = {cat = GiftCategory.WorldSWEP, name = "Silenced M4A1",   id = "weapon_ttt_silm4a1",         an=false, random=false,                       type = GunType.Other,   silenced = true},
+    silent_pistol = {cat = GiftCategory.WorldSWEP, name = "Silenced Pistol", id = "weapon_ttt_sipistol",        an=false, random=false,                       type = GunType.Pistol,  silenced = true},
+    silent_smg    = {cat = GiftCategory.FloorSWEP, name = "Silent Fox",      id = "weapon_ttt_tmp_s",           an=false, random=true, rarity=5, quality=3,   type = GunType.Other,   silenced = true, smell = GiftSmell.Fur},
+    striker       = {cat = GiftCategory.WorldSWEP, name = "Striker-12",      id = "weapon_sp_striker",          an=false, random=true, rarity=5, quality=3,   type = GunType.Other},
+    tec9          = {cat = GiftCategory.FloorSWEP, name = "TEC-9",           id = "weapon_ap_tec9",             an=false, random=true, rarity=1, quality=3,   type = GunType.Other,   feel = GiftFeel.Meta},
+    thompson      = {cat = GiftCategory.FloorSWEP, name = "1928 Thompson",   id = "weapon_ttt_milk_tommygun",   an=false, random=true, rarity=1, quality=0,   type = GunType.Other,   smell = GiftSmell.Woody},
+    tmp           = {cat = GiftCategory.FloorSWEP, name = "TMP",             id = "weapon_ttt_tmp",             an=false, random=true, rarity=1, quality=2,   type = GunType.Other,   feel = GiftFeel.Muffled},
+    typhon        = {cat = GiftCategory.WorldSWEP, name = "'TYHPHON' AMR",   id = "weapon_ttt_typhon",          an=false, random=false,                       type = GunType.Rifle,   feel = GiftFeel.Powerful},
+    us_dmr        = {cat = GiftCategory.FloorSWEP, name = "U.S DMR",         id = "weapon_ttt_m14",             an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun}, --shhh
+    ump_prototype = {cat = GiftCategory.WorldSWEP, name = "UMP Prototype",   id = "weapon_ttt_stungun",         an=false, random=true, rarity=8, quality=7, type = GunType.Other,     sound = GiftSound.Whirring, feel = GiftFeel.Electric},
+    usp           = {cat = GiftCategory.FloorSWEP, name = "USP",             id = "weapon_ttt_pistol",          an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol},
+    winchester    = {cat = GiftCategory.FloorSWEP, name = "Winchester 1873", id = "weapon_sp_winchester",       an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun, sound = GiftSound.Wooden, smell = GiftSmell.Dusty},
 }
 
 for label, data in pairs(standardGuns) do
@@ -2040,7 +2154,7 @@ local deployableSWEPs = {
                SENT_random = true, SENT_rarity = 2, SENT_quality = 7,
                SWEP_random = false,
                SENT_size = GiftSize.Big, SWEP_size = GiftSize.Big,
-               sound = GiftSound.Glass, smell = GiftSmell.Earthy, feel = GiftFeel.Cursed},
+               sound = GiftSound.Glass, smell = GiftSmell.Clay, feel = GiftFeel.Cursed},
 
     radio   = {name = "Radio", desc = "a toy radio",
                SENT_id = "ttt_radio", SWEP_id = "weapon_ttt_radio",
@@ -2375,7 +2489,10 @@ function GiftData:GetIdentifier(giftObj)
 end
 
 function GiftData:IsSpawnable(giftee, giftObj)
-    if self.special_setup then
+    if self.available_on_map then
+        return string.StartsWith(game.GetMap(), self.available_on_map)
+
+    elseif self.special_setup then
         if self.special_setup == "snuffles_present_setup"
           and utils.RoundStartTime and CurTime() <= utils.RoundStartTime + 10 then
             return false
@@ -2396,9 +2513,6 @@ function GiftData:IsSpawnable(giftee, giftObj)
 
         elseif self.special_setup == "fart_grenade_setup" then
             return weapons.GetStored("weapon_fartgrenade") ~= nil
-
-        elseif self.special_setup == "catbine_restriction" then
-            return string.StartsWith(game.GetMap(), "ttt_unsung_star")
         end
     end
 
@@ -3844,7 +3958,7 @@ local giftSurfaceProps = {
     ["carpet"]              = {                            smell=GiftSmell.Dusty,     feel=GiftFeel.Soft},
     ["ceiling_tile"]        = {sound=GiftSound.Thudding,   smell=GiftSmell.Dusty,     feel=GiftFeel.Cold},
     ["computer"]            = {sound=GiftSound.Whirring,   smell=GiftSmell.Sterile,   feel=GiftFeel.Electric},
-    ["pottery"]             = {sound=GiftSound.Thudding,   smell=GiftSmell.Paint,     feel=GiftFeel.Hollow},
+    ["pottery"]             = {sound=GiftSound.Thudding,   smell=GiftSmell.Clay,      feel=GiftFeel.Hollow},
     ["gmod_bouncy"]         = {sound=GiftSound.Springy},
     ["gm_ps_egg"]           = {                            smell=GiftSmell.Food,      feel=GiftFeel.Round},
     ["gm_ps_metaltire"]     = {                                                       feel=GiftFeel.Round},
@@ -3884,16 +3998,19 @@ function GiftData:Detect(ent, entIdentifier)
     end
 end
 
-function GetEntGiftData(ent)
+function GetEntGiftData(ent, silent)
     local entClass = ent:GetClass()
     local entIdentifier = entClass
     local entModel = ent:GetModel()
+    local entName = ent:GetName()
 
     if string.find(entIdentifier, "prop_physics", nil, true)
       or string.StartsWith(entIdentifier, "prop_vehicle")
-      or entIdentifier == "func_physbox"
       or entIdentifier == "prop_ragdoll" then
         entIdentifier = entModel
+
+    elseif entIdentifier == "func_physbox" then
+        entIdentifier = entName
     end
 
     for label, giftData in pairs(giftDataCatalog) do
@@ -3903,8 +4020,11 @@ function GetEntGiftData(ent)
     end
 
     -- Generating placeholder data from entity attributes
-    dbg.Log("Could not find gift data for "..tostring(ent).."; generating placeholder...")
-    dbg.Log("=> Model path: ", entModel)
+    if not silent then
+        dbg.Log("Could not find gift data for "..tostring(ent).."; generating placeholder...")
+        dbg.Log("=> Model path: ", entModel)
+    end
+
     local placeholderData = GiftData.New({})
     local placeholderLabel = "gift_ent_"..tostring(ent:EntIndex())
     placeholderData.identifier = entIdentifier
@@ -3917,6 +4037,9 @@ function GetEntGiftData(ent)
     -- Detect category
     if entClass == "prop_ragdoll" then
         placeholderData.category = GiftCategory.Ragdoll
+
+    elseif entClass == "func_physbox" then
+        placeholderData.category = GiftCategory.PhysBox
 
     elseif entIdentifier == entModel then
         placeholderData.category = GiftCategory.PhysProp
@@ -3946,12 +4069,8 @@ function GetEntGiftData(ent)
     if ent.PrintName and ent.PrintName ~= "" then
         name = ent.PrintName
 
-    elseif ent.GetName then
-        local entName = ent:GetName()
-
-        if entName and entName ~= "" then
-            name = entName
-        end
+    elseif entName and entName ~= "" then
+        name = entName
     end
 
     if not name then
@@ -3973,8 +4092,8 @@ function GetEntGiftData(ent)
     placeholderData.attrib_feel  = GiftFeel.Indescribable
 
     local phys = ent:GetPhysicsObject()
-    local surfacePropName = utils.GetEntSurfaceProp(ent, phys)
-    dbg.Log("Found surface prop name:", surfacePropName)
+    local surfacePropName = utils.GetEntSurfaceProp(ent, phys, silent)
+    if not silent then dbg.Log("Found surface prop name:", surfacePropName) end
 
     if surfacePropName then
         surfacePropName = string.lower(surfacePropName)

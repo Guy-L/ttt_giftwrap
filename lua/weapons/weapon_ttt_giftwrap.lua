@@ -104,7 +104,7 @@ if SERVER then
         end
     end)
 
-    function GetWrapConstraint(ent, wrapper)
+    function GetWrapConstraint(ent, wrapper, silent)
         if not IsValid(ent) then return "Invalid object." end
         if ent.Base == "base_ammo_ttt" then return nil end
         if ent.GetExplodeTime then return nil end
@@ -233,7 +233,7 @@ if SERVER then
 
         -- validity check
         if not table.HasValue(valid_classes, class) and string.sub(ent:GetClass(), 1, 5) ~= "prop_" then
-            dbg.Log("Tried wrapping: "..class)
+            if not silent then dbg.Log("Tried wrapping: "..class) end
             return "Can't wrap this type of thing yet."
         end
 
@@ -245,7 +245,7 @@ if SERVER then
 
         -- weight check
         if phys:GetMass() > 700 then
-            dbg.Log("Tried wrapping "..class.." with mass "..phys:GetMass())
+            if not silent then dbg.Log("Tried wrapping "..class.." with mass "..phys:GetMass()) end
             return "It's too heavy, and you don't have enough wrapping paper."
         end
     end

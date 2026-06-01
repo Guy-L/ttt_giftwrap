@@ -288,6 +288,8 @@ function GW_Utils.IsMapClass(ent)
         or class == "class C_BaseToggle" -- the hell even
         or class == "func_tanktrain"
         or class == "func_tracktrain"
+        or class == "trigger_hurt"
+        or class == "func_rotating"
         --or class == "prop_dynamic" --TODO check if any of what we want to wrap is this (lots of stationary map elements are)
         --or class == "func_brush" --TODO check if any of what we want to wrap is this (lots of stationary map elements are)
         or GW_Utils.IsMapClass(ent:GetMoveParent())
@@ -310,7 +312,7 @@ function GW_Utils.GetSubRoleData(subRoleID)
     return roles.NONE
 end
 
-function GW_Utils.GetEntSurfaceProp(ent, phys)
+function GW_Utils.GetEntSurfaceProp(ent, phys, silent)
     if not IsValid(ent) then return nil end
     if not phys then phys = ent:GetPhysicsObject() end
 
@@ -318,7 +320,7 @@ function GW_Utils.GetEntSurfaceProp(ent, phys)
     if IsValid(phys) then
         local mat = phys:GetMaterial()
         if mat and mat ~= "" then
-            GW_DBG.Log("Retrieved surfaceProp from physics object:", mat)
+            if not silent then GW_DBG.Log("Retrieved surfaceProp from physics object:", mat) end
             return mat
         end
     end
@@ -330,7 +332,7 @@ function GW_Utils.GetEntSurfaceProp(ent, phys)
         
         if info then
             local propName = info.SurfacePropName or (info.KeyValues and info.KeyValues.surfaceprop)
-            GW_DBG.Log("Retrieved surfaceProp from model info:", propName)
+            if not silent then GW_DBG.Log("Retrieved surfaceProp from model info:", propName) end
             return propName
         end
     end
@@ -343,7 +345,7 @@ function GW_Utils.GetEntSurfaceProp(ent, phys)
         if iMat then
             local surfaceProp = iMat:GetString("$surfaceProp")
 
-            GW_DBG.Log("Retrieved surfaceProp from materials:", surfaceProp)
+            if not silent then GW_DBG.Log("Retrieved surfaceProp from materials:", surfaceProp) end
             return surfaceProp
         end
     end
@@ -356,11 +358,11 @@ function GW_Utils.GetEntSurfaceProp(ent, phys)
         filter = function(e) return e ~= ent end
     })
     if tr.HitEnt == ent then
-        GW_DBG.Log("Retrieved surfaceProp from trace hit:", tr.SurfaceProps)
+        if not silent then GW_DBG.Log("Retrieved surfaceProp from trace hit:", tr.SurfaceProps) end
         return tr.SurfaceProps
     end
 
-    GW_DBG.Log("Failed to retrieve surfaceProp from", ent)
+    if not silent then GW_DBG.Log("Failed to retrieve surfaceProp from", ent) end
     return nil
 end
 

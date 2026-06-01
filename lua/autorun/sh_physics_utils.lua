@@ -168,6 +168,73 @@ if SERVER then
         end
     end
 
+    function GW_DBG.DebugWraps()
+        local wrappables = {}
+        local unwrappables = {}
+
+        for _, ent in ipairs(ents.GetAll()) do
+            local wrapConstraint = GetWrapConstraint(ent, player.GetAll()[1], true)
+
+            if wrapConstraint then
+                table.insert(unwrappables, {ent = ent, reason = wrapConstraint})
+            else
+                table.insert(wrappables, ent)
+            end
+        end
+
+        print("WRAPPABLE ENTITIES")
+        local hasDataCnt = 0
+        local classCounts  = {}
+
+        for _, ent in ipairs(wrappables) do
+            local giftLabel, giftData = GetEntGiftData(ent, true)
+            local class = ent:GetClass()
+
+            if string.StartsWith(class, "weapon_") or class == "ttt_banana" then
+                class = "weapons"
+            elseif string.StartsWith(class, "item_ammo_") or class == "item_box_buckshot_ttt" then
+                class = "ammo boxes"
+            end
+            classCounts[class] = (classCounts[class] or 0) + 1
+
+            if giftData and giftData.autoGen then
+                print("-> Missing data:", ent, ent:GetModel(), ent:GetPos())
+                debugoverlay.Sphere(ent:GetPos(), 50, 15, GW_DBG.Green)
+            else
+                hasDataCnt = hasDataCnt + 1
+            end
+        end
+        print("Has data: "..hasDataCnt.."/"..#wrappables .." ("..(string.format("%.1f", 100 * hasDataCnt / math.max(#wrappables, 1))).."%)")
+
+        local uniqueClasses = {}
+        for class, count in pairs(classCounts) do
+            table.insert(uniqueClasses, {class = class, count = count})
+        end
+
+        table.sort(uniqueClasses, function(a, b)
+            return a.count > b.count
+        end)
+
+        local classStrings = {}
+        for _, v in ipairs(uniqueClasses) do
+            table.insert(classStrings, v.count .. " " .. v.class)
+        end
+        print("Unique classes: " .. table.concat(classStrings, ", "))
+
+        ---------------------------------------
+        ---------------------------------------
+        print("\nUNWRAPPABLE ENTITIES")
+        for _, unwrappable in ipairs(unwrappables) do
+            local ent = unwrappable.ent
+
+            if IsValid(ent) and ent:GetSolid() > 0 and not ent:IsPlayer()
+              and not ent:IsWeapon() and not utils.IsMapClass(ent) then
+                print("-> Unwrappable:", ent, ent:GetPos(), ent:GetSolid(), unwrappable.reason)
+                debugoverlay.Sphere(ent:GetPos(), 50, 15, GW_DBG.Red)
+            end
+        end
+    end
+
     function GW_DBG.MyPos()
         local plyPos = player.GetAll()[1]:GetPos()
         GW_DBG.Log(math.Round(plyPos.x)..", "..math.Round(plyPos.y)..", "..math.Round(plyPos.z+20))
