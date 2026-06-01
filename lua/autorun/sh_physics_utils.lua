@@ -168,7 +168,7 @@ if SERVER then
         end
     end
 
-    function GW_DBG.DebugWraps()
+    function GW_DBG.DebugWraps(skipUnwrappables)
         local wrappables = {}
         local unwrappables = {}
 
@@ -198,7 +198,7 @@ if SERVER then
             classCounts[class] = (classCounts[class] or 0) + 1
 
             if giftData and giftData.autoGen then
-                print("-> Missing data:", ent, ent:GetModel(), ent:GetPos())
+                print("-> Missing data:", ent, GW_DBG.PosStr(ent:GetPos()), ent:GetModel())
                 debugoverlay.Sphere(ent:GetPos(), 50, 15, GW_DBG.Green)
             else
                 hasDataCnt = hasDataCnt + 1
@@ -223,21 +223,34 @@ if SERVER then
 
         ---------------------------------------
         ---------------------------------------
+        if skipUnwrappables then return end
         print("\nUNWRAPPABLE ENTITIES")
+        local relevantCnt = 0
+
         for _, unwrappable in ipairs(unwrappables) do
             local ent = unwrappable.ent
 
             if IsValid(ent) and ent:GetSolid() > 0 and not ent:IsPlayer()
               and not ent:IsWeapon() and not utils.IsMapClass(ent) then
-                print("-> Unwrappable:", ent, ent:GetPos(), ent:GetSolid(), unwrappable.reason)
-                debugoverlay.Sphere(ent:GetPos(), 50, 15, GW_DBG.Red)
+                print("-> Unwrappable:", ent, GW_DBG.PosStr(ent:GetPos()), unwrappable.reason, "solid "..ent:GetSolid())
+                debugoverlay.Sphere(ent:GetPos(), 10, 5, GW_DBG.Red)
+                relevantCnt = relevantCnt + 1
             end
         end
+
+        print("Relevant unwrappables:", relevantCnt)
     end
 
     function GW_DBG.MyPos()
-        local plyPos = player.GetAll()[1]:GetPos()
-        GW_DBG.Log(math.Round(plyPos.x)..", "..math.Round(plyPos.y)..", "..math.Round(plyPos.z+20))
+        GW_DBG.Log(GW_DBG.PosStr(player.GetAll()[1]:GetPos() + Vector(0, 0, 20)))
+    end
+
+    function GW_DBG.PosStr(pos)
+        return math.Round(pos.x)..", "..math.Round(pos.y)..", "..math.Round(pos.z)
+    end
+
+    function GW_DBG.GoToEnt(entID)
+        player.GetAll()[1]:SetPos(ents.GetByIndex(entID):GetPos())
     end
 end
 

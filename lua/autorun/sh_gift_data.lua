@@ -48,7 +48,7 @@ GiftSound = {
     Goopy      = {snd="", desc="goopy"},
     Metallic   = {snd="", desc="metallic"},
     Glass      = {snd="", desc="tinkly"},
-    Wooden     = {snd="", desc="creaky"},
+    Creaky     = {snd="", desc="creaky"},
     Plastic    = {snd="", desc="plasticky"}, -- pretty much unused
     Fleshy     = {snd="", desc="fleshy"},
     Talking    = {snd="", desc="like it's talking"},
@@ -66,6 +66,7 @@ GiftSound = {
     Hollow     = {snd="", desc="hollow"}, --new, underused
     Rattling   = {snd="", desc="like it's rattling"}, --new, underused
     Hissing    = {snd="", desc="like it's hissing"}, --new, underused
+    Ringing    = {snd="", desc="like it's ringing"}, --new, underused
     Splashing  = {snd="", desc="like it's splashing"},
     Squelching = {snd="", desc="like it's squelching"},
     Rustling   = {snd="", desc="like it's rustling"},
@@ -220,6 +221,16 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Plastic, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Paper,   attrib_feel = GiftFeel.Heavy,
     },
+    bread_loaf = GiftData.New {
+        name     = "Bread Loaf",          desc        = "a loaf of bread",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/foodnhouseholditems/bread-2.mdl", -- ttt_5c_plaza
+            "models/foodnhouseholditems/bread-4.mdl", -- ttt_5c_plaza
+        },
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Granular, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Food,     attrib_feel = GiftFeel.Squishy,
+    },
     cannonball_prop = GiftData.New {
         name     = "Used Cannonball",     desc       = "an inert cannonball",
         category = GiftCategory.PhysProp, identifier = "models/props_phx/misc/smallcannonball.mdl",
@@ -288,6 +299,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Squishy,
     },
+    door = GiftData.New {
+        name     = "Door",                desc       = "a door",
+        category = GiftCategory.PhysProp, identifier = "models/props_c17/door01_left.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Creaky, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Paint,  attrib_feel = GiftFeel.Flat,
+    },
     explosive_barrel = GiftData.New {
         name     = "Explosive Barrel",    desc       = "an explosive barrel",
         category = GiftCategory.PhysProp, identifier = "models/props_c17/oildrum001_explosive.mdl",
@@ -343,6 +361,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Ash,      attrib_feel = GiftFeel.Hollow,
     },
+    milk_jug = GiftData.New {
+        name     = "Milk Jug",            desc       = "an old milk jug",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/garbage_milkcarton001a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Plastic, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Cold,
+    },
     neco_arc = GiftData.New {
         name     = "Neco Arc Plushie",    desc       = "a weird cat",
         category = GiftCategory.PhysProp, identifier = "models/goobers/necoarc/neko_arc_plush.mdl",
@@ -358,6 +383,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Rustling, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Dry,      attrib_feel = GiftFeel.Informative,
     },
+    phone_office = GiftData.New {
+        name     = "Office Phone",      desc       = "an office phone",
+        category = GiftCategory.PhysProp, identifier = "models/props/cs_office/phone.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Ringing, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Fragile,
+    },
     plastic_crate = GiftData.New {
         name     = "Plastic Crate",       desc       = "a plastic crate",
         category = GiftCategory.PhysProp, identifier = "models/props_junk/plasticcrate01a.mdl",
@@ -372,6 +404,13 @@ local giftDataCatalog = {
         factor_rarity = 1, factor_quality = 8,
         attrib_sound = GiftSound.None,     attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Cotton,   attrib_feel = GiftFeel.Squishy,
+    },
+    prop_radio = GiftData.New {
+        name     = "Radio (Prop)",        desc       = "a broken radio",
+        category = GiftCategory.PhysProp, identifier = "models/props/cs_office/radio.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Musical, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Fragile,
     },
     rat = GiftData.New {
         name     = "Rat",                 desc       = "a rat",
@@ -446,6 +485,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Round,
     },
+    watermelon_unbreakable = GiftData.New {
+        name     = "Unbreakable Watermelon", desc       = "an invincible watermelon",
+        category = GiftCategory.PhysProp,    identifier = "models/foodnhouseholditems/watermelon_unbreakable.mdl", -- ttt_5c_plaza
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Sturdy,
+    },
     wooden_chair = GiftData.New {
         name     = "Wooden Chair",        desc        = "a wooden chair",
         category = GiftCategory.PhysProp, identifiers = {
@@ -453,28 +499,28 @@ local giftDataCatalog = {
             "models/props_interiors/furniture_chair01a.mdl",
         },
         can_be_random_gift = false,
-        attrib_sound = GiftSound.Wooden, attrib_size = GiftSize.Huge,
+        attrib_sound = GiftSound.Creaky, attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Light,
     },
     wooden_crate = GiftData.New {
         name     = "Wooden Crate",        desc       = "a wooden crate",
         category = GiftCategory.PhysProp, identifier = "models/props_junk/wood_crate001a.mdl",
         can_be_random_gift = false,
-        attrib_sound = GiftSound.Wooden, attrib_size = GiftSize.Huge,
+        attrib_sound = GiftSound.Creaky, attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Box,
     },
     wooden_crate_big = GiftData.New {
         name     = "Wooden Crate (Big)",  desc       = "a large wooden crate",
         category = GiftCategory.PhysProp, identifier = "models/props_junk/wood_crate002a.mdl",
         can_be_random_gift = false,
-        attrib_sound = GiftSound.Wooden, attrib_size = 6,
+        attrib_sound = GiftSound.Creaky, attrib_size = 6,
         attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Massive,
     },
     wooden_pallet = GiftData.New {
         name     = "Wooden Pallet",       desc       = "a wooden pallet",
         category = GiftCategory.PhysProp, identifier = "models/props_junk/wood_pallet001a.mdl",
         can_be_random_gift = false,
-        attrib_sound = GiftSound.Wooden, attrib_size = GiftSize.Gigantic,
+        attrib_sound = GiftSound.Creaky, attrib_size = GiftSize.Gigantic,
         attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Flat,
     },
 
@@ -1709,7 +1755,7 @@ local standardGuns = {
     us_dmr        = {cat = GiftCategory.FloorSWEP, name = "U.S DMR",         id = "weapon_ttt_m14",             an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun}, --shhh
     ump_prototype = {cat = GiftCategory.WorldSWEP, name = "UMP Prototype",   id = "weapon_ttt_stungun",         an=false, random=true, rarity=8, quality=7, type = GunType.Other,     sound = GiftSound.Whirring, feel = GiftFeel.Electric},
     usp           = {cat = GiftCategory.FloorSWEP, name = "USP",             id = "weapon_ttt_pistol",          an=false, random=true, rarity=1, quality=0,   type = GunType.Pistol},
-    winchester    = {cat = GiftCategory.FloorSWEP, name = "Winchester 1873", id = "weapon_sp_winchester",       an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun, sound = GiftSound.Wooden, smell = GiftSmell.Dusty},
+    winchester    = {cat = GiftCategory.FloorSWEP, name = "Winchester 1873", id = "weapon_sp_winchester",       an=false, random=true, rarity=1, quality=1,   type = GunType.Shotgun, sound = GiftSound.Creaky, smell = GiftSmell.Dusty},
 }
 
 for label, data in pairs(standardGuns) do
@@ -2022,7 +2068,7 @@ local deployableSWEPs = {
                SWEP_random = true, SWEP_rarity = 5, SWEP_quality = 5,
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Larger,
                sound = GiftSound.Thudding, smell = GiftSmell.Gunpowder, feel = GiftFeel.Round,
-               SWEP_sound = GiftSound.Wooden, SWEP_smell = GiftSmell.Salty, SWEP_feel = GiftFeel.Hollow},
+               SWEP_sound = GiftSound.Creaky, SWEP_smell = GiftSmell.Salty, SWEP_feel = GiftFeel.Hollow},
 
     health_station = {name = "Health Station", desc = "a healing microwave",
                SENT_id = "ttt_health_station", SWEP_id = "weapon_ttt_health_station",
@@ -3902,7 +3948,7 @@ end
 
 local giftSurfaceTypeProps = {
     ["metal"]    = {sound=GiftSound.Metallic, smell=GiftSmell.Sterile, feel=GiftFeel.Cold},
-    ["wood"]     = {sound=GiftSound.Wooden,   smell=GiftSmell.Woody,   feel=GiftFeel.Sturdy},
+    ["wood"]     = {sound=GiftSound.Creaky,   smell=GiftSmell.Woody,   feel=GiftFeel.Sturdy},
     ["slime"]    = {sound=GiftSound.Goopy,    smell=GiftSmell.Strange, feel=GiftFeel.Slippery},
     ["flesh"]    = {sound=GiftSound.Fleshy,   smell=GiftSmell.Rotten,  feel=GiftFeel.Squishy},
     ["glass"]    = {sound=GiftSound.Glass,                             feel=GiftFeel.Hollow},

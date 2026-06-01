@@ -281,15 +281,17 @@ function GW_Utils.IsMapClass(ent)
     return string.StartsWith(class, "func_breakable")
         or string.StartsWith(class, "func_door")
         or string.StartsWith(class, "prop_door")
-        or class == "func_reflective_glass"
-        or class == "func_movelinear"
+        or string.StartsWith(class, "trigger")
         or class == "func_button"
-        or class == "momentary_rot_button"
-        or class == "class C_BaseToggle" -- the hell even
+        or class == "func_movelinear"
+        or class == "func_reflective_glass"
+        or class == "func_rotating"
         or class == "func_tanktrain"
         or class == "func_tracktrain"
-        or class == "trigger_hurt"
-        or class == "func_rotating"
+        or class == "func_water_analog"
+        or class == "phys_bone_follower"
+        or class == "momentary_rot_button"
+        or class == "class C_BaseToggle" -- the hell even
         --or class == "prop_dynamic" --TODO check if any of what we want to wrap is this (lots of stationary map elements are)
         --or class == "func_brush" --TODO check if any of what we want to wrap is this (lots of stationary map elements are)
         or GW_Utils.IsMapClass(ent:GetMoveParent())
