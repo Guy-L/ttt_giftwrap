@@ -10,7 +10,7 @@ local GIFT_NAME = "Gift"
 local HOOK_SPEC_GIFT_INDIC   = "TTT_GiftWrapCL_DrawSpectatorGiftHUD"
 local GIFTWRAP_PICKUP_MSG    = "TTT_GiftWrap_PickUpMsg"
 local GIFTWRAP_HL_CHAT_MSG   = "TTT_GiftWrap_HighlightChatMsg"
-local GIFTWRAP_GIFT_DATA_MSG = "TTT_GiftWrap_SendWrapperData"
+local GIFTWRAP_GIFT_DATA_MSG = "TTT_GiftWrap_SendWrapperDataMsg"
 local HOOK_GIFTWRAP_PICKUP   = "TTT_GiftWrap_PickUp"
 local HOOK_GIFTWRAP_TREE_USE = "TTT_GiftWrap_UseTree"
 local HOOK_ANGLE_CORRECTION  = "TTT_GiftWrap_CorrectGiftAngle"
@@ -21,6 +21,8 @@ local HOOK_RESET_VM_COLORS   = "TTT_GiftWrap_ResetVMColors"
 local GIFTWRAP_REMOVE        = "TTT_GiftWrap_XMasBeaconRemove"
 WRAPPED_GIFT_REMOVE          = "TTT_GiftWrap_WrappedGiftRemove"
 TP_GIFT_MSG                  = "TTT_GiftWrapSV_TeleportGift"
+WRAP_CONSTRAINT_QUERY_MSG    = "TTT_GiftWrapCL_WrapConstraintQueryMsg"
+WRAP_CONSTRAINT_REPLY_MSG    = "TTT_GiftWrapSV_WrapConstraintResponseMsg"
 
 local TIMEZONE_OFFSET_HOURS       = utils.Cvar("ttt2_giftwrap_timezone_offset", "0", -24, 24, "Adjusts the timezone used for determining whether it's Christmas (offset in hours).")
 local SECOND_GIFT_CHANCE          = utils.Cvar("ttt2_giftwrap_second_gift_chance", "0.5", 0, 1, "Chance for a second random gift spawn per Snuffle gift replaced.")
@@ -63,6 +65,8 @@ if SERVER then
     util.AddNetworkString(GIFTWRAP_PICKUP_MSG)
     util.AddNetworkString(GIFTWRAP_HL_CHAT_MSG)
     util.AddNetworkString(GIFTWRAP_GIFT_DATA_MSG)
+    util.AddNetworkString(WRAP_CONSTRAINT_QUERY_MSG)
+    util.AddNetworkString(WRAP_CONSTRAINT_REPLY_MSG)
     util.AddNetworkString(TP_GIFT_MSG)
     util.PrecacheModel(WRAP_VIEWMODEL)
     util.PrecacheModel(WRAP_WORLDMODEL)
@@ -250,7 +254,17 @@ if SERVER then
             return "It's too heavy, and you don't have enough wrapping paper."
         end
     end
-    
+
+    net.Receive(WRAP_CONSTRAINT_QUERY_MSG, function(_, ply)
+        local ent = net.ReadEntity()
+        local constraint = GetWrapConstraint(ent, ply, true)
+
+        net.Start(WRAP_CONSTRAINT_REPLY_MSG)
+        net.WriteFloat(ent:EntIndex()) -- zero clue why WriteInt/WriteUInt wouldn't accept this number
+        net.WriteString((constraint and not ent:GetNWBool("GWPhysStasis")) and constraint or "")
+        net.Send(ply)
+    end)
+
     -- Tell clients to update UI when it enters their inventory (no reliable clientside hook?)
     hook.Add("AllowPlayerPickup", HOOK_GIFTWRAP_PICKUP, function(ply, ent)
         if utils.IsGiftWrap(ent) then
@@ -1070,7 +1084,7 @@ if SERVER then
 
          -- check one layer up the parenting chain (useful for vehicles)
         local moveParent = ent:GetMoveParent()
-        if IsValid(moveParent) then ent = moveParent end
+        if IsValid(moveParent) and not ent:IsWeapon() then ent = moveParent end
 
         local wrapCheckRet = GetWrapConstraint(ent, owner)
 
@@ -1161,6 +1175,10 @@ elseif CLIENT then
             end)
             vm._gwColorsApplied = false
         end
+    end
+
+    function SWEP:DoDrawCrosshair(xCenter, yCenter, shouldDraw)
+        self.BaseClass.DoDrawCrosshair(self, xCenter, yCenter, shouldDraw and not self:HasGift())
     end
 
     hook.Add("Think", HOOK_RESET_VM_COLORS, function()

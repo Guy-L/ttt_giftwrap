@@ -4981,7 +4981,7 @@ models/props_junk/propane_tank001a_big.mdl
 models/props_junk/propanecanister001a.mdl
 models/props_junk/pushcart01a.mdl
 models/props_junk/ravenholmsign.mdl
-models/props_junk/rock001a.mdl
+[supported] models/props_junk/rock001a.mdl
 models/props_junk/sawblade001a.mdl
 models/props_junk/shoe001a.mdl
 models/props_junk/shovel01a.mdl

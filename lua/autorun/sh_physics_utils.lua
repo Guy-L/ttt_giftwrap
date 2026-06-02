@@ -328,6 +328,7 @@ if SERVER then
             phys:EnableMotion(false)
             phys:Sleep()
             phys:SetPos(maxPos)
+            ent:SetNWBool("GWPhysStasis", true)
         end
 
         -- otherwise clients may see old position for a frame or so
@@ -429,6 +430,8 @@ if SERVER then
             -- give things with move children a few extra ticks to propagate their new position
             -- before restarting physics (otherwise things like vehicles go flying off randomly)
             timer.Simple(stabilize and 0.25 or 0, function()
+                ent:SetNWBool("GWPhysStasis", false)
+
                 if IsValid(phys) and not ent._DontWake then
                     phys:EnableMotion(true)
                     phys:Wake()

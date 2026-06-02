@@ -738,6 +738,7 @@ if SERVER then
 ----------------------------------
 elseif CLIENT then
     local matTreeIcon = Material("vgui/ttt/marker_vision/c4")
+    local gwInteractDist = 93.7 -- unsure why this number
 
     net.Receive(TREE_FOUND_MSG, function()
         christmasTree = net.ReadEntity()
@@ -850,9 +851,9 @@ elseif CLIENT then
         local ent = tData:GetEntity()
         if not IsValid(ent) then return end
 
-        -- picking up prop gift
+        -- looking at thrown SENT gift
         if ent:GetClass() == PROP_CLASS_NAME then
-            if not ent:GetNotRetrievable() and tData:GetEntityDistance() <= 93.7 then
+            if not ent:GetNotRetrievable() and tData:GetEntityDistance() <= gwInteractDist then
                 local giftee = ent:GetGiftee()
                 local isGiftee = not IsValid(giftee) or client == giftee
                 local knownDeadGiftee = utils.ConfirmedDead(client, giftee)
@@ -896,7 +897,7 @@ elseif CLIENT then
                 end
             end
 
-        -- placing down gift at tree
+        -- placing down gift at tree (deprecated)
         elseif ent:GetModel() == SNUFFLE_TREE_MODEL then
             local wep = client:GetActiveWeapon()
 
@@ -910,6 +911,28 @@ elseif CLIENT then
                 tData:SetSubtitle("Press ["..Key("+use", "USE").."] to place with other gifts")
                 tData:AddDescriptionLine("Ho ho ho!")
             end
+
+        -- looking at wrap target
+        else
+            local wep = client:GetActiveWeapon()
+
+            if utils.IsGiftWrap(wep) and not wep:HasGift() and not utils.IsMapClass(ent)
+              and tData:GetEntityDistance() <= gwInteractDist then
+                local color = UnpackColor(wep:GetGiftRibbonColor())
+                tData:EnableOutline()
+
+                local wrapConstraint = QueryWrapConstraint(ent)
+                if wrapConstraint then
+                    local darker = 100
+                    tData:SetOutlineColor(Color(math.max(color.r-darker,0), math.max(color.g-darker,0), math.max(color.b-darker,0)))
+
+                    tData:EnableText()
+                    --tData:AddDescriptionLine("Can't be wrapped!")
+                    tData:AddDescriptionLine(wrapConstraint, COLOR_ORANGE)
+                else
+                    tData:SetOutlineColor(color)
+                end
+            end
         end
     end)
 
@@ -920,7 +943,7 @@ elseif CLIENT then
         if bind == "+use" then
             local tr = utils.GetEyeTrace(ply)
 
-            if IsValid(tr.Entity) and tr.Entity:GetClass() == PROP_CLASS_NAME and tr.StartPos:Distance(tr.HitPos) <= 93.7 then
+            if IsValid(tr.Entity) and tr.Entity:GetClass() == PROP_CLASS_NAME and tr.StartPos:Distance(tr.HitPos) <= gwInteractDist then
                 ToggleGiftOptions(tr.Entity)
             end
 
@@ -933,6 +956,36 @@ elseif CLIENT then
 
             ToggleGiftOptions(gift)
         end
+    end)
+
+    -- ask server for constraint data (needed; no phys on client) & cache it
+    local constraintQueries = {}
+
+    function QueryWrapConstraint(ent)
+        local key = ent:EntIndex()
+        local query = constraintQueries[key]
+
+        if query and CurTime() < query.time + 3 then
+            return query.result
+        end
+
+        net.Start(WRAP_CONSTRAINT_QUERY_MSG)
+        net.WriteEntity(ent)
+        net.SendToServer()
+
+        local prevResult = query and query.result
+        constraintQueries[key] = {
+            time = CurTime(),
+            result = prevResult
+        }
+        return prevResult
+    end
+
+    net.Receive(WRAP_CONSTRAINT_REPLY_MSG, function()
+        local key = net.ReadFloat()
+        local result = net.ReadString()
+
+        constraintQueries[key].result = (result ~= "") and result
     end)
 
     -- ugly; unfortunately needed to work on external servers
