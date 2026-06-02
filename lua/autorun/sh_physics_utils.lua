@@ -257,6 +257,80 @@ if SERVER then
         print("Relevant unwrappables:", relevantCnt)
     end
 
+    function GW_DBG.UnwrappableTour(t)
+        if not t or t < 1 then t = 3 end
+        local unwrappables = {}
+        local ply = player.GetAll()[1]
+
+        for _, ent in ipairs(ents.GetAll()) do
+            local wrapConstraint = GetWrapConstraint(ent, player.GetAll()[1], true)
+
+            if wrapConstraint and IsValid(ent) and ent:GetSolid() > 0 and not ent:IsPlayer()
+              and not ent:IsWeapon() and not utils.IsMapClass(ent) then
+                table.insert(unwrappables, ent)
+            end
+        end
+
+        print("Touring through "..#unwrappables.." entities...")
+        if ply:GetMoveType() ~= MOVETYPE_NOCLIP then
+            RunConsoleCommand("ulx", "noclip", ply:Nick())
+        end
+
+        local entCnt = 1
+        local function TourStep()
+            local ent = unwrappables[entCnt]
+
+            if not IsValid(ent) then
+                timer.Remove("GW-DBG_IterUnwrappables")
+                print("Tour complete!")
+                return
+            end
+
+            local entPos = ent:GetPos()
+            local pos = GW_DBG.FindViewablePos(entPos)
+            local ang = (entPos - pos):Angle()
+            ply:SetPos(pos - Vector(0, 0, 50))
+            ply:SetEyeAngles(ang)
+            debugoverlay.Sphere(entPos, 10, t-1, GW_DBG.Red)
+
+            print("Entity "..entCnt.."/"..#unwrappables..": "..tostring(ent))
+            entCnt = entCnt + 1
+        end
+
+        TourStep()
+        timer.Remove("GW-DBG_IterUnwrappables")
+        timer.Create("GW-DBG_IterUnwrappables", t, 0, TourStep)
+    end
+
+    function GW_DBG.FindViewablePos(targetPos, radius, incRad)
+        if not radius then radius = 100 end
+        if not incRad then incRad = math.pi/8 end
+        local trueRad = math.sqrt(2) * radius
+
+        for ang = 0, 2 * math.pi, incRad do
+            local x = trueRad * math.cos(ang)
+            local y = trueRad * math.sin(ang)
+
+            local pos = targetPos + Vector(x, y)
+            local tr = util.TraceLine({
+                start = pos,
+                endpos = targetPos,
+                mask = MASK_NPCWORLDSTATIC
+            })
+
+            if tr.Fraction >= 1 then
+                return pos
+            end
+        end
+
+        return targetPos + Vector(100, 100, 0)
+    end
+
+    function GW_DBG.EndTour()
+        timer.Remove("GW-DBG_IterUnwrappables")
+        print("Tour cancelled.")
+    end
+
     function GW_DBG.MyPos()
         GW_DBG.Log(GW_DBG.PosStr(player.GetAll()[1]:GetPos() + Vector(0, 0, 20)))
     end

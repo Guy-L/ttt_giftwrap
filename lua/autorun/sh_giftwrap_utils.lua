@@ -290,6 +290,7 @@ function GW_Utils.IsMapClass(ent)
         or class == "func_tracktrain"
         or class == "func_water_analog"
         or class == "phys_bone_follower"
+        or class == "ttt_traitor_check"
         or class == "momentary_rot_button"
         or class == "class C_BaseToggle" -- the hell even
         --or class == "prop_dynamic" --TODO check if any of what we want to wrap is this (lots of stationary map elements are)

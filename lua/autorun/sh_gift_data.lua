@@ -55,6 +55,7 @@ GiftSound = {
     Meowing    = {snd="", desc="like it's meowing"},
     Bleating   = {snd="", desc="like it's bleating"}, -- lambert only
     Mooing     = {snd="", desc="like it's mooing"}, -- cow only
+    Oinking    = {snd="", desc="like it's oinking"}, -- pig only
     Thudding   = {snd="", desc="like it's thudding"},
     Whirring   = {snd="", desc="like it's whirring"},
     Revving    = {snd="", desc="like it's revving"},
@@ -410,6 +411,13 @@ local giftDataCatalog = {
         factor_rarity = 2, factor_quality = 7,
         attrib_sound = GiftSound.Meowing, attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Fur,     attrib_feel = GiftFeel.Soft,
+    },
+    mc_pig = GiftData.New {
+        name     = "Pig",                 desc       = "a pig",
+        category = GiftCategory.PhysProp, identifier = "models/mcmodelpack/mobs/pig.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Oinking, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Alive,
     },
     metal_pan = GiftData.New {
         name     = "Metal Pan",           desc       = "a cooking pan",
@@ -806,6 +814,19 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Dusty,    attrib_feel = GiftFeel.Soft,
         available_on_map = "ttt_seliana",
     },
+    mc_city_tnt = GiftData.New {
+        name     = "TNT",                desc       = "a TNT block",
+        category = GiftCategory.PhysBox, identifiers = {
+            "TNT01",
+            "TNT02",
+            "TNT03",
+            "", -- not relevant since we get the moveParent of each block; added for coverage
+        },
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Hissing,   attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Box,
+        available_on_map = "ttt_minecraftcity_v3",
+    },
 
     ----------------------------------------------------------------------
     -- Ragdolls
@@ -938,6 +959,14 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Rattling, attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Dry,      attrib_feel = GiftFeel.Fragile,
+        disable_flies = true,
+    },
+    mc_spider = GiftData.New {
+        name     = "Spider",             desc       = "a spider",
+        category = GiftCategory.Ragdoll, identifier = "models/mcmodelpack/mobs/spider.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Hissing, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Fur,     attrib_feel = GiftFeel.Alive,
         disable_flies = true,
     },
     mc_cavespider = GiftData.New {
