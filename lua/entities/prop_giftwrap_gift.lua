@@ -924,11 +924,12 @@ elseif CLIENT then
                 local wrapConstraint = QueryWrapConstraint(ent)
                 if wrapConstraint then
                     local darker = 100
-                    tData:SetOutlineColor(Color(math.max(color.r-darker,0), math.max(color.g-darker,0), math.max(color.b-darker,0)))
+                    color = Color(math.max(color.r-darker,0), math.max(color.g-darker,0), math.max(color.b-darker,0))
+                    tData:SetOutlineColor(color)
 
                     tData:EnableText()
                     --tData:AddDescriptionLine("Can't be wrapped!")
-                    tData:AddDescriptionLine(wrapConstraint, COLOR_ORANGE)
+                    tData:AddDescriptionLine(wrapConstraint, color)
                 else
                     tData:SetOutlineColor(color)
                 end

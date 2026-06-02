@@ -260,10 +260,15 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Oily,     attrib_feel = GiftFeel.Massive,
     },
     cardboard_box = GiftData.New {
-        name     = "Cardboard Box",       desc       = "a cardboard box",
-        category = GiftCategory.PhysProp, identifier = "models/props_junk/cardboard_box001a.mdl",
+        name     = "Cardboard Box",       desc        = "a cardboard box",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props_junk/cardboard_box001a.mdl",
+            "models/props/cs_office/cardboard_box01.mdl",
+            "models/props/cs_office/cardboard_box02.mdl",
+            "models/props/cs_office/cardboard_box03.mdl",
+        },
         can_be_random_gift = false,
-        attrib_sound = GiftSound.None,      attrib_size = GiftSize.Huge,
+        attrib_sound = GiftSound.None,      attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Cardboard, attrib_feel = GiftFeel.Fragile,
     },
     chair_desk = GiftData.New {
@@ -290,8 +295,11 @@ local giftDataCatalog = {
         adjMass = 40,
     },
     coffee_mug = GiftData.New {
-        name     = "Coffee Mug",          desc       = "a coffee mug",
-        category = GiftCategory.PhysProp, identifier = "models/props_junk/garbage_coffeemug001a.mdl",
+        name     = "Coffee Mug",          desc        = "a coffee mug",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props_junk/garbage_coffeemug001a.mdl",
+            "models/props/cs_office/coffee_mug.mdl",
+        },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Glass,    attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Caffeine, attrib_feel = GiftFeel.Round,
@@ -535,6 +543,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Train,   attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Plastic, attrib_feel = GiftFeel.Long,
         adjMass = 40,
+    },
+    trash_can = GiftData.New {
+        name     = "Trash Can",           desc       = "a trash can",
+        category = GiftCategory.PhysProp, identifier = "models/props/cs_office/trash_can.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Plastic, attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Stinky,  attrib_feel = GiftFeel.Fragile,
     },
     used_knife = GiftData.New {
         name     = "Used Knife",          desc       = "a bloodied knife",
@@ -815,7 +830,7 @@ local giftDataCatalog = {
         available_on_map = "ttt_seliana",
     },
     mc_city_tnt = GiftData.New {
-        name     = "TNT",                desc       = "a TNT block",
+        name     = "TNT Block",          desc       = "a TNT block",
         category = GiftCategory.PhysBox, identifiers = {
             "TNT01",
             "TNT02",

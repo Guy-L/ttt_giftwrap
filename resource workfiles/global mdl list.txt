@@ -2572,12 +2572,12 @@ models/props/cs_office/awning_short.mdl
 models/props/cs_office/bookshelf1.mdl
 models/props/cs_office/bookshelf2.mdl
 models/props/cs_office/bookshelf3.mdl
-models/props/cs_office/cardboard_box01.mdl
-models/props/cs_office/cardboard_box02.mdl
-models/props/cs_office/cardboard_box03.mdl
+[supported] models/props/cs_office/cardboard_box01.mdl
+[supported] models/props/cs_office/cardboard_box02.mdl
+[supported] models/props/cs_office/cardboard_box03.mdl
 models/props/cs_office/chair_office.mdl
 models/props/cs_office/clouds.mdl
-models/props/cs_office/coffee_mug.mdl
+[supported] models/props/cs_office/coffee_mug.mdl
 models/props/cs_office/coffee_mug2.mdl
 models/props/cs_office/coffee_mug3.mdl
 models/props/cs_office/coffee_mug_p1.mdl
@@ -2758,7 +2758,7 @@ models/props/cs_office/table_coffee_p1.mdl
 models/props/cs_office/table_coffee_p2.mdl
 models/props/cs_office/table_coffee_p3.mdl
 models/props/cs_office/table_meeting.mdl
-models/props/cs_office/trash_can.mdl
+[supported] models/props/cs_office/trash_can.mdl
 models/props/cs_office/trash_can_p.mdl
 models/props/cs_office/trash_can_p1.mdl
 models/props/cs_office/trash_can_p2.mdl
