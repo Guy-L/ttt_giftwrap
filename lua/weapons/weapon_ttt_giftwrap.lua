@@ -11,6 +11,7 @@ local HOOK_SPEC_GIFT_INDIC   = "TTT_GiftWrapCL_DrawSpectatorGiftHUD"
 local GIFTWRAP_PICKUP_MSG    = "TTT_GiftWrap_PickUpMsg"
 local GIFTWRAP_HL_CHAT_MSG   = "TTT_GiftWrap_HighlightChatMsg"
 local GIFTWRAP_GIFT_DATA_MSG = "TTT_GiftWrap_SendWrapperDataMsg"
+local CLIENT_FLOURISH_MSG     = "TTT_GiftWrapSV_WrappedPlayerFlourishMsg"
 local HOOK_GIFTWRAP_PICKUP   = "TTT_GiftWrap_PickUp"
 local HOOK_GIFTWRAP_TREE_USE = "TTT_GiftWrap_UseTree"
 local HOOK_ANGLE_CORRECTION  = "TTT_GiftWrap_CorrectGiftAngle"
@@ -62,6 +63,7 @@ if SERVER then
     resource.AddFile("materials/"..GIFTWRAP_ICON..".vmt")
     PrecacheParticleSystem("flies_fx")
 
+    util.AddNetworkString(CLIENT_FLOURISH_MSG)
     util.AddNetworkString(GIFTWRAP_PICKUP_MSG)
     util.AddNetworkString(GIFTWRAP_HL_CHAT_MSG)
     util.AddNetworkString(GIFTWRAP_GIFT_DATA_MSG)
@@ -275,7 +277,7 @@ if SERVER then
 
     -- Allow clients to "use" trees to place gifts in the usual range
     hook.Add("PlayerUse", HOOK_GIFTWRAP_TREE_USE, function(ply, ent)
-        if utils.IsLivingPlayer(ply) and IsValid(ent) 
+        if utils.IsLivingPlayer(ply) and IsValid(ent)
           and ent:GetModel() == SNUFFLE_TREE_MODEL then
             local wep = ply:GetActiveWeapon()
 
@@ -346,6 +348,11 @@ Gifts made by others can be opened with LMB (while holding them or via crowbar),
             dbg.Log("Received pickup notif")
             UpdateLocalInventoryGiftWrap("pickup")
         end)
+    end)
+
+    net.Receive(CLIENT_FLOURISH_MSG, function()
+        local sound = net.ReadString()
+        LocalPlayer():EmitSound(sounds[sound], 75, 100, 0.8)
     end)
 
     local COLOR_NORMAL = Color(0, 128, 255)
@@ -1000,6 +1007,16 @@ if SERVER then
 
             local openSnd = CreateSound(sndOrigin, sounds[dropSnd])
             openSnd:PlayEx(dropVol, dropPitch)
+
+            if sndOrigin == giftEnt then
+                for _, child in ipairs(giftEnt:GetChildren()) do
+                    if child:IsPlayer() then
+                        net.Start(CLIENT_FLOURISH_MSG)
+                        net.WriteString(dropSnd)
+                        net.Send(child)
+                    end
+                end
+            end
         end
 
         -- Particle effect
@@ -1106,7 +1123,7 @@ if SERVER then
             net.Broadcast()
 
             ent:CallOnRemove(WRAPPED_GIFT_REMOVE, function()
-                local wrappedBy = ent:GetNWEntity("WrappedByGift")
+                local wrappedBy = ent:GetNW2Entity("WrappedByGift")
 
                 if IsValid(wrappedBy) then
                     EmptyGift(wrappedBy)

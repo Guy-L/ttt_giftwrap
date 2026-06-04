@@ -3,7 +3,11 @@ local SNUFFLE_PRESENT_CLASS = "christmas_present"
 local HOOK_GIFTWRAP_MARKER_UI   = "TTT_GiftWrapCL_MarkerVision"
 local HOOK_GIFTWRAP_INTERACT_UI = "TTT_GiftWrapCL_InteractUI"
 local HOOK_GIFTWRAP_SPEC_USE    = "TTT_GiftWrapCL_SpectatorUseKey"
+local HOOK_GIFTWRAP_BIND_VIEW   = "TTT_GiftWrapCL_ViewFromGiftPos"
 local HOOK_GIFTWRAP_ENT_SPAWN   = "TTT_GiftWrapSV_EntSpawn"
+local HOOK_VEHICLE_GIFT_PVS     = "TTT_GiftWrapSV_WrappedRiderPVSFix"
+local HOOK_ON_EXIT_VEHICLE_GIFT = "TTT_GiftWrapSV_WrappedRiderVehicleExit"
+local HOOK_EXIT_VEHICLE_GIFT    = "TTT_GiftWrapSV_WrappedRiderVehicleCanExit"
 local HOOK_ROUND_START_TIME     = "TTT_GiftWrapSV_RoundStartTime"
 local HOOK_EXTINGUISH           = "TTT_GiftWrapSV_Extinguish"
 local TREE_FOUND_MSG            = "TTT_GiftWrapSV_TreeFoundMsg"
@@ -25,12 +29,13 @@ ENT.Author = "Guy"
 ENT.Model = GIFT_PROPMODEL --purely for Contents menu rendering
 
 local sounds = {
-    bells1 = Sound("giftwrap/tf2_nm_bells1.wav"),
-    bells2 = Sound("giftwrap/tf2_nm_bells2.wav"),
-    bounce1 = Sound("physics/metal/paintcan_impact_soft1.wav"),
-    bounce2 = Sound("physics/metal/paintcan_impact_soft2.wav"),
-    bounce3 = Sound("physics/metal/paintcan_impact_soft3.wav"),
+    bells1   = Sound("giftwrap/tf2_nm_bells1.wav"),
+    bells2   = Sound("giftwrap/tf2_nm_bells2.wav"),
+    bounce1  = Sound("physics/metal/paintcan_impact_soft1.wav"),
+    bounce2  = Sound("physics/metal/paintcan_impact_soft2.wav"),
+    bounce3  = Sound("physics/metal/paintcan_impact_soft3.wav"),
     teleport = Sound("giftwrap/teleport.mp3"),
+    pop      = Sound("garrysmod/balloon_pop_cute.wav"),
 }
 
 -- note: due to lazy design, all of these arrays must be of equal length
@@ -486,7 +491,7 @@ if SERVER then
         local curTime = CurTime()
 
         -- prevent updates from gifts currently wrapped in other gifts
-        if IsValid(self:GetNWEntity("WrappedByGift")) then
+        if IsValid(self:GetNW2Entity("WrappedByGift")) then
             self._LastPos = nil
             return
         end
@@ -512,6 +517,7 @@ if SERVER then
 
     function ENT:Use(activator)
         if self:GetCollisionGroup() ~= COLLISION_GROUP_NONE then return end
+        if activator._DisableGiftUse then return end
         local ownedGiftwrap = utils.GetInventoryGiftwrap(activator)
         local pickupByWrapper = activator:SteamID64() == self:GetWrapperSID()
 
@@ -554,12 +560,18 @@ if SERVER then
             end
 
             activator:PickupWeapon(newGift)
-            activator:SelectWeapon(SWEP_CLASS_NAME)
             self:RemoveMarkerVision(MV_GIFTEE_LABEL)
             self:RemoveMarkerVision(MV_GIFT_TP_LABEL)
 
             self._PreserveGift = true
             self:Remove()
+
+            -- must delay this for the holdtype to be correct (nothing else I tried worked)
+            timer.Simple(0, function()
+                if IsValid(activator) then
+                    activator:SelectWeapon(SWEP_CLASS_NAME)
+                end
+            end)
         end
     end
 
@@ -730,6 +742,40 @@ if SERVER then
         return newGift
     end
 
+    -- technically unnecessary since vehicles follow giftbox pos, but good just in case
+    hook.Add("SetupPlayerVisibility", HOOK_VEHICLE_GIFT_PVS, function(ply, viewEntity)
+        local parent = ply:GetParent()
+        if not IsValid(parent) then return end
+        local parentGift = parent:GetNW2Entity("WrappedByGift")
+
+        if IsValid(parentGift) then
+            AddOriginToPVS(parentGift:GetPos())
+        end
+    end)
+
+    hook.Add("PlayerLeaveVehicle", HOOK_ON_EXIT_VEHICLE_GIFT, function(ply, veh)
+        local parentGift = veh:GetNW2Entity("WrappedByGift")
+
+        if IsValid(parentGift) then
+            utils.TpViewing(ply, parentGift, 80, 20)
+            ply:EmitSound(sounds["pop"], 75, math.random(90, 110), 0.5)
+            ply._DisableGiftUse = true
+
+            timer.Simple(1, function()
+                if IsValid(ply) then
+                    ply._DisableGiftUse = false
+                end
+            end)
+        end
+    end)
+
+    hook.Add("CanExitVehicle", HOOK_EXIT_VEHICLE_GIFT, function(veh, ply)
+        local parentGift = veh:GetNW2Entity("WrappedByGift")
+
+        if IsValid(parentGift) then
+            ply:ExitVehicle()
+        end
+    end)
 
 
 
@@ -1003,6 +1049,43 @@ elseif CLIENT then
             HELPSCRN._gwOptMenu:Close()
         end
     end
+
+    -- support for players in gifts seeing from inside the gift
+    hook.Add("CalcView", HOOK_GIFTWRAP_BIND_VIEW, function(ply, pos, angles, fov, znear, zfar)
+        local parent = ply:GetParent()
+        if not IsValid(parent) then return end
+        local parentGift = parent:GetNW2Entity("WrappedByGift")
+
+        if IsValid(parentGift) then
+            local viewPos = parentGift:GetPos()
+
+            if parentGift:GetClass() == SWEP_CLASS_NAME then
+                local giftOwner = parentGift:GetOwner()
+
+                if IsValid(giftOwner) then
+                    if giftOwner:GetActiveWeapon() == parentGift then
+                        local attachmentID = utils.GetRHAttachmentID(giftOwner)
+
+                        if attachmentID then
+                            local attachment = giftOwner:GetAttachment(attachmentID)
+                            local offset = Vector(0, -7, 1)
+                            viewPos = attachment.Pos + attachment.Ang:Forward() * offset.x + attachment.Ang:Right() * offset.y + attachment.Ang:Up() * offset.z
+                        end
+
+                    else -- in the pocket
+                        local pelvis = giftOwner:LookupBone("ValveBiped.Bip01_Pelvis")
+
+                        if pelvis then
+                            local bonePos, boneAng = giftOwner:GetBonePosition(pelvis)
+                            viewPos = bonePos + boneAng:Forward() * -15
+                        end
+                    end
+                end
+            end
+
+            return { origin = viewPos, znear = 1 }
+        end
+    end)
 end
 
 dbg.Log("(prop) Initialized gift entity Lua")

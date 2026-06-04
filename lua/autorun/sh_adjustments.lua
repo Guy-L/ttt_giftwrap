@@ -89,7 +89,7 @@ end
 local function RemoteGiftExplosion(ent, ogExplode, parryFunc)
     dbg.Log("Confirming explosion for", ent)
 
-    if IsValid(ent:GetNWEntity("WrappedByGift")) then
+    if IsValid(ent:GetNW2Entity("WrappedByGift")) then
         ent._isSelfDestructing = false
         parryFunc(ent)
     else
@@ -99,7 +99,7 @@ end
 
 -- Catch-all hook to prevent kill events on wrapped entities (used by Fireballs & others)
 hook.Add("AcceptInput", ENT_KILL_INPUT_HOOK, function(ent, input, activator, caller, value)
-    if (input == "kill" or input == "Kill") and IsValid(ent) and IsValid(ent:GetNWEntity("WrappedByGift")) then
+    if (input == "kill" or input == "Kill") and IsValid(ent) and IsValid(ent:GetNW2Entity("WrappedByGift")) then
         dbg.Log("Prevented kill input for wrapped entity", ent)
         return true
     end
@@ -215,7 +215,7 @@ local initChanges = {
                 local manhack = slf:GetSpawnedManhack()
 
                 if IsValid(manhack) then
-                    if not IsValid(manhack:GetNWEntity("WrappedByGift")) then
+                    if not IsValid(manhack:GetNW2Entity("WrappedByGift")) then
                         og.SecondaryAttack(slf)
                     else
                         utils.NonSpamMessage(slf:GetOwner(), "wrapped_manhack", "Sorry, your manhack is wrapped inside a giftbox.")
@@ -406,7 +406,7 @@ local initChanges = {
         apply = function(sent, og)
 
             sent.EndTouch = function(self, ent)
-                if IsValid(self:GetNWEntity("WrappedByGift")) then return end
+                if IsValid(self:GetNW2Entity("WrappedByGift")) then return end
                 og.EndTouch(self, ent)
             end
         end
@@ -595,7 +595,7 @@ local initChanges = {
                                 owner.PEProp = nil
 
                                 if IsValid(ent) then
-                                    if IsValid(ent:GetNWEntity("WrappedByGift")) then
+                                    if IsValid(ent:GetNW2Entity("WrappedByGift")) then
                                         owner:ChatPrint("Detonation was parried by Gift Wrap!")
 
                                     else
@@ -685,7 +685,7 @@ local initChanges = {
                                 if ent ~= self.PEProp then ent = self.PEProp end
 
                                 if IsValid(ent) then
-                                    if IsValid(ent:GetNWEntity("WrappedByGift")) then
+                                    if IsValid(ent:GetNW2Entity("WrappedByGift")) then
                                         --self.PEPlanting = false
                                         ent._isSelfDestructing = false
 

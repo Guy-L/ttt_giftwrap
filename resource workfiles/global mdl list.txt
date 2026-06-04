@@ -702,7 +702,7 @@ models/gibs/helicopter_brokenpiece_05_tailfan.mdl
 models/gibs/helicopter_brokenpiece_06_body.mdl
 models/gibs/hghl1.mdl
 models/gibs/hgibs.mdl
-models/gibs/hgibs_rib.mdl
+[supported] models/gibs/hgibs_rib.mdl
 models/gibs/hgibs_scapula.mdl
 models/gibs/hgibs_spine.mdl
 models/gibs/manhack_gib01.mdl
@@ -2382,7 +2382,7 @@ models/props/cs_italy/winerack_small.mdl
 models/props/cs_militia/2x4walls01.mdl
 models/props/cs_militia/axe.mdl
 models/props/cs_militia/bar01.mdl
-models/props/cs_militia/barstool01.mdl
+[supported] models/props/cs_militia/barstool01.mdl
 models/props/cs_militia/bathroomwallhole01_tile.mdl
 models/props/cs_militia/bathroomwallhole01_wood_broken.mdl
 models/props/cs_militia/bathroomwallhole01_wood_broken_01.mdl
@@ -2575,7 +2575,7 @@ models/props/cs_office/bookshelf3.mdl
 [supported] models/props/cs_office/cardboard_box01.mdl
 [supported] models/props/cs_office/cardboard_box02.mdl
 [supported] models/props/cs_office/cardboard_box03.mdl
-models/props/cs_office/chair_office.mdl
+[supported] models/props/cs_office/chair_office.mdl
 models/props/cs_office/clouds.mdl
 [supported] models/props/cs_office/coffee_mug.mdl
 models/props/cs_office/coffee_mug2.mdl
@@ -2585,7 +2585,7 @@ models/props/cs_office/coffee_mug_p2.mdl
 models/props/cs_office/coffee_mug_p3.mdl
 models/props/cs_office/computer.mdl
 models/props/cs_office/computer_case.mdl
-models/props/cs_office/computer_caseb.mdl
+[supported] models/props/cs_office/computer_caseb.mdl
 models/props/cs_office/computer_caseb_gib1.mdl
 models/props/cs_office/computer_caseb_gib2.mdl
 models/props/cs_office/computer_caseb_p1.mdl
@@ -2623,7 +2623,7 @@ models/props/cs_office/computer_keyboard_p2b.mdl
 models/props/cs_office/computer_keyboard_p2c.mdl
 models/props/cs_office/computer_keyboard_p2d.mdl
 models/props/cs_office/computer_keyboard_p2e.mdl
-models/props/cs_office/computer_monitor.mdl
+[supported] models/props/cs_office/computer_monitor.mdl
 models/props/cs_office/computer_monitor_p1.mdl
 models/props/cs_office/computer_monitor_p1a.mdl
 models/props/cs_office/computer_monitor_p2.mdl
@@ -2635,7 +2635,7 @@ models/props/cs_office/doorknob.mdl
 models/props/cs_office/doorknobb.mdl
 models/props/cs_office/exit_ceiling.mdl
 models/props/cs_office/exit_wall.mdl
-models/props/cs_office/file_box.mdl
+[supported] models/props/cs_office/file_box.mdl
 models/props/cs_office/file_box_gib1.mdl
 models/props/cs_office/file_box_gib2.mdl
 models/props/cs_office/file_box_p1.mdl
@@ -2691,7 +2691,7 @@ models/props/cs_office/paperbox_pile_01.mdl
 models/props/cs_office/phone_big.mdl
 models/props/cs_office/phone_p1.mdl
 models/props/cs_office/phone_p2.mdl
-models/props/cs_office/plant01.mdl
+[supported] models/props/cs_office/plant01.mdl
 models/props/cs_office/plant01_big.mdl
 models/props/cs_office/plant01_gib1.mdl
 models/props/cs_office/plant01_gib2.mdl
@@ -2766,10 +2766,10 @@ models/props/cs_office/trash_can_p3.mdl
 models/props/cs_office/trash_can_p4.mdl
 models/props/cs_office/trash_can_p5.mdl
 models/props/cs_office/trash_can_p6.mdl
-models/props/cs_office/trash_can_p7.mdl
+[supported] models/props/cs_office/trash_can_p7.mdl
 models/props/cs_office/trash_can_p8.mdl
 models/props/cs_office/trash_can_p_big.mdl
-models/props/cs_office/tv_plasma.mdl
+[supported] models/props/cs_office/tv_plasma.mdl
 models/props/cs_office/tv_plasma_gib1.mdl
 models/props/cs_office/tv_plasma_gib2.mdl
 models/props/cs_office/tv_plasma_p1.mdl
@@ -3911,7 +3911,7 @@ models/props_c17/substation_transformer01c.mdl
 models/props_c17/substation_transformer01d.mdl
 models/props_c17/substation_transformer01e.mdl
 models/props_c17/suitcase001a.mdl
-models/props_c17/suitcase_passenger_physics.mdl
+[supported] models/props_c17/suitcase_passenger_physics.mdl
 models/props_c17/support01.mdl
 models/props_c17/tools_pliers01a.mdl
 models/props_c17/tools_wrench01a.mdl
@@ -4920,7 +4920,7 @@ models/props_junk/garbage_coffeemug001a_big.mdl
 models/props_junk/garbage_coffeemug001a_chunk01.mdl
 models/props_junk/garbage_coffeemug001a_chunk02.mdl
 models/props_junk/garbage_coffeemug001a_chunk03.mdl
-models/props_junk/garbage_glassbottle001a.mdl
+[supported] models/props_junk/garbage_glassbottle001a.mdl
 models/props_junk/garbage_glassbottle001a_chunk01.mdl
 models/props_junk/garbage_glassbottle001a_chunk02.mdl
 models/props_junk/garbage_glassbottle001a_chunk03.mdl
@@ -4989,7 +4989,7 @@ models/props_junk/terracotta01.mdl
 models/props_junk/terracotta_chunk01a.mdl
 models/props_junk/terracotta_chunk01b.mdl
 models/props_junk/terracotta_chunk01f.mdl
-models/props_junk/trafficcone001a.mdl
+[supported] models/props_junk/trafficcone001a.mdl
 models/props_junk/trafficcone001a_big.mdl
 models/props_junk/trashbin01a.mdl
 models/props_junk/trashcluster01a.mdl

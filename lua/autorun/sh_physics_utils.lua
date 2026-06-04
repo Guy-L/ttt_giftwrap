@@ -246,8 +246,8 @@ if SERVER then
         for _, unwrappable in ipairs(unwrappables) do
             local ent = unwrappable.ent
 
-            if IsValid(ent) and ent:GetSolid() > 0 and not ent:IsPlayer()
-              and not ent:IsWeapon() and not utils.IsMapClass(ent) then
+            if IsValid(ent) and ent:GetSolid() > 0 and not ent:IsPlayer() and not ent:IsWeapon()
+              and not utils.IsMapClass(ent) and not IsValid(ent:GetNW2Entity("WrappedByGift")) then
                 print("-> Unwrappable:", ent, GW_DBG.PosStr(ent:GetPos()), unwrappable.reason, "solid "..ent:GetSolid())
                 debugoverlay.Sphere(ent:GetPos(), 10, 5, GW_DBG.Red)
                 relevantCnt = relevantCnt + 1
@@ -266,8 +266,8 @@ if SERVER then
             local wrapConstraint = GetWrapConstraint(ent, player.GetAll()[1], true)
 
             if wrapConstraint and IsValid(ent) and ent:GetSolid() > 0 and not ent:IsPlayer()
-              and not ent:IsWeapon() and not utils.IsMapClass(ent) then
-                table.insert(unwrappables, ent)
+              and not ent:IsWeapon() and not utils.IsMapClass(ent) and not IsValid(ent:GetNW2Entity("WrappedByGift")) then
+                table.insert(unwrappables, {ent = ent, reason = wrapConstraint})
             end
         end
 
@@ -278,7 +278,7 @@ if SERVER then
 
         local entCnt = 1
         local function TourStep()
-            local ent = unwrappables[entCnt]
+            local ent = unwrappables[entCnt].ent
 
             if not IsValid(ent) then
                 timer.Remove("GW-DBG_IterUnwrappables")
@@ -286,44 +286,16 @@ if SERVER then
                 return
             end
 
-            local entPos = ent:GetPos()
-            local pos = GW_DBG.FindViewablePos(entPos)
-            local ang = (entPos - pos):Angle()
-            ply:SetPos(pos - Vector(0, 0, 50))
-            ply:SetEyeAngles(ang)
-            debugoverlay.Sphere(entPos, 10, t-1, GW_DBG.Red)
+            GW_Utils.TpViewing(ply, ent, 100, -50)
+            debugoverlay.Sphere(ent:GetPos(), 10, t-1, GW_DBG.Red)
 
-            print("Entity "..entCnt.."/"..#unwrappables..": "..tostring(ent))
+            print("Entity "..entCnt.."/"..#unwrappables..": "..tostring(ent).." ("..unwrappables[entCnt].reason..")")
             entCnt = entCnt + 1
         end
 
         TourStep()
         timer.Remove("GW-DBG_IterUnwrappables")
         timer.Create("GW-DBG_IterUnwrappables", t, 0, TourStep)
-    end
-
-    function GW_DBG.FindViewablePos(targetPos, radius, incRad)
-        if not radius then radius = 100 end
-        if not incRad then incRad = math.pi/8 end
-        local trueRad = math.sqrt(2) * radius
-
-        for ang = 0, 2 * math.pi, incRad do
-            local x = trueRad * math.cos(ang)
-            local y = trueRad * math.sin(ang)
-
-            local pos = targetPos + Vector(x, y)
-            local tr = util.TraceLine({
-                start = pos,
-                endpos = targetPos,
-                mask = MASK_NPCWORLDSTATIC
-            })
-
-            if tr.Fraction >= 1 then
-                return pos
-            end
-        end
-
-        return targetPos + Vector(100, 100, 0)
     end
 
     function GW_DBG.EndTour()
@@ -374,6 +346,40 @@ if SERVER then
         })
     end
 
+    function GW_Utils.FindViewablePos(targetPos, radius, incRad)
+        if not radius then radius = 100 end
+        if not incRad then incRad = math.pi/8 end
+
+        local trueRad = math.sqrt(2) * radius
+        local startAng = math.random(0, 2 * math.pi)
+
+        for ang = 0, 2 * math.pi, incRad do
+            local x = trueRad * math.cos(startAng + ang)
+            local y = trueRad * math.sin(startAng + ang)
+
+            local pos = targetPos + Vector(x, y)
+            local tr = util.TraceLine({
+                start = targetPos,
+                endpos = pos,
+                mask = MASK_PLAYERSOLID_BRUSHONLY
+            })
+
+            if tr.Fraction >= 1 and util.IsInWorld(pos) then
+                return pos
+            end
+        end
+
+        return targetPos + Vector(100, 100, 0)
+    end
+
+    function GW_Utils.TpViewing(ply, targetEnt, radius, zOff)
+        local entPos = targetEnt:GetPos()
+        local pos = GW_Utils.FindViewablePos(entPos, radius)
+        local ang = (entPos - pos):Angle()
+        ply:SetPos(pos + Vector(0, 0, zOff or 0))
+        ply:SetEyeAngles(ang)
+    end
+
     function GW_Utils.GetRandomUpwardsVel(raise)
         local dir = VectorRand()
         dir.z = math.abs(dir.z + raise)
@@ -389,7 +395,7 @@ if SERVER then
         ent:SetNoDraw(true)
         ent:SetNotSolid(true)
 
-        ent:SetNWEntity("WrappedByGift", giftObj)
+        ent:SetNW2Entity("WrappedByGift", giftObj)
         ent._GWStoredPos = ent:GetPos()
         ent._GWStoredColGroup = ent:GetCollisionGroup()
         ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
@@ -436,6 +442,16 @@ if SERVER then
                     texture    = child:GetInternalVariable("model"),
                 })
                 child:SetNoDraw(true)
+
+            elseif child:IsPlayer() then
+                child:ChatPrint("Your vehicle has been wrapped!")
+                child:SetNoDraw(true)
+
+                timer.Simple(2.5, function()
+                    if IsValid(child) then
+                        child:ChatPrint("NOTE: You can free yourself from the giftbox by exiting the vehicle.")
+                    end
+                end)
             end
         end
 
@@ -492,7 +508,7 @@ if SERVER then
         ent:SetNoDraw(false)
         ent:SetNotSolid(false)
 
-        ent:SetNWEntity("WrappedByGift", nil)
+        ent:SetNW2Entity("WrappedByGift", nil)
         if ent._GWStoredColGroup then
             ent:SetCollisionGroup(ent._GWStoredColGroup)
         end
@@ -555,6 +571,14 @@ if SERVER then
         net.Start(UNHIDE_MARK_MSG)
         net.WriteEntity(ent)
         net.Broadcast()
+
+        -- notify conected players
+        for _, child in ipairs(ent:GetChildren()) do
+            if child:IsPlayer() then
+                child:ChatPrint("Your vehicle was unwrapped!")
+                child:SetNoDraw(false)
+            end
+        end
     end
 
     function GW_Utils.FindConnectedRopes(ent)

@@ -289,6 +289,7 @@ function GW_Utils.IsMapClass(ent)
         or class == "func_tanktrain"
         or class == "func_tracktrain"
         or class == "func_water_analog"
+        or class == "func_wall"
         or class == "phys_bone_follower"
         or class == "ttt_traitor_check"
         or class == "momentary_rot_button"
@@ -415,13 +416,13 @@ end
 
 function GW_Utils.GetTopmostWrap(ent)
     if not IsValid(ent) then return nil end
-    local wrappedBy = ent:GetNWEntity("WrappedByGift")
+    local wrappedBy = ent:GetNW2Entity("WrappedByGift")
     if not IsValid(wrappedBy) then return nil end
     wrapLevel = 0
 
     while IsValid(wrappedBy) do
         ent = wrappedBy
-        wrappedBy = ent:GetNWEntity("WrappedByGift")
+        wrappedBy = ent:GetNW2Entity("WrappedByGift")
         wrapLevel = wrapLevel + 1
     end
 
@@ -478,7 +479,7 @@ function GW_Utils.TransferNetVars(fromGift, toGift)
 
     local wrappedEnt = fromGift:GetStoredGift()
     if IsValid(wrappedEnt) then
-        wrappedEnt:SetNWEntity("WrappedByGift", toGift)
+        wrappedEnt:SetNW2Entity("WrappedByGift", toGift)
     end
 
     -- transfer Prop Exploder (v1) rig
@@ -554,6 +555,19 @@ end
 
 function GW_Utils.StinkAttachPlayer(ply)
     if not IsValid(ply) then return end
+    local rhAttachmentID = GW_Utils.GetRHAttachmentID(ply)
+
+    if rhAttachmentID then
+        ParticleEffectAttach("flies_fx", PATTACH_POINT_FOLLOW, ply, rhAttachmentID)
+        return
+    end
+
+    GW_DBG.Log("(Flies FX) Failed to find right hand for", ply, ply:GetModel())
+    ParticleEffectAttach("flies_fx", PATTACH_ABSORIGIN_FOLLOW, ply, 0)
+end
+
+function GW_Utils.GetRHAttachmentID(ply)
+    if not IsValid(ply) then return end
     local rhAttachmentNames = {
         "anim_attachment_RH",
         "primary",
@@ -563,13 +577,9 @@ function GW_Utils.StinkAttachPlayer(ply)
         local id = ply:LookupAttachment(name)
 
         if id > 0 then
-            ParticleEffectAttach("flies_fx", PATTACH_POINT_FOLLOW, ply, id)
-            return
+            return id
         end
     end
-
-    GW_DBG.Log("(Flies FX) Failed to find right hand for", ply, ply:GetModel())
-    ParticleEffectAttach("flies_fx", PATTACH_ABSORIGIN_FOLLOW, ply, 0)
 end
 
 function GW_Utils.IsGiftBox(ent)
