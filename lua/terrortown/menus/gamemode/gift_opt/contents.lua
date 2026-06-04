@@ -49,14 +49,14 @@ local contentsMat = CreateMaterial("gw_contents_icon_mat", "UnlitGeneric", {
     ["$translucent"] = "1"
 })
 
-local function GenerateRenderIcon(ent, giftData)
+local function GenerateRenderIcon(ent, giftObj, giftData)
     dbg.Log("Manually rendering icon for " .. tostring(ent))
 
     -- camera offset so we see the whole box
     local center = ent:GetPos()
     --local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
     --local size = (maxs - mins):Length()
-    local size = giftData.attrib_size * 700 -- offsets the near-zero FOV
+    local size = giftData:GetSize(giftObj) * 700 -- offsets the near-zero FOV
 
     local offset = ent:GetForward() + ent:GetRight() + ent:GetUp()
     local camPos = center + offset * size
@@ -124,7 +124,7 @@ local function SetModelImage(dImage, giftEnt, giftData)
         lastRequestingImg = dImage
 
         if giftData.category == GiftCategory.PhysBox then
-            GenerateRenderIcon(wrappedEnt, giftData)
+            GenerateRenderIcon(wrappedEnt, giftEnt, giftData)
         else
             GenerateSpawnIcon(entModel)
         end
@@ -224,8 +224,6 @@ function CreateStatusTable(parent, statusTable)
 end
 
 function CreateCurrentContentsBox(giftEnt, giftData, parent)
-    local storedEnt = giftEnt:GetStoredGift()
-
     local curContents = vgui.Create("DPanel", parent)
     curContents:SetPaintBackground(true)
     curContents:SetBackgroundColor(curcont_bg)
@@ -328,7 +326,7 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
                 AttributeLine(textPanel, "feels",  giftData.attrib_feel, "Just holding it doesn't tell you much")
             end
 
-            local sizeLine = FancyLine(textPanel, "Size: ", giftData:GetSizeStr(storedEnt), nil)
+            local sizeLine = FancyLine(textPanel, "Size: ", giftData:GetSizeStr(giftEnt), nil)
             sizeLine:SizeToContentsY()
             sizeLine:DockMargin(0, 0, 0, 2)
         end

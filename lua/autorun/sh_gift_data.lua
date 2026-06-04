@@ -244,6 +244,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Hollow, attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Dusty,  attrib_feel = GiftFeel.Box,
     },
+    bucket_metal = GiftData.New {
+        name     = "Metal Bucket",        desc       = "a bucket",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/metalbucket01a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Hollow,   attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Metallic, attrib_feel = GiftFeel.Round,
+    },
     cannonball_prop = GiftData.New {
         name     = "Used Cannonball",     desc       = "an inert cannonball",
         category = GiftCategory.PhysProp, identifier = "models/props_phx/misc/smallcannonball.mdl",
@@ -252,11 +259,21 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Round,
     },
     can_soda = GiftData.New {
-        name     = "Soda Can",            desc       = "a soda can",
-        category = GiftCategory.PhysProp, identifier = "models/props/cs_office/trash_can_p7.mdl",
+        name     = "Soda Can",            desc        = "a soda can",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props/cs_office/trash_can_p7.mdl",
+            "models/props_junk/popcan01a.mdl",
+        },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Hollow, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Fizzy,  attrib_feel = GiftFeel.Cold,
+    },
+    can_paint = GiftData.New {
+        name     = "Paint Can",           desc       = "a paint can",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/metal_paintcan001a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Splashing, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Paint,     attrib_feel = GiftFeel.Round,
     },
     car_wreck = GiftData.New {
         name     = "Wrecked Car",         desc        = "a broken down car",
@@ -277,9 +294,12 @@ local giftDataCatalog = {
     cardboard_box = GiftData.New {
         name     = "Cardboard Box",       desc        = "a cardboard box",
         category = GiftCategory.PhysProp, identifiers = {
-            "models/props_junk/cardboard_box001a.mdl",
+            {mdl="models/props_junk/cardboard_box001a.mdl", size=4},
+            {mdl="models/props_junk/cardboard_box001b.mdl", size=4},
+            {mdl="models/props_junk/cardboard_box002a.mdl", size=GiftSize.Huge},
+            "models/props_junk/cardboard_box003a.mdl",
             "models/props/cs_office/cardboard_box01.mdl",
-            "models/props/cs_office/cardboard_box02.mdl",
+            {mdl="models/props/cs_office/cardboard_box02.mdl", size=GiftSize.Large},
             "models/props/cs_office/cardboard_box03.mdl",
         },
         can_be_random_gift = false,
@@ -418,11 +438,16 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Paper,    attrib_feel = GiftFeel.Massive,
     },
     glass_bottle = GiftData.New {
-        name     = "Glass Bottle",        desc       = "a bottle",
-        category = GiftCategory.PhysProp, identifier = "models/props_junk/garbage_glassbottle001a.mdl",
+        name     = "Glass Bottle",        desc        = "a bottle",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props_junk/garbage_glassbottle001a.mdl",
+            "models/props_junk/garbage_glassbottle003a.mdl",
+            "models/props_junk/glassbottle01a.mdl",
+            "models/props_junk/glassjug01.mdl",
+        },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Glass,   attrib_size = GiftSize.Large,
-        attrib_smell = GiftSmell.Alcohol, attrib_feel = GiftFeel.Round,
+        attrib_smell = GiftSmell.Alcohol, attrib_feel = GiftFeel.Fragile,
     },
     goober = GiftData.New {
         name     = "Goober",              desc       = "a goober",
@@ -484,12 +509,19 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Ash,      attrib_feel = GiftFeel.Flat,
     },
+    metal_panel = GiftData.New {
+        name     = "Metal Panel",         desc       = "a panel",
+        category = GiftCategory.PhysProp, identifier = "models/props_debris/metal_panel01a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Max,
+        attrib_smell = GiftSmell.Rusty,    attrib_feel = GiftFeel.Flat,
+    },
     metal_pot = GiftData.New {
         name     = "Metal Pot",           desc       = "a metal pot",
         category = GiftCategory.PhysProp, identifier = "models/props_c17/metalpot001a.mdl",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Larger,
-        attrib_smell = GiftSmell.Ash,      attrib_feel = GiftFeel.Hollow,
+        attrib_smell = GiftSmell.Rusty,    attrib_feel = GiftFeel.Hollow,
     },
     milk_jug = GiftData.New {
         name     = "Milk Jug",            desc        = "an old milk jug",
@@ -539,11 +571,16 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Cotton,   attrib_feel = GiftFeel.Squishy,
     },
     potted_plant = GiftData.New {
-        name     = "Potted Plant",        desc       = "a potted plant",
-        category = GiftCategory.PhysProp, identifier = "models/props/cs_office/plant01.mdl",
+        name     = "Potted Plant",        desc        = "a potted plant",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props/cs_office/plant01.mdl",
+            "models/props/de_inferno/potted_plant1.mdl",
+            "models/props/de_inferno/potted_plant2.mdl",
+            "models/props/de_inferno/potted_plant3.mdl",
+        },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Rustling, attrib_size = GiftSize.Huge,
-        attrib_smell = GiftSmell.Earthy,   attrib_feel = GiftFeel.Long,
+        attrib_smell = GiftSmell.Earthy,   attrib_feel = GiftFeel.Round,
     },
     prop_radio = GiftData.New {
         name     = "Radio (Prop)",        desc       = "a broken radio",
@@ -599,6 +636,20 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Leather,  attrib_feel = GiftFeel.Round,
     },
+    takeout_carton = GiftData.New {
+        name     = "Asian Takeout Carton", desc       = "some takeout",
+        category = GiftCategory.PhysProp,  identifier = "models/props_junk/garbage_takeoutcarton001a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Squelching, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Food,       attrib_feel = GiftFeel.Warm,
+    },
+    tire_car = GiftData.New {
+        name     = "Car Tire",            desc       = "a tire",
+        category = GiftCategory.PhysProp, identifier = "models/props_vehicles/tire001c_car.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Rubbery, attrib_feel = GiftFeel.Round,
+    },
     toy_train = GiftData.New {
         name     = "Toy Train",           desc       = "a toy train",
         category = GiftCategory.PhysProp, identifier = "models/quarterlife/fsd-overrun-toy.mdl",
@@ -616,11 +667,14 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Rubbery, attrib_feel = GiftFeel.Light,
     },
     trash_can = GiftData.New {
-        name     = "Trash Can",           desc       = "a trash can",
-        category = GiftCategory.PhysProp, identifier = "models/props/cs_office/trash_can.mdl",
+        name     = "Trash Can",           desc        = "a trash can",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props/cs_office/trash_can.mdl",
+            "models/props/cs_office/trash_can_p.mdl",
+        },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Plastic, attrib_size = GiftSize.Larger,
-        attrib_smell = GiftSmell.Stinky,  attrib_feel = GiftFeel.Fragile,
+        attrib_smell = GiftSmell.Stinky,  attrib_feel = GiftFeel.Hollow,
     },
     tv_monitor_plasma = GiftData.New {
         name     = "Plasma TV Monitor",    desc       = "a flat screen TV",
@@ -652,6 +706,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Strange,  attrib_feel = GiftFeel.Sharp,
         special_setup = "sopd_setup", break_constraints = true,
+    },
+    washtub_metal = GiftData.New {
+        name     = "Metal Wash Tub",      desc       = "a wash tub",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/metalbucket02a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Hollow,   attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Metallic, attrib_feel = GiftFeel.Round,
     },
     watermelon = GiftData.New {
         name     = "Watermelon",          desc       = "a watermelon",
@@ -692,8 +753,11 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Massive,
     },
     wooden_pallet = GiftData.New {
-        name     = "Wooden Pallet",       desc       = "a wooden pallet",
-        category = GiftCategory.PhysProp, identifier = "models/props_junk/wood_pallet001a.mdl",
+        name     = "Wooden Pallet",       desc        = "a wooden pallet",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props_junk/wood_pallet001a.mdl",
+            "models/props/de_prodigy/wood_pallet_01.mdl",
+        },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Creaky, attrib_size = GiftSize.Gigantic,
         attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Flat,
@@ -906,14 +970,6 @@ local giftDataCatalog = {
 
     ----------------------------------------------------------------------
     -- Func PhysBoxes (map-bound model-less props)
-    seliana_carpet = GiftData.New {
-        name     = "Carpet",             desc       = "a fancy carpet",
-        category = GiftCategory.PhysBox, identifier = "Carpet",
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Max,
-        attrib_smell = GiftSmell.Dusty,    attrib_feel = GiftFeel.Soft,
-        only_on_map = "ttt_seliana",
-    },
     mc_city_tnt = GiftData.New {
         name     = "TNT Block",          desc        = "a TNT block",
         category = GiftCategory.PhysBox, identifiers = {
@@ -925,7 +981,36 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Hissing,   attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Box,
-        only_on_map = "ttt_minecraftcity_v3",
+        only_on_map = "ttt_minecraftcity",
+    },
+    mc_b5_dia_ore = GiftData.New {
+        name     = "Diamonde Ore Block", desc        = "a diamond ore",
+        category = GiftCategory.PhysBox, identifiers = {
+            "DiaOre_1", "DiaOre_2", "DiaOre_3", "DiaOre_4",
+            "DiaOre_5", "DiaOre_6", "DiaOre_7", "DiaOre_8",
+        },
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Glass,   attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Mineral, attrib_feel = GiftFeel.Box,
+        only_on_map = "ttt_minecraft_b5",
+    },
+    mc_b5_gold = GiftData.New {
+        name     = "Gold Block",         desc       = "a gold block",
+        category = GiftCategory.PhysBox, identifier = "GoldBlock",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Mineral,  attrib_feel = GiftFeel.Box,
+        only_on_map = "ttt_minecraft_b5",
+    },
+    mc_b5_cd = GiftData.New {
+        name     = "Music Disc (cat)",   desc        = "a music disc",
+        category = GiftCategory.PhysBox, identifiers = {
+            "Music_CD_01", "Music_CD_02", "Music_CD_03",
+        },
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Musical, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Mineral, attrib_feel = GiftFeel.Flat,
+        only_on_map = "ttt_minecraft_b5",
     },
     oldruins_tankard = GiftData.New {
         name     = "Tavern Tankard",     desc        = "a wooden tankard",
@@ -937,6 +1022,33 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Splashing, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Alcohol,   attrib_feel = GiftFeel.Medieval,
         only_on_map = "ttt_oldruins",
+    },
+    rpg_village_dynamite = GiftData.New {
+        name     = "Dynamite",           desc        = "dynamite",
+        category = GiftCategory.PhysBox, identifiers = {
+            "dynamite1", "dynamite2", "dynamite3", "dynamite4",
+        },
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Hissing,   attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Powerful,
+        visual_override = {path = "custom/rpg_dynamite", type = "sprite"},
+        only_on_map = "ttt_rpgvillage",
+    },
+    rpg_village_firekey = GiftData.New {
+        name     = "Burning Rod",        desc       = "a torch",
+        category = GiftCategory.PhysBox, identifier = "firekey",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Ash,       attrib_feel = GiftFeel.Long,
+        only_on_map = "ttt_rpgvillage",
+    },
+    seliana_carpet = GiftData.New {
+        name     = "Carpet",             desc       = "a fancy carpet",
+        category = GiftCategory.PhysBox, identifier = "Carpet",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Max,
+        attrib_smell = GiftSmell.Dusty,    attrib_feel = GiftFeel.Soft,
+        only_on_map = "ttt_seliana",
     },
 
     ----------------------------------------------------------------------
@@ -1008,6 +1120,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
         attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Scientific,
     },
+    mossman_corpse = GiftData.New {
+        name     = "Dead Mossman",       desc       = "Mossman's body",
+        category = GiftCategory.Ragdoll, identifier = "models/mossman.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Scientific,
+    },
     gordon_corpse = GiftData.New {
         name     = "Dead Gordon",        desc       = "Gordon's body",
         category = GiftCategory.Ragdoll, identifier = "models/halflife1/gordon_freeman_pm.mdl",
@@ -1016,8 +1135,11 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Scientific,
     },
     gman_corpse = GiftData.New {
-        name     = "Dead G-Man",         desc       = "the G-Man's body",
-        category = GiftCategory.Ragdoll, identifier = "models/player/gman_high.mdl",
+        name     = "Dead G-Man",         desc        = "the G-Man's body",
+        category = GiftCategory.Ragdoll, identifiers = {
+            "models/gman.mdl",
+            "models/player/gman_high.mdl",
+        },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
         attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Powerful,
@@ -2737,15 +2859,24 @@ end
 function GiftData:GetIdentifier(giftObj)
     if self.identifiers then
         local chosenID = IsValid(giftObj) and giftObj:GetNW2Int("chosen_id") or 0
+        local idData = self.identifiers[chosenID > 0 and chosenID or math.random(#self.identifiers)]
 
-        if chosenID > 0 then
-            return self.identifiers[chosenID]
-        else
-            return self.identifiers[math.random(#self.identifiers)]
-        end
+        return idData.mdl and idData.mdl or idData
     else
         return self.identifier
     end
+end
+
+function GiftData:GetSize(giftObj)
+    if self.identifiers and IsValid(giftObj) then
+        local idData = self.identifiers[giftObj:GetNW2Int("chosen_id")]
+
+        if idData and idData.size then
+            return idData.size
+        end
+    end
+
+    return self.attrib_size
 end
 
 function GiftData:IsSpawnable(giftee, giftObj)
@@ -2815,6 +2946,17 @@ function GiftData:IsDropBlocked()
 end
 
 function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
+    if self.identifiers and wrappedEnt.GetModel then
+        local mdl = wrappedEnt:GetModel()
+
+        for i, idData in ipairs(self.identifiers) do
+            if mdl == (idData.mdl and idData.mdl or idData) then
+                giftObj:SetNW2Int("chosen_id", i)
+                break
+            end
+        end
+    end
+
     if self.break_constraints then
         constraint.RemoveAll(wrappedEnt)
     end
@@ -4075,13 +4217,14 @@ elseif CLIENT then
         return nil
     end
 
-    function GiftData:GetSizeStr(giftEnt)
+    function GiftData:GetSizeStr(giftObj)
         local closestDesc = "Unknown"
         local closestDiff = math.huge
-        local giftSize = self.attrib_size
+        local giftSize = self:GetSize(giftObj)
+        local wrappedEnt = giftObj:GetStoredGift()
 
-        if IsValid(giftEnt) and giftEnt:GetClass() == PROP_CLASS_NAME then
-            giftSize = giftEnt:GetGiftScale()
+        if IsValid(wrappedEnt) and wrappedEnt:GetClass() == PROP_CLASS_NAME then
+            giftSize = wrappedEnt:GetGiftScale()
         end
 
         for descriptor, size in pairs(GiftSize) do
@@ -4249,7 +4392,9 @@ local giftSurfaceProps = {
 }
 
 function GiftData:Detect(ent, entIdentifier)
-    if self.only_on_map and game.GetMap() ~= self.only_on_map then return false end
+    if self.only_on_map and not string.StartsWith(game.GetMap(), self.only_on_map) then
+        return false
+    end
 
     if self.special_setup == "fireball_setup" then
         return ent:GetName() == "Fireball"
@@ -4263,8 +4408,8 @@ function GiftData:Detect(ent, entIdentifier)
     end
 
     if self.identifiers then
-        for _, mdl in ipairs(self.identifiers) do
-            if mdl == entIdentifier then
+        for _, id in ipairs(self.identifiers) do
+            if id.mdl and id.mdl == entIdentifier or id == entIdentifier then
                 return true
             end
         end
@@ -4315,7 +4460,7 @@ function GetEntGiftData(ent, silent)
     if entClass == "prop_ragdoll" then
         placeholderData.category = GiftCategory.Ragdoll
 
-    elseif entClass == "func_physbox" then
+    elseif string.StartsWith(entClass, "func_physbox") then
         placeholderData.category = GiftCategory.PhysBox
 
     elseif entIdentifier == entModel then
@@ -4504,8 +4649,8 @@ if SERVER then
             end
 
             if data.identifiers then
-                for _, mdl in ipairs(data.identifiers) do
-                    util.PrecacheModel(mdl)
+                for _, id in ipairs(data.identifiers) do
+                    util.PrecacheModel(id.mdl and id.mdl or id)
                 end
             end
         end

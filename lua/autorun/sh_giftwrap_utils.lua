@@ -283,6 +283,7 @@ function GW_Utils.IsMapClass(ent)
         or string.StartsWith(class, "prop_door")
         or string.StartsWith(class, "trigger")
         or class == "func_button"
+        or class == "func_clip_vphysics"
         or class == "func_movelinear"
         or class == "func_reflective_glass"
         or class == "func_rotating"
@@ -290,11 +291,13 @@ function GW_Utils.IsMapClass(ent)
         or class == "func_tracktrain"
         or class == "func_water_analog"
         or class == "func_wall"
+        or class == "fish"
         or class == "phys_bone_follower"
+        or class == "ttt_traitor_button"
         or class == "ttt_traitor_check"
         or class == "momentary_rot_button"
         or class == "class C_BaseToggle" -- the hell even
-        --or class == "prop_dynamic" --TODO check if any of what we want to wrap is this (lots of stationary map elements are)
+        or class == "prop_dynamic"
         --or class == "func_brush" --TODO check if any of what we want to wrap is this (lots of stationary map elements are)
         or GW_Utils.IsMapClass(ent:GetMoveParent())
 end

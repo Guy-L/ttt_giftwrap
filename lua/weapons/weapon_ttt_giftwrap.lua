@@ -245,7 +245,7 @@ if SERVER then
         end
 
         -- moveability check
-        if not IsValid(phys) or not phys:IsMoveable() or not ent.CanPickup == false
+        if not IsValid(phys) or not phys:IsMoveable() or ent.CanPickup == false
           or phys:HasGameFlag(FVPHYSICS_NO_PLAYER_PICKUP) then
             return "It won't budge."
         end
@@ -758,7 +758,7 @@ function SWEP:Throw(owner, force)
             if not force then force = 800 end
             local throwVel = owner:GetAimVector()
             --throwVel.z = 0.3 -- hardlock trajectory vertically
-            throwVel = throwVel * (force + 150*(giftData.attrib_size or 1))
+            throwVel = throwVel * (force + 150*(giftData:GetSize(self) or 1))
 
             phys:SetVelocity(throwVel)
             phys:AddAngleVelocity(Vector(0, 0, 500))
@@ -865,7 +865,7 @@ if SERVER then
 
                 local hitPos = tr.HitPos
                 if gifteePly:EyePos():Distance(hitPos) > 80 then --clamp
-                    local scaleFactor = (giftData.attrib_size-3 or 0) * 12
+                    local scaleFactor = (giftData:GetSize(giftObj)-3 or 0) * 12
                     hitPos = gifteePly:EyePos() + gifteePly:GetAimVector() * (80 + scaleFactor)
                 end
 

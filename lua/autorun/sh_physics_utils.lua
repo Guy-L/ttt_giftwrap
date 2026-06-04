@@ -235,7 +235,7 @@ if SERVER then
         for _, v in ipairs(uniqueClasses) do
             table.insert(classStrings, v.count .. " " .. v.class)
         end
-        print("Unique classes: " .. table.concat(classStrings, ", "))
+        print("Entity classes: " .. table.concat(classStrings, ", "))
 
         ---------------------------------------
         ---------------------------------------
@@ -278,14 +278,15 @@ if SERVER then
 
         local entCnt = 1
         local function TourStep()
-            local ent = unwrappables[entCnt].ent
+            local entry = unwrappables[entCnt]
 
-            if not IsValid(ent) then
+            if not entry then
                 timer.Remove("GW-DBG_IterUnwrappables")
                 print("Tour complete!")
                 return
             end
 
+            local ent = entry.ent
             GW_Utils.TpViewing(ply, ent, 100, -50)
             debugoverlay.Sphere(ent:GetPos(), 10, t-1, GW_DBG.Red)
 
@@ -753,28 +754,30 @@ if SERVER then
     function GW_Utils.PointZone(pos)
         if not GW_Utils.mapSpawnStats.zones then return false end
         local foundZone
+        local foundZoneBounce = false
 
         for _, zone in ipairs(GW_Utils.mapSpawnStats.zones) do
             if GW_Utils.IsPointInZone(pos, zone) then
                 if zone.type == "troom" then
-                    return zone.type -- troom > safe > others
+                    return zone.type, zone.bounce ~= false -- troom > safe > others
+
                 elseif zone.type == "safe" or not foundZone then
                     foundZone = zone
+                    foundZoneBounce = (zone.type == "exit" or zone.type == "troom") and zone.bounce ~= false
                 end
             end
         end
 
-        return foundZone and foundZone.type or false
+        return foundZone and foundZone.type or false, foundZoneBounce
     end
 
-    -- TODO: post-teleport visibility (MV or otherwise)
     GW_Utils.mapSpawnStatsList = {
         ["ttt_5c_plaza"]                = { radius=1000, timeout=3,  zones = {
             { min = Vector(-2932, 837, -50), max = Vector(1322, 1305, 732),   type="exit" },
             { min = Vector(-2256, -1679, 4), max = Vector(-2128, -1535, 134), type="troom" },
             { min = Vector(54, -1244, 10),   max = Vector(161, -1038, 100),   type="troom" },
         }},
-        ["ttt_67thway_v7_j_l"]          = { radius=1000, timeout=3,  zones = {
+        ["ttt_67thway_v7"]              = { radius=1000, timeout=3,  zones = {
             { min = Vector(-1284, -642, -454), max = Vector(-1154, -139, -324), type="troom" },
             { min = Vector(-1538, -262, -454), max = Vector(-909, 505, -324),   type="troom" },
             { min = Vector(-2180, -262, -454), max = Vector(-1538, 646, -324),  type="troom" },
@@ -782,24 +785,25 @@ if SERVER then
         ["ttt_beachbar"]                = { radius=1000, timeout=3,  zones = {
             { min = Vector(-847, 2546, 378), max = Vector(-555, 2916, 515), type="troom" },
         }},
+        ["ttt_annex"]                   = { radius=1000, timeout=3 },
         ["ttt_bestbuy"]                 = { radius=nil },
-        ["ttt_ca_oilrig_edit"]          = { radius=800,  timeout=3,  waterExit=true },
+        ["ttt_ca_oilrig"]               = { radius=800,  timeout=3,  waterExit=true },
         ["ttt_canyon_labs"]             = { radius=1000, timeout=3 },
         ["ttt_casino_b2"]               = { radius=1000, timeout=3,  zones = {
-            { min = Vector(1660, -956, -412), max = Vector(1700, -1007, -317), type="exit" },
-            { min = Vector(556, 1582, -400),  max = Vector(485, 1640, -300),   type="exit" },
+            { min = Vector(1660, -956, -412), max = Vector(1700, -1007, -317), type="exit", bounce=false },
+            { min = Vector(556, 1582, -400),  max = Vector(485, 1640, -300),   type="exit", bounce=false },
         }},
         ["ttt_castle"]                  = { radius=1000, timeout=5,  waterExit=true },
         --["ttt_charnel"]                 = { radius=1000, timeout=3,  zones = {
         --    { min = Vector(3409, -1007, 31), max = Vector(4078, -1689, 454), type="troom" }, --open to all once opened
         --}},
-        ["ttt_christmas_bowling_v1a"]   = { radius=1000, timeout=3,  zones = {
+        ["ttt_christmas_bowling"]       = { radius=1000, timeout=3,  zones = {
             { min = Vector(830, 1743, 97),    max = Vector(1463, 2016, 294),   type="troom" },
             { min = Vector(-1477, -1601, 25), max = Vector(-716, -1455, 200),  type="troom" },
             { min = Vector(-1344, -1455, 25), max = Vector(-1197, -1305, 200), type="troom" },
             { min = Vector(-985, -1455, 25),  max = Vector(-834, -1305, 200),  type="troom" },
         }},
-        ["ttt_clue_2018_b7"]            = { radius=1000, timeout=10, zones = {
+        ["ttt_clue_2018"]               = { radius=1000, timeout=10, zones = {
             { min = Vector(-143, -1306, -74), max = Vector(379, -680, 858), type="exit" },
         }},
         ["ttt_cobertura"]               = { radius=2000, timeout=3 },
@@ -812,10 +816,21 @@ if SERVER then
             { min = Vector(354, 4095, 330),   max = Vector(642, 4295, 494),   type="troom" },
         }},
         ["ttt_diescraper"]              = { radius=400,  timeout=3 },
+        ["ttt_dog"]                     = { radius=1000, timeout=3,  zones = {
+            { min = Vector(-1780, -832, -136), max = Vector(-1392, -416, 0),   type="exit", bounce=false },
+            { min = Vector(-64, -609, 330),    max = Vector(704, 192, 600),    type="exit" },
+            { min = Vector(-1780, 116, 576),   max = Vector(-1480, 416, 750),  type="exit" },
+            { min = Vector(-1780, -832, 260),  max = Vector(-1580, -664, 400), type="exit" },
+            { min = Vector(1072, 48, 152),     max = Vector(1496, 416, 320),   type="exit" },
+            { min = Vector(1232, 208, 0),      max = Vector(1496, 416, 152),   type="exit" },
+            { min = Vector(-460, -477, -550),  max = Vector(1201, 387, -347),  type="safe" },
+            { min = Vector(-524, -340, -176),  max = Vector(-288, 0, -52),     type="troom" },
+            { min = Vector(-1768, 116, 132),   max = Vector(-1480, 404, 564),  type="troom" },
+        }},
         ["ttt_emerald_empire"]          = { radius=1000, timeout=10, zones = {
             { min = Vector(1000, -2681, 880), max = Vector(1544, -1902, 1122), type="exit" },
         }},
-        ["ttt_escher_nmp8_d"]           = { radius=1000, timeout=3 },
+        ["ttt_escher"]                  = { radius=1000, timeout=3 },
         ["ttt_fernwood_b1"]             = { radius=1000, timeout=3,  zones = {
             { min = Vector(-945, 1214, -107), max = Vector(-777, 1456, 75),   type="troom" },
             { min = Vector(-909, 1700, -373), max = Vector(-291, 2008, -200), type="troom" },
@@ -823,24 +838,23 @@ if SERVER then
         ["ttt_forestpath_winter"]       = { radius=1100, timeout=5,  waterExit=true },
         ["ttt_fort_pvk"]                = { radius=1000, timeout=3,  waterExit=true },
         ["ttt_frg_angles"]              = { radius=2000, timeout=3 },
-        ["ttt_frg_angles_nm"]           = { radius=2000, timeout=3 },
-        ["ttt_frg_the_blue_wall_v1-1"]  = { radius=nil,  timeout=3,  zones = {
+        ["ttt_frg_the_blue_wall"]       = { radius=nil,  timeout=3,  zones = {
             { min = Vector(-10, 2440, 1117), max = Vector(135, 2593, 1600), type="troom" },
             { min = Vector(-56, 2593, 1420), max = Vector(181, 2941, 1600), type="troom" },
         }},
-        ["ttt_goldenplixprison_v3"]     = { radius=1000, timeout=3,  zones = {
+        ["ttt_goldenplixprison"]        = { radius=1000, timeout=3,  zones = {
             { min = Vector(-1016, 653, -21),  max = Vector(-776, 1013, 140),  type="troom" },
             { min = Vector(-934, -900, 400),  max = Vector(1178, -236, 730),  type="troom" },
             { min = Vector(-2563, 1523, 203), max = Vector(-2130, 1902, 376), type="exit" },
             { min = Vector(-2563, 1791, 376), max = Vector(-1534, 2434, 594), type="exit" },
             { type="exit", height = 218, c1 = Vector(-1793, 1791, 376), c2 = Vector(-2130, 1791, 376), c3 = Vector(-1793, 1523, 203), c4 = Vector(-2130, 1523, 203)},
         }},
-        ["ttt_gsf_apartments_b1"]       = { radius=1000, timeout=3 },
+        ["ttt_gsf_apartments"]          = { radius=1000, timeout=3 },
         ["ttt_gsf_topztower"]           = { radius=1000, timeout=3 },
         ["ttt_happyhome"]               = { radius=1150, timeout=1,  zones = {
             { min = Vector(-1953, 77, 800), max = Vector(-283, 1567, 1603), type="exit" },
-            { min = Vector(-1530, 77, 800), max = Vector(-283, 1142, 931),  type="safe" },
-            { min = Vector(992, 48, 407),   max = Vector(1168, 382, 550),   type="exit" },
+            { min = Vector(-1536, 77, 800), max = Vector(-283, 1152, 931),  type="safe" },
+            { min = Vector(992, 48, 407),   max = Vector(1168, 382, 800),   type="exit" },
             { min = Vector(-12, -209, 136), max = Vector(528, -140, 280),   type="troom" },
             { type="troom", height = 144, c1 = Vector(528, -209, 136), c2 = Vector(528, -140, 136), c3 = Vector(896, -81, 136), c4 = Vector(896, -11, 136)},
             { type="troom", height = 144, c1 = Vector(896, -81, 136),  c2 = Vector(896, -11, 136),  c3 = Vector(1090, 49, 136), c4 = Vector(992, 53, 136)},
@@ -859,12 +873,15 @@ if SERVER then
             { min = Vector(-154, -89, 133),    max = Vector(77, 360, 308),    type="troom" },
             { min = Vector(411, 28, -127),     max = Vector(615, 162, 5),     type="troom" },
         }},
+        ["ttt_hotwireslum2026"]         = { radius=1000, timeout=3,  zones = {
+            { min = Vector(1692, 516, 0), max = Vector(1942, 903, 144), type="exit" },
+        }},
         ["ttt_homie_hangout"]           = { radius=1000, timeout=3,  zones = {
             { min = Vector(490, -161, -12),   max = Vector(835, 194, 154),  type="troom" },
             { min = Vector(-200, -613, -340), max = Vector(21, -399, -127), type="troom" },
         }},
-        ["ttt_innocentmotel_v1"]        = { radius=1000, timeout=3,  zones = {
-            { min = Vector(-440, 750, -250), max = Vector(-250, 950, -70),  type="exit" },
+        ["ttt_innocentmotel"]           = { radius=1000, timeout=3,  zones = {
+            { min = Vector(-448, 750, -250), max = Vector(-250, 950, -70),  type="exit", bounce=false },
             { min = Vector(536, 314, 0),     max = Vector(667, 847, 130),   type="exit" },
             { min = Vector(-404, -1844, 90), max = Vector(-92, -1590, 239), type="troom" },
             { min = Vector(-1227, 1016, 88), max = Vector(-970, 1284, 229), type="troom" },
@@ -883,7 +900,7 @@ if SERVER then
             { min = Vector(-1636, -1690, 0), max = Vector(-1131, -1309, 155), type="troom" },
             { min = Vector(828, -1150, 145), max = Vector(1120, -953, 285),   type="troom" },
         }},
-        ["ttt_kakariko_v4a"]            = { radius=1500, timeout=10, zones = {
+        ["ttt_kakariko"]            = { radius=1500, timeout=10, zones = {
             { min = Vector(-2800, -330, 0),   max = Vector(-2180, -1500, 500), type="exit" },
             { min = Vector(-633, 1268, -390), max = Vector(718, 3030, -165),   type="troom" },
         }},
@@ -895,35 +912,36 @@ if SERVER then
         ["ttt_lighthouse"]              = { radius=1000, timeout=15, waterExit=true },
         ["ttt_lockout"]                 = { radius=1000, timeout=3 },
         ["ttt_magma"]                   = { radius=1000, timeout=3,  zones = {
-            { min = Vector(-1615, 114, -400),  max = Vector(-1152, 640, -63), type="exit" },
-            { min = Vector(-728, -1066, -577), max = Vector(99, -511, -135),  type="exit" },
+            { min = Vector(-1615, 114, -400),  max = Vector(-1152, 640, -63), type="exit", bounce=false },
+            { min = Vector(-728, -1066, -577), max = Vector(99, -511, -135),  type="exit", bounce=false },
             { min = Vector(-1404, -579, 177),  max = Vector(-909, -375, 315), type="troom" },
             { min = Vector(-1026, -375, 50),   max = Vector(-799, 597, 315),  type="troom" },
         }},
         ["ttt_magma_gs"]                = { radius=1000, timeout=3,  zones = {
-            { min = Vector(-1635, 110, -500),  max = Vector(-1157, 634, -49), type="exit" },
-            { min = Vector(-724, -1044, -543), max = Vector(78, -565, -140),  type="exit" },
+            { min = Vector(-1635, 110, -500),  max = Vector(-1157, 634, -49), type="exit", bounce=false },
+            { min = Vector(-724, -1044, -543), max = Vector(78, -565, -140),  type="exit", bounce=false },
         }},
-        ["ttt_mc_summercamp_v2"]        = { radius=nil,  timeout=3,  zones = {
+        ["ttt_mc_summercamp"]           = { radius=nil,  timeout=3,  zones = {
             { min = Vector(-944, -784, -202),  max = Vector(-816, 216, -5),  type="troom" },
             { min = Vector(944, 224, -210),    max = Vector(817, 541, -5),   type="troom" },
             { min = Vector(-183, -1146, -207), max = Vector(-138, -664, -5), type="troom" },
         }},
-        ["ttt_minecraft_b5_fish_n_ships_nocheese"] = { radius=1000, timeout=3, zones = {
-            { min = Vector(-1775, -1841, -3355), max = Vector(239, 163, -3270),   type="exit" },
-            { min = Vector(510, -642, 262),      max = Vector(674, -479, 408),    type="exit" },
-            { min = Vector(-71, -1032, 18),      max = Vector(99, -832, 57),      type="exit" },
-            { min = Vector(477, -481, 417),      max = Vector(521, -414, 447),    type="exit" },
+        ["ttt_minecraft_b5"] = { radius=1000, timeout=3, zones = {
+            { min = Vector(-1775, -1841, -3355), max = Vector(239, 163, -3270),   type="exit", bounce=false },
+            { min = Vector(510, -642, 262),      max = Vector(674, -479, 408),    type="exit", bounce=false },
+            { min = Vector(-71, -1032, 18),      max = Vector(99, -832, 57),      type="exit", bounce=false },
+            { min = Vector(477, -481, 417),      max = Vector(521, -414, 447),    type="exit", bounce=false },
+            { min = Vector(-352, -96, -64),      max = Vector(-128, 160, 32),     type="exit", bounce=false },
             { min = Vector(-2083, 413, -225),    max = Vector(-1851, 895, -33),   type="troom" },
             { min = Vector(-927.9, -160.1, -70), max = Vector(-832.5, -257, 287), type="troom" },
             { min = Vector(-927.9, -257, 30),    max = Vector(-769, -383.9, 287), type="troom" },
             { min = Vector(-927.9, -383.9, 30),  max = Vector(-833, -446, 159.9), type="troom" },
             { min = Vector(-927.9, -160.1, 88),  max = Vector(-896, -128, 129),   type="troom" },
         }, waterExit=true },
-        ["ttt_minecraftcity_v3"]        = { radius=1000, timeout=3,  zones = {
+        ["ttt_minecraftcity"]        = { radius=1000, timeout=3,  zones = {
             { min = Vector(30, 416, 20),     max = Vector(179, 636, 130),   type="troom" },
             { min = Vector(-96, -1490, 24),  max = Vector(198, -1215, 150), type="troom" },
-            { min = Vector(-228, -1425, -4), max = Vector(-126, -1307, 49), type="exit" },
+            { min = Vector(-228, -1425, -4), max = Vector(-126, -1307, 49), type="exit", bounce=false },
         }},
         ["ttt_missile_isles"]           = { radius=1000, timeout=6,  zones = {
             { min = Vector(1833, 1312, 110),   max = Vector(2519, 2012, 433),   type="safe" },
@@ -931,7 +949,7 @@ if SERVER then
             { min = Vector(-1491, -1406, 202), max = Vector(-1932, -1090, 390), type="troom" },
             { min = Vector(-1737, -600, -357), max = Vector(-326, -2190, -290), type="safe" },
         }},
-        ["ttt_mttresort_v2"]            = { radius=1000, timeout=3,  zones = {
+        ["ttt_mttresort"]               = { radius=1000, timeout=3,  zones = {
             { min = Vector(-448, -566, -246), max = Vector(-335, -186, -90), type = "troom" },
         }},
         ["ttt_mw2_terminal"]            = { radius=nil },
@@ -939,19 +957,29 @@ if SERVER then
         ["ttt_orange_v7"]               = { radius=1500, timeout=3,  zones = {
             { min = Vector(399, -273, -8),    max = Vector(510, -85, 127.9),  type = "troom" },
             { min = Vector(446, -323, -8),    max = Vector(636, -199, 127.9), type = "troom" },
-            { min = Vector(-424, -1149, 400), max = Vector(505, -272, 572),   type = "exit" },
+            { min = Vector(-424, -1149, 400), max = Vector(505, -272, 572),   type = "exit", bounce=false },
         }},
-        ["ttt_pelicantown_opt_v4_edit"] = { radius=1000, timeout=3,  zones = {
+        ["ttt_panorama"]                = { radius=1000, timeout=3,  zones = {
+            { min = Vector(-2588, 543, -100), max = Vector(-960, 1466, 300), type="safe" },
+        }},
+        ["ttt_paradise_resort"]         = { radius=1000, timeout=15 },
+        ["ttt_pigisland_nightswim"]     = { radius=1000, timeout=5,  zones = {
+            { min = Vector(-909, -1099, 245), max = Vector(-1825, 513, 950), type="safe" },
+        }},
+        ["ttt_pelicantown"]             = { radius=1000, timeout=3,  zones = {
             { min = Vector(-1814, -512, -8), max = Vector(-1597, -291, 165), type="troom" },
             { min = Vector(956, 1595, -3),   max = Vector(1218, 1779, 100),  type="troom" },
             { min = Vector(1084, 1446, -3),  max = Vector(1218, 1595, 100),  type="troom" },
             { min = Vector(-94, 602, 258),   max = Vector(40, 344, 360),     type="troom" },
             { min = Vector(72, 536, 258),    max = Vector(40, 602, 360),     type="troom" },
         }},
-        ["ttt_panorama"]                = { radius=1000, timeout=3,  zones = {
-            { min = Vector(-2588, 543, -100), max = Vector(-960, 1466, 300), type="safe" },
+        ["ttt_polylith"]                = { radius=1100, timeout=3,  zones = {
+            { min = Vector(-66, 215, -358),     max = Vector(1151, 1180, 8),    type="safe" },
+            { min = Vector(1152, -1152, -139),  max = Vector(1536, -640, 1408), type="exit" },
+            { min = Vector(516, -1155, -3),     max = Vector(1025, -532, 401),  type="troom" },
+            { min = Vector(-235, 1101, -64),    max = Vector(128, 1664, 258),   type="troom" },
+            { min = Vector(-320, 1344, -64),    max = Vector(-235, 1472, 258),   type="troom" },
         }},
-        ["ttt_paradise_resort"]         = { radius=1000, timeout=15 },
         ["ttt_poolparty"]               = { radius=1000, timeout=3,  zones = {
             { min = Vector(-531, 3152, 3),  max = Vector(-155, 3413, 260), type="exit" },
             { min = Vector(63, 1197, -110), max = Vector(2226, 3911, 10),  type="safe" },
@@ -963,14 +991,18 @@ if SERVER then
             { min = Vector(1853, 856, 400), max = Vector(2548, 1313, 660), type="troom" },
         }},
         ["ttt_raifucu_maru"]            = { radius=1000, timeout=5,  waterExit=true },
-        ["ttt_rooftops_a2_f1"]          = { radius=1000, timeout=3 },
+        ["ttt_rooftops"]                = { radius=1000, timeout=3 },
+        ["ttt_rotburg"]                 = { radius=1300, timeout=3,  zones = {
+            { min = Vector(2016, 384, -100), max = Vector(992, 192, 162), type="exit", bounce=false },
+        }},
         ["ttt_roy_the_ship"]            = { radius=nil,  timeout=5,  waterExit=true },
-        ["ttt_rpgvillage_edit"]         = { radius=nil,  timeout=5,  zones = {
-            { min = Vector(1266, -3670, -1182), max = Vector(1925, -1817, -370), type="exit" },
-            { min = Vector(-1260, 8, -1300),    max = Vector(-946, 423, -728),   type="exit" },
+        ["ttt_rpgvillage"]              = { radius=nil,  timeout=5,  zones = {
+            { min = Vector(1266, -3670, -1182), max = Vector(1925, -1817, -370), type="exit", bounce=false },
+            { min = Vector(-1260, 8, -1300),    max = Vector(-946, 423, -728),   type="exit", bounce=false },
             { min = Vector(1360, 2163, -492),   max = Vector(1895, 2606, -277),  type="troom" },
             { min = Vector(-2047, -798, 113),   max = Vector(-1762, -353, 224),  type="troom" },
         }},
+        ["ttt_sandscraper"]             = { radius=1000, timeout=3 },
         ["ttt_seliana"]                 = { radius=1000, timeout=5,  zones = {
             { min = Vector(1136, 1637, 551),  max = Vector(1369, 1764, 779),  type="nospawn" },
         }, waterExit=true },
@@ -983,8 +1015,8 @@ if SERVER then
             { min = Vector(-607, 4100, -19), max = Vector(-288, 4471, 130), type="troom" },
         }},
         ["ttt_simple_otat1"]            = { radius=1000, timeout=3 },
-        ["ttt_skycraftfinal_dark_r6"]   = { radius=1500, timeout=3,  zones = {
-            { min = Vector(5065, -494, 2233),  max = Vector(5141, -420, 2330),  type = "exit" },
+        ["ttt_skycraftfinal_dark"]      = { radius=1500, timeout=3,  zones = {
+            { min = Vector(5065, -494, 2233),  max = Vector(5141, -420, 2330),  type = "exit", bounce=false },
             { min = Vector(1300, -1480, 440),  max = Vector(1400, -1360, 600),  type = "troom" }, -- t-room 1
             { min = Vector(1120, -1280, 600),  max = Vector(1440, -1480, 840),  type = "troom" },
             { min = Vector(1120, -1320, 600),  max = Vector(1080, -1480, 920),  type = "troom" },
@@ -1035,7 +1067,7 @@ if SERVER then
             { min = Vector(1607, 702, -331), max = Vector(1860, 1092, -190), type="troom" },
             { min = Vector(252, 559, -472),  max = Vector(573, 749, -330),   type="troom" },
         }},
-        ["ttt_snowtown_001e"]           = { radius=1500, timeout=10, zones = {
+        ["ttt_snowtown"]                = { radius=1500, timeout=10, zones = {
             { min = Vector(-3500, 52, -147), max = Vector(-2054, 2067, 752), type="safe" },
         }},
         ["ttt_solitude"]                = { radius=1000, timeout=3,  zones = {
@@ -1050,25 +1082,26 @@ if SERVER then
             { min = Vector(544, -520, 608), max = Vector(744, -184, 750), type="exit" },
             { min = Vector(528, 576, 576),  max = Vector(1296, 64, 700),  type="exit" },
         }},
-        ["ttt_subnet_final"]            = { radius=nil,  timeout=3,  zones = {
-            { min = Vector(548, -811, 1103),  max = Vector(1995, 378, 1700),  type="exit" },
-            { min = Vector(2617, -790, 1160), max = Vector(2973, -449, 1285), type="exit" },
+        ["ttt_subnet"]                  = { radius=nil,  timeout=3,  zones = {
+            { min = Vector(548, -811, 1103),  max = Vector(1995, 378, 1700),  type="exit", bounce=false },
+            { min = Vector(2656, -752, 1160), max = Vector(2896, -512, 1285), type="exit" },
             { min = Vector(441, 664, 350),    max = Vector(692, 991, 500),    type="exit" },
             { min = Vector(435, 360, 200),    max = Vector(558, 451, 450),    type="exit" },
-            { min = Vector(575, -149, 200),   max = Vector(808, -70, 443),    type="exit" },
-            { min = Vector(2623, -11, 250),   max = Vector(2773, 186, 390),   type="exit" },
-            { min = Vector(2784, -421, 350),  max = Vector(2897, -744, 530),  type="exit" },
+            { min = Vector(575, -149, 200),   max = Vector(808, -70, 520),    type="exit" },
+            { min = Vector(2624, -16, 304),   max = Vector(2752, 144, 384),   type="exit" },
+            { min = Vector(2784, -416, 368),  max = Vector(2880, -736, 544),  type="exit" },
+            { min = Vector(848, 528, 1571),   max = Vector(1440, 1136, 1700), type="exit" },
             { min = Vector(2474, -289, 330),  max = Vector(2571, -102, 532),  type="nospawn" },
             { min = Vector(956, 133, 243),    max = Vector(1213, 522, 437),   type="troom" },
             { min = Vector(431, 748, -250),   max = Vector(896, 912, -60),    type="troom" },
             { min = Vector(1455, 478, 649),   max = Vector(1791, 801, 900),   type="troom" },
             { min = Vector(2174, -961, -247), max = Vector(2304, -17, -94),   type="troom" },
         }},
-        ["ttt_teenroom_2022_v2"]        = { radius=nil,  timeout=3,  zones = {
+        ["ttt_teenroom_2022"]           = { radius=nil,  timeout=3,  zones = {
             { min = Vector(863, -891, 329), max = Vector(1319, -308, 450), type="troom" },
         }},
-        ["ttt_theroot_b1"]              = { radius=nil,  timeout=3,  zones = {
-            { min = Vector(270, -129, 358), max = Vector(512, 128, 500),   type="exit" },
+        ["ttt_theroot"]                 = { radius=nil,  timeout=3,  zones = {
+            { min = Vector(270, -129, 358), max = Vector(512, 128, 500),   type="exit", bounce=false },
             { min = Vector(-1233, 142, 95), max = Vector(-979, 517, 2115), type="troom" },
             { min = Vector(-979, 517, 95),  max = Vector(-786, 287, 240),  type="troom" },
         }},
@@ -1081,8 +1114,8 @@ if SERVER then
             { min = Vector(-4450, 870, 92),   max = Vector(-4291, 1949, 240), type="safe" },
         }},
         ["ttt_tower"]                   = { radius=500,  timeout=3 },
-        ["ttt_trainstation_a5"]         = { radius=1200, timeout=10 },
-        ["ttt_unsupervised_b15"]        = { radius=1000, timeout=3,  zones = {
+        ["ttt_trainstation"]            = { radius=1200, timeout=10 },
+        ["ttt_unsupervised"]            = { radius=1000, timeout=3,  zones = {
             { type="exit", height = 148, c1 = Vector(-466, 706, 280), c2 = Vector(-466, 443, 280), c3 = Vector(0, 706, 440), c4 = Vector(0, 443, 440) },
             { min = Vector(1844, 116, -49), max = Vector(1418, -683, 204), type="exit" },
             { min = Vector(-322, 316, 7),   max = Vector(-593, 440, 200),  type="troom" },
@@ -1094,7 +1127,7 @@ if SERVER then
             { min = Vector(140, 2585, 100), max = Vector(762, 3578, 250),  type="exit" },
         }},
         ["ttt_vessel"]                  = { radius=nil,  timeout=5,  zones = {
-            { min = Vector(-60, -2510, 992), max = Vector(59, -2390, 1078), type="exit" },
+            { min = Vector(-60, -2510, 992), max = Vector(59, -2390, 1078), type="exit", bounce=false },
         }, waterExit=true },
         ["ttt_villa_gambit"]            = { radius=1000, timeout=3,  zones = {
             { min = Vector(1030, 906, -123),  max = Vector(1404, 1041, 50),  type="troom" },
@@ -1108,8 +1141,8 @@ if SERVER then
             { min = Vector(2120, -2795, 120), max = Vector(2480, -2680, 200), type="troom" },
         }},
         ["ttt_wetlands"]                = { radius=1000, timeout=5,  zones = {
-            { min = Vector(-1095, 1927, 190), max = Vector(-493, 2111, 276), type="exit" },
-            { type="exit", height = 200, c1 = Vector(-118, 2712, 368), c2 = Vector(-118, 2088, 368), c3 = Vector(-1120, 2712, 250), c4 = Vector(-1120, 2088, 250)},
+            { min = Vector(-1096, 1928, 190), max = Vector(-488, 2111, 800), type="exit" },
+            { type="exit", height = 500, c1 = Vector(-118, 2712, 368), c2 = Vector(-118, 2088, 368), c3 = Vector(-1120, 2712, 250), c4 = Vector(-1120, 2088, 250)},
             { type="exit", height = 500, c1 = Vector(1288, 2254, 0),   c2 = Vector(1852, 1681, 0),   c3 = Vector(2114, 3060, 0),    c4 = Vector(2127, 1491, 0)},
             { type="exit", height = 500, c1 = Vector(1428, 2365, 0),   c2 = Vector(648, 3149, 0),    c3 = Vector(2137, 3072, 0),    c4 = Vector(1230, 3242, 0)},
         }},
@@ -1117,14 +1150,28 @@ if SERVER then
             { min = Vector(464, -641, -2605), max = Vector(952, -194, -2393),  type="troom" },
             { min = Vector(795, -910, -1991), max = Vector(1023, -146, -1723), type="troom" },
         }},
-        ["ttt_windmill_sky"]            = { radius=1200, timeout=10, zones = {
-            { min = Vector(3222, -3601, 2575), max = Vector(3801, -2959, 2730), type="exit" },
+        ["ttt_windmill_sky"]            = { radius=1200, timeout=5,  zones = {
+            { min = Vector(3222, -3601, 2575), max = Vector(3801, -2959, 2730), type="exit", bounce=false },
         }},
         ["ttt_worlds"]                  = { radius=1200, timeout=3 },
     }
 
     local map = game.GetMap()
-    GW_Utils.mapSpawnStats = GW_Utils.mapSpawnStatsList[map] or {radius=1000, timeout=10}
+    local mapStats = {radius=1000, timeout=10}
+
+    if GW_Utils.mapSpawnStatsList[map] then
+        print('direct match!')
+        mapStats = GW_Utils.mapSpawnStatsList[map]
+    else
+        for mapPrefix, stats in pairs(GW_Utils.mapSpawnStatsList) do
+            if string.StartWith(map, mapPrefix) then
+                print(mapPrefix)
+                mapStats = stats
+            end
+        end
+    end
+
+    GW_Utils.mapSpawnStats = mapStats
     if not GW_Utils.mapSpawnStats.spnHeight then GW_Utils.mapSpawnStats.spnHeight = 100 end
 
     --GW_DBG.Log("Map Stats for "..map.."...")

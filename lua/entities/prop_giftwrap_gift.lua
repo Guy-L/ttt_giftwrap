@@ -205,7 +205,7 @@ function ENT:GetGiftScale()
     if not giftData then
         dbg.Log("[WARNING] Gift prop has no valid data attached; using default size; label: '"..giftLabel.."'")
     end
-    return giftData and giftData.attrib_size or 1.5
+    return giftData and giftData:GetSize(self) or 1.5
 end
 
 function ENT:UpdateScale()
@@ -283,15 +283,11 @@ if SERVER then
         --debugoverlay.Line(self._LastPos, curPos, 3, Color(255,0,0), true)
         --if tr.Hit then print(tr.Hit, tr.Entity) end
 
-        local startZone = utils.PointZone(self._LastPos)
-        local endZone = utils.PointZone(curPos)
-
-        local isBounceZone = function(zone)
-            return zone == "exit" or zone == "troom"
-        end
+        local _, startBounceZone = utils.PointZone(self._LastPos)
+        local _, endBounceZone = utils.PointZone(curPos)
 
         local clipbrushCol = tr.Hit and tr.HitPos and not tr.StartSolid and not tr.AllSolid and vel:Dot(tr.HitNormal) < 0
-        local oobZoneCol      = not isBounceZone(startZone) and isBounceZone(endZone) and self._LastPos:Distance(curPos) < 150
+        local oobZoneCol   = not startBounceZone and endBounceZone and self._LastPos:Distance(curPos) < 150
 
         if clipbrushCol or oobZoneCol then
             if curTime < self._LastBounce + (clipbrushCol and 1 or 0.5) then
@@ -963,7 +959,7 @@ elseif CLIENT then
             local wep = client:GetActiveWeapon()
 
             if utils.IsGiftWrap(wep) and not wep:HasGift() and not utils.IsMapClass(ent)
-              and tData:GetEntityDistance() <= gwInteractDist then
+              and tData:GetEntityDistance() <= 150 then
                 local color = UnpackColor(wep:GetGiftRibbonColor())
                 tData:EnableOutline()
 
