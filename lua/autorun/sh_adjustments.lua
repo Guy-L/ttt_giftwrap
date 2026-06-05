@@ -755,6 +755,76 @@ local initChanges = {
             end
         end
     },
+
+    {   name = "prop_diguiser_undisguise_notif",
+        addon = "Prop Disguiser", icon = "vgui/ttt/exho_propdisguiser.png",
+        desc = "Notify gift owner when a wrapped disguised player undisguises (+SFX, better position)", realm = ChangeRealm.SERVER,
+        identifier = "weapon_ttt_prop_disguiser", category = ChangeCategory.SWEP,
+        original_keys = {"PropDisguise", "PropUnDisguise"},
+        apply = function(swep, og)
+
+            swep.PropDisguise = function(self)
+                og.PropDisguise(self)
+
+                if IsValid(self.Prop) then
+                    self.Prop:CallOnRemove("PD_DisguiseRemove", function()
+                        local ply = self.Owner
+
+                        if IsValid(ply) then
+                            net.Start("PD_ChatPrint")
+                            net.WriteString("Your disguise mysteriously broke!")
+                            net.Send(ply)
+
+                            self:PropUnDisguise()
+                        end
+                    end)
+                end
+            end
+
+            swep.PropUnDisguise = function(self)
+                if IsValid(self.Prop) and IsValid(self.Owner) and self:GetNWBool("PD_WepDisguised") then
+                    local wrappedBy = self.Prop:GetNW2Entity("WrappedByGift")
+                    self.Prop:RemoveCallOnRemove("PD_DisguiseRemove")
+
+                    if IsValid(wrappedBy) then
+                        self.Owner:EmitSound("garrysmod/balloon_pop_cute.wav", 75, math.random(90, 110), 0.5)
+                        self.Prop:RemoveCallOnRemove(WRAPPED_GIFT_REMOVE)
+                        self.Owner:SetParent(NULL)
+                        EmptyGift(wrappedBy)
+
+                        local giftOwner = wrappedBy:GetOwner()
+                        if IsValid(giftOwner) then
+                            giftOwner:ChatPrint("Somehow, what was in your giftbox broke containment!")
+                        end
+                    end
+
+                    og.PropUnDisguise(self)
+
+                    if IsValid(wrappedBy) then
+                        utils.TpViewing(self.Owner, wrappedBy, 80, 20)
+                    end
+                end
+            end
+
+            -- just fixing this function's obvious lua error
+            swep.Reload = function(self)
+                if self:GetNWBool("PD_WepDisguised") then
+                    local curTime = CurTime()
+                    local ply = self.Owner
+
+                    if SERVER and not ply._LastPDReload or CurTime() > ply._LastPDReload + 1 then
+                        net.Start("PD_ChatPrint")
+                        net.WriteString("You can't choose a new model while disguised!")
+                        net.Send(ply)
+
+                        ply._LastPDReload = curTime
+                    end
+                else
+                    self:ModelHandler()
+                end
+            end
+        end
+    },
 }
 
 -- Add similar fixes for COD perk bottles

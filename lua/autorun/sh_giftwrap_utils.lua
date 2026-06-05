@@ -375,10 +375,11 @@ end
 
 function GW_Utils.NonSpamMessage(ply, id, msg, acceptClient)
     if CLIENT and not acceptClient then return end
+    local curTime = CurTime()
 
-    if not ply["Last"..id] or CurTime() > ply["Last"..id] + 1 then
+    if not ply["Last"..id] or curTime > ply["Last"..id] + 1 then
         ply:ChatPrint(msg)
-        ply["Last"..id] = CurTime()
+        ply["Last"..id] = curTime
     end
 end
 
@@ -430,6 +431,12 @@ function GW_Utils.GetTopmostWrap(ent)
     end
 
     return ent, wrapLevel
+end
+
+function GW_Utils.IsPlayerWrapped(ply)
+    local parent = ply:GetParent()
+
+    return IsValid(parent) and IsValid(parent:GetNW2Entity("WrappedByGift"))
 end
 
 

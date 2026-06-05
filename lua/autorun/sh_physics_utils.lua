@@ -315,6 +315,10 @@ if SERVER then
     function GW_DBG.GoToEnt(entID)
         player.GetAll()[1]:SetPos(ents.GetByIndex(entID):GetPos())
     end
+
+    function GW_DBG.BotPickup()
+        ents.FindByClass(PROP_CLASS_NAME)[1]:Use(player.GetAll()[2])
+    end
 end
 
 
@@ -573,11 +577,14 @@ if SERVER then
         net.WriteEntity(ent)
         net.Broadcast()
 
-        -- notify conected players
+        -- notify connected players
         for _, child in ipairs(ent:GetChildren()) do
             if child:IsPlayer() then
-                child:ChatPrint("Your vehicle was unwrapped!")
-                child:SetNoDraw(false)
+                child:ChatPrint("The gift you were in was unwrapped!")
+
+                if not child:GetNWBool("PD_Disguised") then
+                    child:SetNoDraw(false)
+                end
             end
         end
     end
@@ -1160,12 +1167,12 @@ if SERVER then
     local mapStats = {radius=1000, timeout=10}
 
     if GW_Utils.mapSpawnStatsList[map] then
-        print('direct match!')
+        --print('direct match!')
         mapStats = GW_Utils.mapSpawnStatsList[map]
     else
         for mapPrefix, stats in pairs(GW_Utils.mapSpawnStatsList) do
             if string.StartWith(map, mapPrefix) then
-                print(mapPrefix)
+                --print(mapPrefix)
                 mapStats = stats
             end
         end

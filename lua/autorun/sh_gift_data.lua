@@ -2965,7 +2965,20 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
         wrappedEnt._Invalid = true
     end
 
-    if self.follow_gift or self.category == GiftCategory.Vehicle then
+    if wrappedEnt.IsADisguise then
+        wrappedEnt.TiedPly:SetParent(wrappedEnt)
+        wrappedEnt.TiedPly.StoredTimeLeft = wrappedEnt.TiedPly:GetNWFloat("PD_TimeLeft") - CurTime()
+        timer.Pause(wrappedEnt.TiedPly:SteamID().."_DisguiseTime")
+
+        wrappedEnt.TiedPly:ChatPrint("Your disguise has been wrapped!")
+        timer.Simple(2, function()
+            if IsValid(wrappedEnt) and IsValid(wrappedEnt.TiedPly) then
+                wrappedEnt.TiedPly:ChatPrint("NOTE: You can free yourself from the giftbox by undisguising.")
+            end
+        end)
+    end
+
+    if self.follow_gift or self.category == GiftCategory.Vehicle or wrappedEnt.IsADisguise then
         local hookName = "TTT_GiftWrapSV_WrappedEntFollowBox_"..wrappedEnt:EntIndex()
 
         hook.Add("Think", hookName, function()
@@ -2984,6 +2997,10 @@ function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
 
                 wrappedEnt:SetPos(pos)
                 wrappedEnt.LastPos = pos -- c4
+
+                if wrappedEnt.IsADisguise then -- prop disguiser
+                    wrappedEnt.TiedPly:SetNWFloat("PD_TimeLeft", CurTime() + wrappedEnt.TiedPly.StoredTimeLeft)
+                end
             end
         end)
     end
@@ -3380,7 +3397,12 @@ function GiftData:ApplyPostUnwrapAdjustments(wrappedEnt, giftee, giftObj, isUndo
             ParticleEffectAttach("flies_fx", PATTACH_ABSORIGIN_FOLLOW, wrappedEnt, 0)
         end
 
-        if self.follow_gift or self.category == GiftCategory.Vehicle then
+        if wrappedEnt.IsADisguise then
+            wrappedEnt.TiedPly:SetParent(NULL)
+            timer.UnPause(wrappedEnt.TiedPly:SteamID().."_DisguiseTime")
+        end
+
+        if self.follow_gift or self.category == GiftCategory.Vehicle or wrappedEnt.IsADisguise then
             hook.Remove("Think", "TTT_GiftWrapSV_WrappedEntFollowBox_"..wrappedEnt:EntIndex())
         end
     end

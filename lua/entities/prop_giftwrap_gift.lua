@@ -514,6 +514,7 @@ if SERVER then
     function ENT:Use(activator)
         if self:GetCollisionGroup() ~= COLLISION_GROUP_NONE then return end
         if activator._DisableGiftUse then return end
+        if utils.IsPlayerWrapped(activator) then return end
         local ownedGiftwrap = utils.GetInventoryGiftwrap(activator)
         local pickupByWrapper = activator:SteamID64() == self:GetWrapperSID()
 
@@ -895,7 +896,7 @@ elseif CLIENT then
 
         -- looking at thrown SENT gift
         if ent:GetClass() == PROP_CLASS_NAME then
-            if not ent:GetNotRetrievable() and tData:GetEntityDistance() <= gwInteractDist then
+            if not ent:GetNotRetrievable() and tData:GetEntityDistance() <= gwInteractDist and not utils.IsPlayerWrapped(client) then
                 local giftee = ent:GetGiftee()
                 local isGiftee = not IsValid(giftee) or client == giftee
                 local knownDeadGiftee = utils.ConfirmedDead(client, giftee)
