@@ -403,7 +403,7 @@ if SERVER then
         ent:SetNW2Entity("WrappedByGift", giftObj)
         ent._GWStoredPos = ent:GetPos()
         ent._GWStoredColGroup = ent:GetCollisionGroup()
-        ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+        ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
 
         local minPos, maxPos = game.GetWorld():GetModelBounds()
         ent:SetPos(maxPos)
