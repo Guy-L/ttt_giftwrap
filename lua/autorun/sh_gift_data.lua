@@ -44,38 +44,42 @@ GiftCategory = {
 }
 
 GiftSound = {
-    Squishy    = {snd="", desc="squishy"},
-    Goopy      = {snd="", desc="goopy"},
-    Metallic   = {snd="", desc="metallic"},
-    Glass      = {snd="", desc="tinkly"},
-    Creaky     = {snd="", desc="creaky"},
-    Plastic    = {snd="", desc="plasticky"}, -- pretty much unused
-    Fleshy     = {snd="", desc="fleshy"},
-    Talking    = {snd="", desc="like it's talking"},
-    Meowing    = {snd="", desc="like it's meowing"},
-    Bleating   = {snd="", desc="like it's bleating"}, -- lambert only
-    Mooing     = {snd="", desc="like it's mooing"}, -- cow only
-    Oinking    = {snd="", desc="like it's oinking"}, -- pig only
-    Thudding   = {snd="", desc="like it's thudding"},
-    Whirring   = {snd="", desc="like it's whirring"},
-    Revving    = {snd="", desc="like it's revving"},
-    Beeping    = {snd="", desc="like it's beeping"},
-    Granular   = {snd="", desc="granular"},
-    Springy    = {snd="", desc="springy"},
-    Musical    = {snd="", desc="musical"},
-    Squeaky    = {snd="", desc="squeaky"}, --new, underused
-    Hollow     = {snd="", desc="hollow"}, --new, underused
-    Clicky     = {snd="", desc="clicky"}, --new, underused
-    Rattling   = {snd="", desc="like it's rattling"}, --new, underused
-    Hissing    = {snd="", desc="like it's hissing"}, --new, underused
-    Ringing    = {snd="", desc="like it's ringing"}, --new, underused
-    Splashing  = {snd="", desc="like it's splashing"},
-    Squelching = {snd="", desc="like it's squelching"},
-    Rustling   = {snd="", desc="like it's rustling"},
-    Whooshing  = {snd="", desc="like it's whooshing"},
-    Pulsing    = {snd="", desc="like it's pulsing"},
-    Muffled    = {snd="", desc="muffled"}, --TODO: check for use on things other than duct tape + silenced guns
-    Train      = {snd="", desc="like it's chugging along"},
+    Squishy    = {snd="physics/flesh/flesh_squishy_impact_hard1.wav",     desc="squishy"},
+    Goopy      = {snd="player/footsteps/mud3.wav",                        desc="goopy"},
+    Metallic   = {snd={"physics/metal/metal_box_impact_soft1.wav","physics/metal/metal_box_impact_soft2.wav","physics/metal/metal_box_impact_soft3.wav"}, desc="metallic"},
+    Glass      = {snd="physics/glass/glass_bottle_impact_hard3.wav",      desc="tinkly"},
+    Creaky     = {snd={"physics/wood/wood_strain4.wav","physics/wood/wood_strain6.wav"}, desc="creaky"},
+    Plastic    = {snd="physics/plastic/plastic_barrel_impact_soft1.wav",  desc="plasticky"}, -- pretty much unused
+    Fleshy     = {snd="physics/flesh/flesh_squishy_impact_hard4.wav",     desc="fleshy"},
+    Talking    = {desc="like it's talking", bst=-0.5, snd = {
+        "vo/k_lab/al_hmm.wav", "vo/npc/alyx/hurt06.wav",
+        "vo/npc/alyx/uggh01.wav", "vo/npc/male01/help01.wav",
+        "vo/npc/male01/help01.wav", "vo/streetwar/alyx_gate/al_hey.wav"
+    }},
+    Meowing    = {snd={"giftwrap/meow1.mp3","giftwrap/meow2.mp3"}, bst=2, desc="like it's meowing"},
+    Bleating   = {snd="giftwrap/bleating.mp3", bst=2,                     desc="like it's bleating"}, -- lambert only
+    Mooing     = {snd="giftwrap/moo.mp3",                                 desc="like it's mooing"}, -- cow only
+    Oinking    = {snd="giftwrap/oink.mp3", bst=3,                         desc="like it's oinking"}, -- pig only
+    Thudding   = {snd="phx/epicmetal_hard.wav",                           desc="like it's thudding"},
+    Whirring   = {snd="giftwrap/whirring.mp3", bst=6,                     desc="like it's whirring"},
+    Revving    = {snd="vehicles/v8/v8_stop1.wav",                         desc="like it's revving"},
+    Beeping    = {snd="buttons/blip2.wav",                                desc="like it's beeping"},
+    Granular   = {snd="player/footsteps/gravel3.wav",                     desc="granular"},
+    Springy    = {snd="giftwrap/boing.mp3",                               desc="springy"},
+    Musical    = {snd="giftwrap/harp.mp3",                                desc="musical"},
+    Squeaky    = {snd="npc/headcrab_poison/ph_idle1.wav",                 desc="squeaky"}, --new, underused
+    Hollow     = {snd="physics/cardboard/cardboard_box_impact_soft6.wav", desc="hollow"},
+    Clicky     = {snd="weapons/pistol/pistol_empty.wav",                  desc="clicky"}, --new, underused
+    Rattling   = {snd="giftwrap/rattling.mp3", bst=2,                     desc="like it's rattling"}, --new, underused
+    Hissing    = {snd="npc/headcrab_poison/ph_rattle2.wav",               desc="like it's hissing"}, --new, underused
+    Ringing    = {snd="hl1/fvox/bell.wav",                                desc="like it's ringing"}, --new, underused
+    Splashing  = {snd="player/footsteps/slosh2.wav",                      desc="like it's splashing"},
+    Squelching = {snd="player/footsteps/mud1.wav",                        desc="like it's squelching"},
+    Rustling   = {snd="player/footsteps/grass2.wav",                      desc="like it's rustling"},
+    Whooshing  = {snd={"foley/eli_sit_on_couch.wav","npc/fast_zombie/claw_miss1.wav"}, desc="like it's whooshing"},
+    Pulsing    = {snd="weapons/physcannon/energy_bounce1.wav",            desc="like it's pulsing"},
+    Muffled    = {snd={"foley/alyx_sit_on_couch.wav","npc/zombie/foot_slide2.wav"}, desc="muffled"}, --TODO: check for use on things other than duct tape + silenced guns
+    Train      = {snd="giftwrap/choochoo.mp3",                            desc="like it's chugging along"},
     None       = nil -- should maybe see more use
 }
 
@@ -93,10 +97,11 @@ GiftSize = {
 
 GiftSmell = {
     Rotten      = "rotten",
-    Paint       = "freshly painted", -- underused
+    Bloody      = "bloody",
+    Paint       = "freshly painted",
     Food        = "like food",
     Woody       = "woody",
-    Oily        = "oily", -- underused
+    Oily        = "oily",
     Gunpowder   = "like gunpowder",
     Ash         = "like ash",
     Fur         = "like fur",
@@ -414,6 +419,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Creaky, attrib_size = GiftSize.Gigantic,
         attrib_smell = GiftSmell.Paint,  attrib_feel = GiftFeel.Flat,
     },
+    egg_prop = GiftData.New {
+        name     = "Egg",              desc       = "an egg",
+        category = GiftCategory.PhysProp, identifier = "models/props_phx/misc/egg.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Glass, attrib_size = GiftSize.Small,
+        attrib_smell = GiftSmell.Food,  attrib_feel = GiftFeel.Round,
+    },
     explosive_barrel = GiftData.New {
         name     = "Explosive Barrel",    desc       = "an explosive barrel",
         category = GiftCategory.PhysProp, identifier = "models/props_c17/oildrum001_explosive.mdl",
@@ -547,6 +559,30 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Rustling, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Dry,      attrib_feel = GiftFeel.Informative,
+    },
+    osrs_axe = GiftData.New {
+        name     = "Lumbridge Hatchet",       desc       = "a hatchet",
+        category = GiftCategory.PhysProp, identifier = "models/osrs/axe.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Bloody,   attrib_feel = GiftFeel.Sharp,
+        only_on_map = "ttt_lumbridge"
+    },
+    osrs_flour = GiftData.New {
+        name     = "Lumbridge Flour",     desc       = "flour",
+        category = GiftCategory.PhysProp, identifier = "models/osrs/flour.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Granular, attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Food,     attrib_feel = GiftFeel.Soft,
+        only_on_map = "ttt_lumbridge"
+    },
+    osrs_milk = GiftData.New {
+        name     = "Lumbridge Milk",      desc       = "milk",
+        category = GiftCategory.PhysProp, identifier = "models/osrs/milk_bucket.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Splashing, attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Food,      attrib_feel = GiftFeel.Heavy,
+        only_on_map = "ttt_lumbridge"
     },
     phone_office = GiftData.New {
         name     = "Office Phone",      desc       = "an office phone",
@@ -688,7 +724,7 @@ local giftDataCatalog = {
         category = GiftCategory.PhysProp, identifier = "models/weapons/w_knife_t.mdl",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Strange,  attrib_feel = GiftFeel.Sharp,
+        attrib_smell = GiftSmell.Bloody,   attrib_feel = GiftFeel.Sharp,
         break_constraints = true,
     },
     used_shark_idol = GiftData.New {
@@ -704,7 +740,7 @@ local giftDataCatalog = {
         category = GiftCategory.PhysProp, identifier = "models/ttt/sopd/w_sopd.mdl",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Big,
-        attrib_smell = GiftSmell.Strange,  attrib_feel = GiftFeel.Sharp,
+        attrib_smell = GiftSmell.Bloody,   attrib_feel = GiftFeel.Sharp,
         special_setup = "sopd_setup", break_constraints = true,
     },
     washtub_metal = GiftData.New {
@@ -1420,7 +1456,7 @@ local giftDataCatalog = {
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_wtester",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Beeping, attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Scientific,
+        attrib_smell = GiftSmell.Bloody,  attrib_feel = GiftFeel.Scientific,
     },
     doppelganger = GiftData.New {
         name     = "Doppelganger",         desc       = "a self-hologram maker",
@@ -1435,8 +1471,8 @@ local giftDataCatalog = {
         category = GiftCategory.WorldSWEP, identifier = "ttt_duct_tape",
         can_be_random_gift = true,
         factor_rarity = 1, factor_quality = 2,
-        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Large,
-        attrib_smell = GiftSmell.Stinky,  attrib_feel = GiftFeel.Muffled,
+        attrib_sound = GiftSound.Muffled, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Stinky,  attrib_feel = GiftFeel.Round,
     },
     eagleflight = GiftData.New {
         name     = "Eagleflight Gun",      desc       = "a gun where you are the bullet",
@@ -1847,11 +1883,11 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Otherworldly,
     },
     viral_syringe = GiftData.New {
-        name     = "Viral Syringe",        desc       = "the gift of virality",
+        name     = "Viral Syringe",        desc       = "a disease",
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_virussyringe",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Rotten,   attrib_feel = GiftFeel.Scientific,
+        attrib_smell = GiftSmell.Bloody,   attrib_feel = GiftFeel.Sharp,
     },
     weapon_jammer = GiftData.New {
         name     = "Weapon Jammer",            desc       = "a Weapon Jammer",
@@ -2825,9 +2861,20 @@ function GiftData:Inspect(giftObj)
     end
     self.lastCheckType = (self.lastCheckType + 1) % 3
 
-    if self.lastCheckType == 0 then -- sound
-        local sound = self:GetSound(giftObj)
+    -- play extra sound
+    local sound = self:GetSound(giftObj)
 
+    if sound and sound.snd ~= "" then
+        timer.Simple(0.3, function()
+            if IsValid(giftObj) then
+                local sndPath = (type(sound.snd) == "table" and sound.snd[math.random(#sound.snd)] or sound.snd)
+                local volume = (self.lastCheckType == 0 and 0.3 or 0.1) + (sound.bst and sound.bst/10 or 0)
+                giftObj:EmitSound(sndPath, 75, math.random(98, 102), volume, CHAN_STATIC)
+            end
+        end)
+    end
+
+    if self.lastCheckType == 0 then -- sound
         if sound then
             return "It sounds "..qualifier, sound.desc, "..."
         else
@@ -3914,7 +3961,7 @@ function GiftData:GetSound(giftEnt)
 
         if CORPSE.IsValidBody(wrappedEnt) then
             -- player-dependent easter eggs
-            local deadPlyNick = CORPSE.GetPlayerNick(wrappedEnt)
+            local deadPlyNick = string.lower(CORPSE.GetPlayerNick(wrappedEnt))
             local deadPlyID = wrappedEnt:GetNWString("GWStoredSID")
 
             if string.find(deadPlyNick, "cow", nil, true) then
@@ -3927,6 +3974,9 @@ function GiftData:GetSound(giftEnt)
 
             elseif string.find(deadPlyNick, "sheep", nil, true) then
                 return GiftSound.Bleating
+
+            elseif string.find(deadPlyNick, "pig", nil, true) then
+                return GiftSound.Oinking
             end
         end
     end

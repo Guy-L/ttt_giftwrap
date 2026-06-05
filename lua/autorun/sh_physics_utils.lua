@@ -258,7 +258,7 @@ if SERVER then
     end
 
     function GW_DBG.UnwrappableTour(t)
-        if not t or t < 1 then t = 3 end
+        if not t or t < 1 then t = 2 end
         local unwrappables = {}
         local ply = player.GetAll()[1]
 

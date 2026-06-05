@@ -5561,7 +5561,7 @@ models/props_phx/mechanics/slider2.mdl
 
 models/props_phx/misc/big_ramp.mdl
 models/props_phx/misc/bunker01.mdl
-models/props_phx/misc/egg.mdl
+[supported] models/props_phx/misc/egg.mdl
 models/props_phx/misc/fender.mdl
 models/props_phx/misc/flakshell_big.mdl
 models/props_phx/misc/iron_beam1.mdl
