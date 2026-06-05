@@ -287,7 +287,7 @@ if SERVER then
             end
 
             local ent = entry.ent
-            GW_Utils.TpViewing(ply, ent, 100, -50)
+            GW_Utils.TpViewing(ply, ent, 100, -40)
             debugoverlay.Sphere(ent:GetPos(), 10, t-1, GW_DBG.Red)
 
             print("Entity "..entCnt.."/"..#unwrappables..": "..tostring(ent).." ("..unwrappables[entCnt].reason..")")
@@ -351,9 +351,9 @@ if SERVER then
         })
     end
 
-    function GW_Utils.FindViewablePos(targetPos, radius, incRad)
+    function GW_Utils.FindViewablePos(targetEnt, radius, incRad)
         if not radius then radius = 100 end
-        if not incRad then incRad = math.pi/8 end
+        if not incRad then incRad = math.pi/16 end
 
         local trueRad = math.sqrt(2) * radius
         local startAng = math.random(0, 2 * math.pi)
@@ -362,24 +362,34 @@ if SERVER then
             local x = trueRad * math.cos(startAng + ang)
             local y = trueRad * math.sin(startAng + ang)
 
+            local targetPos = targetEnt:GetPos() + Vector(0, 0, 1)
             local pos = targetPos + Vector(x, y)
+            local dir = (pos - targetPos):GetNormalized()
+
             local tr = util.TraceLine({
-                start = targetPos,
+                start = targetPos - dir * 10,
                 endpos = pos,
-                mask = MASK_PLAYERSOLID_BRUSHONLY
+                mask = MASK_PLAYERSOLID_BRUSHONLY,
+                filter = targetEnt,
             })
 
-            if tr.Fraction >= 1 and util.IsInWorld(pos) then
-                return pos
+            if GW_DBG.Cvar:GetBool() then
+                debugoverlay.Line(tr.StartPos, tr.HitPos, 5, GW_DBG.Red, true)
+                debugoverlay.Line(tr.StartPos, pos, 5, GW_DBG.Blue, true)
+            end
+
+            if tr.Fraction >= 1 and util.IsInWorld(tr.HitPos) then
+                return tr.HitPos
             end
         end
 
-        return targetPos + Vector(100, 100, 0)
+        GW_DBG.Log("Could not find viewable pos for", targetEnt)
+        return targetEnt:GetPos() + Vector(100, 100, 0)
     end
 
     function GW_Utils.TpViewing(ply, targetEnt, radius, zOff)
         local entPos = targetEnt:GetPos()
-        local pos = GW_Utils.FindViewablePos(entPos, radius)
+        local pos = GW_Utils.FindViewablePos(targetEnt, radius)
         local ang = (entPos - pos):Angle()
         ply:SetPos(pos + Vector(0, 0, zOff or 0))
         ply:SetEyeAngles(ang)

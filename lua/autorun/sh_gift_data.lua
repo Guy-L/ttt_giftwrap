@@ -165,7 +165,7 @@ GiftFeel = {
     Medieval      = "medieval", -- new, underused
     Negative      = "negative",
     Jolly         = "jolly",
-    Ghostly       = "ghostly",
+    Spooky        = "spooky",
     Cursed        = "cursed",
     Long          = "long",
     Otherworldly  = "otherworldly",
@@ -209,6 +209,20 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Meowing,  attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Metallic, attrib_feel = GiftFeel.Otherworldly,
+    },
+    banana_bunch = GiftData.New {
+        name     = "Banana Bunch",        desc       = "bananas",
+        category = GiftCategory.PhysProp, identifier = "models/props/cs_italy/bananna_bunch.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Fresh,
+    },
+    banana_prop = GiftData.New {
+        name     = "Banana",              desc       = "a banana",
+        category = GiftCategory.PhysProp, identifier = "models/props/cs_italy/bananna.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Small,
+        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Fresh,
     },
     barrel = GiftData.New {
         name     = "Barrel",              desc       = "a barrel",
@@ -325,6 +339,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Squeaky, attrib_size = 4,
         attrib_smell = GiftSmell.Leather, attrib_feel = GiftFeel.Heavy,
     },
+    chair_metal = GiftData.New {
+        name     = "Metal Chair",         desc       = "a metal chair",
+        category = GiftCategory.PhysProp, identifier = "models/props_interiors/furniture_chair03a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = 3,
+        attrib_smell = GiftSmell.Leather,  attrib_feel = GiftFeel.Light,
+    },
     cinder_block = GiftData.New {
         name     = "Cinder Block",        desc       = "a cinder block",
         category = GiftCategory.PhysProp, identifier = "models/props/de_inferno/cinderblock.mdl",
@@ -395,6 +416,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Whirring, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Sterile,  attrib_feel = GiftFeel.Bright,
     },
+    computer_mouse = GiftData.New {
+        name     = "Computer Mouse",      desc       = "a mouse",
+        category = GiftCategory.PhysProp, identifier = "models/props/cs_office/computer_mouse.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Clicky,  attrib_size = GiftSize.Small,
+        attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Round,
+    },
     dead_bunger = GiftData.New {
         name     = "Dead Bunger",         desc       = "a dead Bunger",
         category = GiftCategory.PhysProp, identifier = "models/betterbunger.mdl",
@@ -436,18 +464,32 @@ local giftDataCatalog = {
         special_setup = "explo_barrel_setup"
     },
     file_box = GiftData.New {
-        name     = "File Box",        desc       = "a box of files",
-        category = GiftCategory.PhysProp, identifier = "models/props/cs_office/file_box.mdl",
+        name     = "File Box",            desc        = "a box of files",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props/cs_office/file_box.mdl",
+            "models/props/cs_office/file_box_p1.mdl",
+            "models/props/cs_office/file_box_p2.mdl",
+        },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Paper,    attrib_feel = GiftFeel.Box,
     },
     file_cabinet = GiftData.New {
-        name     = "File Cabinet",        desc       = "a file cabinet",
-        category = GiftCategory.PhysProp, identifier = "models/props_wasteland/controlroom_filecabinet002a.mdl",
+        name     = "File Cabinet",        desc        = "a file cabinet",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props_wasteland/controlroom_filecabinet002a.mdl",
+            "models/props/cs_office/file_cabinet1_group.mdl",
+        },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Gigantic,
         attrib_smell = GiftSmell.Paper,    attrib_feel = GiftFeel.Massive,
+    },
+    food_stack = GiftData.New {
+        name     = "Food Crate Stack",    desc       = "a bunch of food crates",
+        category = GiftCategory.PhysProp, identifier = "models/props/cs_militia/food_stack.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Max,
+        attrib_smell = GiftSmell.Food,     attrib_feel = GiftFeel.Massive,
     },
     glass_bottle = GiftData.New {
         name     = "Glass Bottle",        desc        = "a bottle",
@@ -460,6 +502,14 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Glass,   attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Alcohol, attrib_feel = GiftFeel.Fragile,
+    },
+    gnome = GiftData.New {
+        name     = "Garden Gnome",        desc       = "a gnome",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/gnome.mdl",
+        can_be_random_gift = true,
+        factor_rarity = 2, factor_quality = -3,
+        attrib_sound = GiftSound.Hollow, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Paint,  attrib_feel = GiftFeel.Jolly,
     },
     goober = GiftData.New {
         name     = "Goober",              desc       = "a goober",
@@ -535,6 +585,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Rusty,    attrib_feel = GiftFeel.Hollow,
     },
+    microwave = GiftData.New {
+        name     = "Microwave",           desc       = "a microwave",
+        category = GiftCategory.PhysProp, identifier = "models/props/cs_office/microwave.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Beeping, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Box,
+    },
     milk_jug = GiftData.New {
         name     = "Milk Jug",            desc        = "an old milk jug",
         category = GiftCategory.PhysProp, identifiers = {
@@ -559,6 +616,13 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Rustling, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Dry,      attrib_feel = GiftFeel.Informative,
+    },
+    orange = GiftData.New {
+        name     = "Orange",              desc       = "an orange",
+        category = GiftCategory.PhysProp, identifier = "models/props/cs_italy/orange.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Mini,
+        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Round,
     },
     osrs_axe = GiftData.New {
         name     = "Lumbridge Hatchet",       desc       = "a hatchet",
@@ -672,6 +736,20 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Leather,  attrib_feel = GiftFeel.Round,
     },
+    table_cafeteria = GiftData.New {
+        name     = "Cafeteria Table",     desc = "a cafeteria table",
+        category = GiftCategory.PhysProp, identifier = "models/props_wasteland/cafeteria_table001a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Creaky, attrib_size = GiftSize.Max,
+        attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Long,
+    },
+    table_coffee = GiftData.New {
+        name     = "Coffee Table",     desc = "a coffee table",
+        category = GiftCategory.PhysProp, identifier = "models/props/cs_office/table_coffee.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Creaky, attrib_size = 4,
+        attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Flat,
+    },
     takeout_carton = GiftData.New {
         name     = "Asian Takeout Carton", desc       = "some takeout",
         category = GiftCategory.PhysProp,  identifier = "models/props_junk/garbage_takeoutcarton001a.mdl",
@@ -764,6 +842,20 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Sturdy,
     },
+    water_bottle = GiftData.New {
+        name     = "Water Bottle",        desc       = "a water bottle",
+        category = GiftCategory.PhysProp, identifier = "models/props/cs_office/water_bottle.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Splashing,   attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Nondescript, attrib_feel = GiftFeel.Fresh,
+    },
+    wooden_barrel = GiftData.New {
+        name     = "Wooden Barrel",       desc       = "a wooden barrel",
+        category = GiftCategory.PhysProp, identifier = "models/props_c17/woodbarrel001.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Hollow, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Round,
+    },
     wooden_chair = GiftData.New {
         name     = "Wooden Chair",        desc        = "a wooden chair",
         category = GiftCategory.PhysProp, identifiers = {
@@ -787,6 +879,13 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Creaky, attrib_size = 6,
         attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Massive,
+    },
+    wooden_nightstand = GiftData.New {
+        name     = "Wooden Nightstand",   desc       = "a nightstand",
+        category = GiftCategory.PhysProp, identifier = "models/props_c17/furnituredrawer002a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Hollow, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Light,
     },
     wooden_pallet = GiftData.New {
         name     = "Wooden Pallet",       desc        = "a wooden pallet",
@@ -1219,7 +1318,7 @@ local giftDataCatalog = {
         can_be_random_gift = true,
         factor_rarity = 2, factor_quality = -6,
         attrib_sound = GiftSound.Rattling, attrib_size = GiftSize.Huge,
-        attrib_smell = GiftSmell.Dry,      attrib_feel = GiftFeel.Ghostly,
+        attrib_smell = GiftSmell.Dry,      attrib_feel = GiftFeel.Spooky,
         disable_flies = true,
     },
     mc_skeleton = GiftData.New {
@@ -1540,7 +1639,7 @@ local giftDataCatalog = {
         can_be_random_gift = true,
         factor_rarity = 3, factor_quality = -7,
         attrib_sound = GiftSound.Talking, attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Ghostly,
+        attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Spooky,
     },
     gravity_hammer = GiftData.New {
         name     = "Gravity Hammer",        desc      = "a Gravity Hammer",
@@ -1753,7 +1852,7 @@ local giftDataCatalog = {
         can_be_random_gift = true,
         factor_rarity = 7, factor_quality = 7,
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Big,
-        attrib_smell = GiftSmell.Sterile,  attrib_feel = GiftFeel.Ghostly,
+        attrib_smell = GiftSmell.Sterile,  attrib_feel = GiftFeel.Spooky,
     },
     remove_tool = GiftData.New {
         name     = "Remove Tool",          desc       = "a level editor",

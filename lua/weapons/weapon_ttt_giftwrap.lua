@@ -722,6 +722,7 @@ function SWEP:OnRemove()
                 owner:StopParticles()
             end
         end
+
     elseif CLIENT then
         if IsValid(HELPSCRN._gwOptMenu) and HELPSCRN._gwRef == self then
             HELPSCRN._gwOptMenu:Close()
