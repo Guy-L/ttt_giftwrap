@@ -736,6 +736,11 @@ function SWEP:Deploy()
     if CLIENT then 
         self:UpdateUI("deploy")
         self:UpdateMarkerVision("deploy")
+
+    elseif SERVER then
+        if self:GetGiftee() == self:GetOwner() and not self:HasGift() then
+            self:SetGiftee(NULL)
+        end
     end
 end
 

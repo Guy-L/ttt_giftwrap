@@ -221,6 +221,11 @@ elseif SERVER then
             return
         end
 
+        if gifteePly == ply then
+            dbg.Log("Rejected wrapper setting giftee as themselves:", gifteePly)
+            return
+        end
+
         giftEnt:SetGiftee(isPlayer and gifteePly or NULL)
     end)
 
