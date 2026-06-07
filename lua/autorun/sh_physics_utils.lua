@@ -1,16 +1,15 @@
-include("sh_giftwrap_utils.lua")
 local utils = GW_Utils
 local dbg   = GW_DBG
 
 HIDE_MARK_MSG   = "TTT_GiftWrapSV_HideMark"
 UNHIDE_MARK_MSG = "TTT_GiftWrapSV_UnHideMark"
 
-GW_DBG.Red   = Color(255, 50, 50)
-GW_DBG.Green = Color(50, 255, 50)
-GW_DBG.Blue  = Color(50, 50, 255)
+dbg.Red   = Color(255, 50, 50)
+dbg.Green = Color(50, 255, 50)
+dbg.Blue  = Color(50, 50, 255)
 
 if SERVER then
-    function GW_DBG.GoToGift(i) -- meant for local testing
+    function dbg.GoToGift(i) -- meant for local testing
         local gifts = ents.FindByClass(PROP_CLASS_NAME)
         PrintTable(gifts)
 
@@ -19,44 +18,44 @@ if SERVER then
         end
     end
 
-    function GW_DBG.NearbyEnts(radius, pattern, showTable) -- meant for local testing
+    function dbg.NearbyEnts(radius, pattern, showTable) -- meant for local testing
         for _, ent in ipairs(ents.FindInSphere(player.GetAll()[1]:GetPos(), radius)) do
             local class = ent:GetClass()
 
             if not pattern or string.find(class, pattern, nil, true) then
                 print(ent, ent:GetPos(), ent:GetModel())
-                debugoverlay.Sphere(ent:GetPos(), 50, 7, GW_DBG.Red)
+                debugoverlay.Sphere(ent:GetPos(), 50, 7, dbg.Red)
 
                 if showTable then PrintTable(ent:GetSaveTable(true)) end
             end
         end
     end
 
-    function GW_DBG.ShowNearbySpawns(radius, searchScale, life) --meant for local testing
-        if not GW_DBG.Cvar:GetBool() or not radius then return end
-        local cols = {GW_DBG.Red, GW_DBG.Green, GW_DBG.Blue}
+    function dbg.ShowNearbySpawns(radius, searchScale, life) --meant for local testing
+        if not dbg.Cvar:GetBool() or not radius then return end
+        local cols = {dbg.Red, dbg.Green, dbg.Blue}
 
         local plyPos = player.GetAll()[1]:GetPos()
-        for _, spawn in ipairs(GW_Utils.NearestSpawns(plyPos, radius * searchScale)) do
+        for _, spawn in ipairs(utils.NearestSpawns(plyPos, radius * searchScale)) do
             debugoverlay.Sphere(spawn.pos, radius, life, cols[spawn.grp])
         end
     end
 
-    function GW_DBG.ShowSpawns(spawns, radius, life) --meant for local testing
-        if not GW_DBG.Cvar:GetBool() or not radius then return end
-        local cols = {GW_DBG.Red, GW_DBG.Green, GW_DBG.Blue}
+    function dbg.ShowSpawns(spawns, radius, life) --meant for local testing
+        if not dbg.Cvar:GetBool() or not radius then return end
+        local cols = {dbg.Red, dbg.Green, dbg.Blue}
 
         for _, spawn in ipairs(spawns) do
             debugoverlay.Sphere(spawn.pos, radius, life, cols[spawn.grp])
         end
     end
 
-    function GW_DBG.DebugSpawns(giftEnt, radius, verbose) --meant for local testing, in ENT:Think()
-        if not GW_DBG.Cvar:GetBool() then return end
+    function dbg.DebugSpawns(giftEnt, radius, verbose) --meant for local testing, in ENT:Think()
+        if not dbg.Cvar:GetBool() then return end
         if ents.FindByClass("prop_giftwrap_gift")[1] ~= giftEnt then return end
 
         local plyPos = player.GetAll()[1]:GetPos()
-        GW_DBG.ShowSpawns({GW_Utils.NearestSpawn(plyPos, false)}, 10, 0.2)
+        dbg.ShowSpawns({utils.NearestSpawn(plyPos, false)}, 10, 0.2)
 
         if radius then
             local spacing = 100
@@ -67,15 +66,15 @@ if SERVER then
                     for z = -half, half do
                         local point = plyPos + Vector(x * spacing, y * spacing, z * spacing)
 
-                        if not GW_Utils.IsNearAnySpawn(point, radius) then
-                            debugoverlay.Cross(point, 10, 1, GW_DBG.Red)
+                        if not utils.IsNearAnySpawn(point, radius) then
+                            debugoverlay.Cross(point, 10, 1, dbg.Red)
                         end
                     end
                 end
             end
         end
 
-        local zones = GW_Utils.mapSpawnStats.zones
+        local zones = utils.mapSpawnStats.zones
         if zones then
             for _, zone in ipairs(zones) do
                 local maxDist = 50000
@@ -163,12 +162,12 @@ if SERVER then
 
         if verbose and radius then
             local giftPos = giftEnt:GetPos()
-            GW_DBG.Log("gift near spawn: "..tostring(GW_Utils.IsNearAnySpawn(giftPos, radius)).." (rad:"..radius.."; zones: "..(zones and #zones or 0).."; "..game.GetMap().."); is in world "..tostring(util.IsInWorld(giftPos)).."; water level "..giftEnt:WaterLevel())
-            GW_DBG.Log(math.Round(plyPos.x)..", "..math.Round(plyPos.y)..", "..math.Round(plyPos.z+20).." ; player near spawn: "..tostring(GW_Utils.IsNearAnySpawn(plyPos, radius)).."; is in world "..tostring(util.IsInWorld(plyPos)).."; zone "..tostring(utils.PointZone(plyPos)))
+            dbg.Log("gift near spawn: "..tostring(utils.IsNearAnySpawn(giftPos, radius)).." (rad:"..radius.."; zones: "..(zones and #zones or 0).."; "..game.GetMap().."); is in world "..tostring(util.IsInWorld(giftPos)).."; water level "..giftEnt:WaterLevel())
+            dbg.Log(math.Round(plyPos.x)..", "..math.Round(plyPos.y)..", "..math.Round(plyPos.z+20).." ; player near spawn: "..tostring(utils.IsNearAnySpawn(plyPos, radius)).."; is in world "..tostring(util.IsInWorld(plyPos)).."; zone "..tostring(utils.PointZone(plyPos)))
         end
     end
 
-    function GW_DBG.DebugWraps(skipUnwrappables)
+    function dbg.DebugWraps(skipUnwrappables)
         local wrappables = {}
         local unwrappables = {}
 
@@ -203,8 +202,8 @@ if SERVER then
             local model = ent:GetModel()
 
             if giftData and giftData.autoGen then
-                print("-> Missing data:", ent, GW_DBG.PosStr(ent:GetPos()), model)
-                debugoverlay.Sphere(ent:GetPos(), 50, 15, GW_DBG.Green)
+                print("-> Missing data:", ent, dbg.PosStr(ent:GetPos()), model)
+                debugoverlay.Sphere(ent:GetPos(), 50, 15, dbg.Green)
 
                 if not modelSetND[model] then
                     modelSetND[model] = true
@@ -248,8 +247,8 @@ if SERVER then
 
             if IsValid(ent) and ent:GetSolid() > 0 and not ent:IsPlayer() and not ent:IsWeapon()
               and not utils.IsMapClass(ent) and not IsValid(ent:GetNW2Entity("WrappedByGift")) then
-                print("-> Unwrappable:", ent, GW_DBG.PosStr(ent:GetPos()), unwrappable.reason, "solid "..ent:GetSolid())
-                debugoverlay.Sphere(ent:GetPos(), 10, 5, GW_DBG.Red)
+                print("-> Unwrappable:", ent, dbg.PosStr(ent:GetPos()), unwrappable.reason, "solid "..ent:GetSolid())
+                debugoverlay.Sphere(ent:GetPos(), 10, 5, dbg.Red)
                 relevantCnt = relevantCnt + 1
             end
         end
@@ -257,7 +256,7 @@ if SERVER then
         print("Relevant unwrappables:", relevantCnt)
     end
 
-    function GW_DBG.UnwrappableTour(t)
+    function dbg.UnwrappableTour(t)
         if not t or t < 1 then t = 2 end
         local unwrappables = {}
         local ply = player.GetAll()[1]
@@ -287,8 +286,8 @@ if SERVER then
             end
 
             local ent = entry.ent
-            GW_Utils.TpViewing(ply, ent, 100, -40, t-1)
-            debugoverlay.Sphere(ent:GetPos(), 10, t-1, GW_DBG.Red)
+            utils.TpViewing(ply, ent, 100, -40, t-1)
+            debugoverlay.Sphere(ent:GetPos(), 10, t-1, dbg.Red)
 
             print("Entity "..entCnt.."/"..#unwrappables..": "..tostring(ent).." ("..unwrappables[entCnt].reason..")")
             entCnt = entCnt + 1
@@ -299,24 +298,24 @@ if SERVER then
         timer.Create("GW-DBG_IterUnwrappables", t, 0, TourStep)
     end
 
-    function GW_DBG.EndTour()
+    function dbg.EndTour()
         timer.Remove("GW-DBG_IterUnwrappables")
         print("Tour cancelled.")
     end
 
-    function GW_DBG.MyPos()
-        GW_DBG.Log(GW_DBG.PosStr(player.GetAll()[1]:GetPos() + Vector(0, 0, 20)))
+    function dbg.MyPos()
+        dbg.Log(dbg.PosStr(player.GetAll()[1]:GetPos() + Vector(0, 0, 20)))
     end
 
-    function GW_DBG.PosStr(pos)
+    function dbg.PosStr(pos)
         return math.Round(pos.x)..", "..math.Round(pos.y)..", "..math.Round(pos.z)
     end
 
-    function GW_DBG.GoToEnt(entID)
+    function dbg.GoToEnt(entID)
         player.GetAll()[1]:SetPos(ents.GetByIndex(entID):GetPos())
     end
 
-    function GW_DBG.BotPickup()
+    function dbg.BotPickup()
         ents.FindByClass(PROP_CLASS_NAME)[1]:Use(player.GetAll()[2])
     end
 end
@@ -331,7 +330,7 @@ if SERVER then
     util.AddNetworkString(HIDE_MARK_MSG)
     util.AddNetworkString(UNHIDE_MARK_MSG)
 
-    function GW_Utils.GetEntCenter(ent)
+    function utils.GetEntCenter(ent)
         local phys = ent:GetPhysicsObject()
         if IsValid(phys) then
             local mins, maxs = phys:GetAABB()
@@ -342,7 +341,7 @@ if SERVER then
         return ent:GetPos()
     end
 
-    function GW_Utils.GetGroundHit(pos, filterEnt)
+    function utils.GetGroundHit(pos, filterEnt)
         return util.TraceLine({
             start  = pos + Vector(0, 0, 100),
             endpos = pos - Vector(0,0,1000),
@@ -351,7 +350,7 @@ if SERVER then
         })
     end
 
-    function GW_Utils.FindViewablePos(targetEnt, radius, incRad, t)
+    function utils.FindViewablePos(targetEnt, radius, incRad, t)
         if not radius then radius = 100 end
         if not incRad then incRad = math.pi/16 end
         if not t then t = 1 end
@@ -374,9 +373,9 @@ if SERVER then
                 filter = targetEnt,
             })
 
-            if GW_DBG.Cvar:GetBool() then
-                debugoverlay.Line(tr.StartPos, tr.HitPos, t, GW_DBG.Red, true)
-                debugoverlay.Line(tr.StartPos, pos, t, GW_DBG.Blue, true)
+            if dbg.Cvar:GetBool() then
+                debugoverlay.Line(tr.StartPos, tr.HitPos, t, dbg.Red, true)
+                debugoverlay.Line(tr.StartPos, pos, t, dbg.Blue, true)
             end
 
             if tr.Fraction >= 1 and util.IsInWorld(tr.HitPos) then
@@ -384,30 +383,30 @@ if SERVER then
             end
         end
 
-        GW_DBG.Log("Could not find viewable pos for", targetEnt)
+        dbg.Log("Could not find viewable pos for", targetEnt)
         return targetEnt:GetPos() + Vector(100, 100, 0)
     end
 
-    function GW_Utils.TpViewing(ply, targetEnt, radius, zOff, t)
+    function utils.TpViewing(ply, targetEnt, radius, zOff, t)
         local entPos = targetEnt:GetPos()
-        local pos = GW_Utils.FindViewablePos(targetEnt, radius, nil, t)
+        local pos = utils.FindViewablePos(targetEnt, radius, nil, t)
         local ang = (entPos - pos):Angle()
         ply:SetPos(pos + Vector(0, 0, zOff or 0))
         ply:SetEyeAngles(ang)
     end
 
-    function GW_Utils.GetRandomUpwardsVel(raise)
+    function utils.GetRandomUpwardsVel(raise)
         local dir = VectorRand()
         dir.z = math.abs(dir.z + raise)
         return dir:GetNormalized()
     end
 
-    function GW_Utils.ColorFromString(str)
+    function utils.ColorFromString(str)
         local r, g, b, a = str:match("(%d+)%s+(%d+)%s+(%d+)%s+(%d+)")
         return Color(tonumber(r), tonumber(g), tonumber(b), tonumber(a))
     end
 
-    function GW_Utils.EnterStasis(giftObj, ent)
+    function utils.EnterStasis(giftObj, ent)
         ent:SetNoDraw(true)
         ent:SetNotSolid(true)
 
@@ -436,7 +435,7 @@ if SERVER then
 
         -- hide connected map ropes so stasis pos doesn't show
         -- (other types may still be broken, will fix as I find them)
-        for _, rope in ipairs(GW_Utils.FindConnectedRopes(ent)) do
+        for _, rope in ipairs(utils.FindConnectedRopes(ent)) do
             rope._storedWidth = rope:GetKeyValues()["Width"]
             rope:SetKeyValue("Width", "0")
         end
@@ -449,7 +448,7 @@ if SERVER then
                 table.insert(ent._childTrails, {
                     trailEnt   = child,
                     attachID   = child:GetInternalVariable("m_iParentAttachment"),
-                    color      = GW_Utils.ColorFromString(child:GetInternalVariable("rendercolor")),
+                    color      = utils.ColorFromString(child:GetInternalVariable("rendercolor")),
                     additive   = true,
                     startWidth = child:GetInternalVariable("startwidth"),
                     endWidth   = child:GetInternalVariable("endwidth"),
@@ -473,7 +472,7 @@ if SERVER then
 
         -- store data for connected physics objects
         if ent:IsRagdoll() then
-            GW_Utils.PrepareRagdoll(ent, ent._GWStoredPos)
+            utils.PrepareRagdoll(ent, ent._GWStoredPos)
 
         elseif ent:IsNPC() then -- freeze NPC
             ent._GWStoredNPCState = ent:GetNPCState()
@@ -488,7 +487,7 @@ if SERVER then
         net.Broadcast()
     end
 
-    function GW_Utils.PrepareRagdoll(rag, rootPos)
+    function utils.PrepareRagdoll(rag, rootPos)
         if not rootPos then rootPos = rag:GetPos() end
         rag._GWStoredRelPos = {}
 
@@ -519,7 +518,7 @@ if SERVER then
         end
     end
 
-    function GW_Utils.ExitStasis(ent, pos, stabilize)
+    function utils.ExitStasis(ent, pos, stabilize)
         ent:SetPos(pos)
         ent:SetNoDraw(false)
         ent:SetNotSolid(false)
@@ -555,7 +554,7 @@ if SERVER then
         net.Broadcast()
 
         -- unhide connected ropes
-        for _, rope in ipairs(GW_Utils.FindConnectedRopes(ent)) do
+        for _, rope in ipairs(utils.FindConnectedRopes(ent)) do
             if rope._storedWidth then
                 rope:SetKeyValue("Width", tostring(rope._storedWidth))
             end
@@ -602,7 +601,7 @@ if SERVER then
         end
     end
 
-    function GW_Utils.FindConnectedRopes(ent)
+    function utils.FindConnectedRopes(ent)
         local ropes = {}
 
         local worldRopes = {}
@@ -631,7 +630,7 @@ if SERVER then
         return ropes
     end
 
-    function GW_Utils.GetMapSpawns(filterWep, filterAmmo, filterPlayer, filterWater)
+    function utils.GetMapSpawns(filterWep, filterAmmo, filterPlayer, filterWater)
         local mapSpawns = entspawnscript.GetSpawns()
         local spawns = {}
         local filters = {filterWep, filterAmmo, filterPlayer }
@@ -655,16 +654,16 @@ if SERVER then
 
     local function InitMapSpawns()
         print("[GiftWrap] Initialized map spawns list")
-        GW_AllMapSpawns       = GW_Utils.GetMapSpawns()
-        GW_AllNonWaterSpawns  = GW_Utils.GetMapSpawns(false, false, false, true)
-        GW_WebAmmoSpawns      = GW_Utils.GetMapSpawns(false, false, true)
+        GW_AllMapSpawns       = utils.GetMapSpawns()
+        GW_AllNonWaterSpawns  = utils.GetMapSpawns(false, false, false, true)
+        GW_WebAmmoSpawns      = utils.GetMapSpawns(false, false, true)
     end
 
     hook.Add("TTTInitPostEntity", "GiftWrap_FindSpawnsHook", function()
         timer.Simple(0, InitMapSpawns) -- let entspawnscript finish
     end)
 
-    function GW_Utils.IsNearAnySpawn(pos, spawnRad)
+    function utils.IsNearAnySpawn(pos, spawnRad)
         local radSqr = spawnRad * spawnRad
 
         for _, spawn in ipairs(GW_AllNonWaterSpawns) do
@@ -676,7 +675,7 @@ if SERVER then
         return false
     end
 
-    function GW_Utils.NearestSpawns(pos, radius)
+    function utils.NearestSpawns(pos, radius)
         local nearSpawns = {}
         local radSqr = radius * radius
 
@@ -689,13 +688,13 @@ if SERVER then
         return nearSpawns
     end
 
-    function GW_Utils.NearestSpawn(pos, verbose)
+    function utils.NearestSpawn(pos, verbose)
         local nearestSpawn
         local lowestDist = 9999999999
 
         for _, spawn in ipairs(GW_AllNonWaterSpawns) do
             local dist = pos:DistToSqr(spawn.pos)
-            local zone = GW_Utils.PointZone(spawn.pos + Vector(0, 0, 15), verbose)
+            local zone = utils.PointZone(spawn.pos + Vector(0, 0, 15), verbose)
 
             if dist < lowestDist and not zone or zone == "safe" then
                 lowestDist = dist
@@ -703,11 +702,11 @@ if SERVER then
             end
         end
 
-        if verbose then GW_DBG.Log("Nearest spawn to", pos, "is", nearestSpawn.pos) end
+        if verbose then dbg.Log("Nearest spawn to", pos, "is", nearestSpawn.pos) end
         return nearestSpawn
     end
 
-    function GW_Utils.IsPointInZone(pos, zone)
+    function utils.IsPointInZone(pos, zone)
         -- AABB zone
         if zone.min and zone.max then
             local mins = Vector(
@@ -771,13 +770,13 @@ if SERVER then
         return false
     end
 
-    function GW_Utils.PointZone(pos)
-        if not GW_Utils.mapSpawnStats.zones then return false end
+    function utils.PointZone(pos)
+        if not utils.mapSpawnStats.zones then return false end
         local foundZone
         local foundZoneBounce = false
 
-        for _, zone in ipairs(GW_Utils.mapSpawnStats.zones) do
-            if GW_Utils.IsPointInZone(pos, zone) then
+        for _, zone in ipairs(utils.mapSpawnStats.zones) do
+            if utils.IsPointInZone(pos, zone) then
                 if zone.type == "troom" then
                     return zone.type, zone.bounce ~= false -- troom > safe > others
 
@@ -791,7 +790,7 @@ if SERVER then
         return foundZone and foundZone.type or false, foundZoneBounce
     end
 
-    GW_Utils.mapSpawnStatsList = {
+    utils.mapSpawnStatsList = {
         ["ttt_5c_plaza"]                = { radius=1000, timeout=3,  zones = {
             { min = Vector(-2932, 837, -50), max = Vector(1322, 1305, 732),   type="exit" },
             { min = Vector(-2256, -1679, 4), max = Vector(-2128, -1535, 134), type="troom" },
@@ -1179,11 +1178,11 @@ if SERVER then
     local map = game.GetMap()
     local mapStats = {radius=1000, timeout=10}
 
-    if GW_Utils.mapSpawnStatsList[map] then
+    if utils.mapSpawnStatsList[map] then
         --print('direct match!')
-        mapStats = GW_Utils.mapSpawnStatsList[map]
+        mapStats = utils.mapSpawnStatsList[map]
     else
-        for mapPrefix, stats in pairs(GW_Utils.mapSpawnStatsList) do
+        for mapPrefix, stats in pairs(utils.mapSpawnStatsList) do
             if string.StartWith(map, mapPrefix) then
                 --print(mapPrefix)
                 mapStats = stats
@@ -1191,12 +1190,12 @@ if SERVER then
         end
     end
 
-    GW_Utils.mapSpawnStats = mapStats
-    if not GW_Utils.mapSpawnStats.spnHeight then GW_Utils.mapSpawnStats.spnHeight = 100 end
+    utils.mapSpawnStats = mapStats
+    if not utils.mapSpawnStats.spnHeight then utils.mapSpawnStats.spnHeight = 100 end
 
-    --GW_DBG.Log("Map Stats for "..map.."...")
-    --GW_DBG.Inspect(GW_Utils.mapSpawnStats)
-    --if GW_AllNonWaterSpawns then GW_DBG.Log("Non-water spawns: ", #GW_AllNonWaterSpawns) end
+    --dbg.Log("Map Stats for "..map.."...")
+    --dbg.Inspect(utils.mapSpawnStats)
+    --if GW_AllNonWaterSpawns then dbg.Log("Non-water spawns: ", #GW_AllNonWaterSpawns) end
 
 
 elseif CLIENT then
@@ -1226,3 +1225,5 @@ elseif CLIENT then
         end
     end)
 end
+
+dbg.Log("Utils initialized.")

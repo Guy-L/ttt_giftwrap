@@ -1,4 +1,4 @@
-GW_DBG = {}
+GW_DBG = GW_DBG or {}
 GW_DBG.Cvar = CreateConVar("ttt2_giftwrap_debug", 0, {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Enables addon debug mode (should not be enabled for real play).", 0, 1)
 
 
@@ -191,7 +191,7 @@ end
 -----------------------------------------------------
 --------------------- Utils -------------------------
 -----------------------------------------------------
-GW_Utils = {}
+GW_Utils = GW_Utils or {}
 
 function GW_Utils.IsLivingPlayer(ply)
     return IsPlayer(ply) and ply:Alive() and not ply:IsSpec()
@@ -604,7 +604,7 @@ function GW_Utils.IsOmniscient(ply)
     return ply:GetSubRoleData().isOmniscientRole or not GW_Utils.IsLivingPlayer(ply)
 end
 
-GW_CvarList = GW_CvarList or { ["ttt2_giftwrap_debug"] = "bool" }
+GW_Utils.CvarList = GW_Utils.CvarList or { ["ttt2_giftwrap_debug"] = "bool" }
 GW_Utils.CvarFlags = {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}
 
 function GW_Utils.Cvar(name, default, min, max, desc)
@@ -614,15 +614,13 @@ function GW_Utils.Cvar(name, default, min, max, desc)
     local cvar = CreateConVar(name, default, GW_Utils.CvarFlags, desc, min, max)
 
     if min == 0 and max == 1 and (default == 0 or default == 1) then
-        GW_CvarList[name] = "bool"
+        GW_Utils.CvarList[name] = "bool"
     else
-        GW_CvarList[name] = "float"
+        GW_Utils.CvarList[name] = "float"
     end
 
     return cvar
 end
-
-GW_DBG.Log("Utils initialized.")
 
 
 -- multi-Lua defs I don't really want to make another file for
@@ -646,3 +644,5 @@ MAT_GIFT_ICON = Material("vgui/ttt/menu/icon_gift")
 
 ERROR_ALREADY_OPENED = "You already opened a random gift this round!"
 XMAS_DAY = 359
+
+include("sh_physics_utils.lua")

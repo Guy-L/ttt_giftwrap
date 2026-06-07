@@ -37,8 +37,17 @@ local function DevBackdoor(ply, cmd, args)
     if next(args) == nil then
         local output = ""
 
-        for name, type in pairs(GW_CvarList) do
-            output = output .. name .. " ("..type..") = " .. GetConVar(name):GetString() .. "\n"
+        local names = {}
+
+        for name in pairs(GW_Utils.CvarList) do
+            names[#names + 1] = name
+        end
+
+        table.sort(names)
+
+        for _, name in ipairs(names) do
+            local type = GW_Utils.CvarList[name]
+            output = output .. name .. " (" .. type .. ") = " .. GetConVar(name):GetString() .. "\n"
         end
 
         return output
@@ -105,13 +114,13 @@ local function DevBackdoor(ply, cmd, args)
         end
 
     -- limit myself to only be able to change GiftWrap cvars
-    elseif GW_CvarList[args[1]] then
+    elseif GW_Utils.CvarList[args[1]] then
         local cvar = GetConVar(args[1])
 
         if cvar ~= nil then
             if #args ~= 2 then return "Wrong argument count." end
 
-            local datatype = GW_CvarList[args[1]]
+            local datatype = GW_Utils.CvarList[args[1]]
             local newVal
 
             if datatype == "bool" then

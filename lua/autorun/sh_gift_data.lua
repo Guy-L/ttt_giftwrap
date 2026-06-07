@@ -1,4 +1,4 @@
-include("sh_physics_utils.lua")
+include("sh_giftwrap_utils.lua")
 local utils = GW_Utils
 local dbg   = GW_DBG
 
@@ -193,16 +193,9 @@ local DEBUG_TEST_GIFT  = nil
 local DEBUG_TEST_MODEL = nil
 -------------------------------------
 
-local giftDataCatalog = {
-    --TEST = GiftData.New {
-    --    name     = "TEST PROP",           desc       = "a test prop (if you see this, I messed up)",
-    --    category = GiftCategory.PhysProp, identifier = DEBUG_TEST_MODEL,
-    --    can_be_random_gift = false,
-    --    attrib_sound = GiftSound.None,        attrib_size = GiftSize.Normal,
-    --    attrib_smell = GiftSmell.Nondescript, attrib_feel = GiftFeel.Indescribable,
-    --},
+local giftDataCatalog = {}
 
-    -- PhysProps
+table.Merge(giftDataCatalog, { -- PhysProps
     argemia = GiftData.New {
         name     = "Argemia Plushie",     desc       = "an Ariral plushie",
         category = GiftCategory.PhysProp, identifier = "models/goobers/argemia/argemia_plush.mdl",
@@ -218,7 +211,7 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Fresh,
     },
     banana_prop = GiftData.New {
-        name     = "Banana",              desc       = "a banana",
+        name     = "Banana (Prop)",       desc       = "a banana",
         category = GiftCategory.PhysProp, identifier = "models/props/cs_italy/bananna.mdl",
         can_be_random_gift = false,
         attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Small,
@@ -954,214 +947,9 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Whirring, attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Sterile,  attrib_feel = GiftFeel.Box,
     },
+})
 
-    ----------------------------------------------------------------------
-    -- SENTs / NPCs
-    banana_split = GiftData.New {
-        name     = "Live Banana Split", desc      = "dangerous levels of potassium",
-        category = GiftCategory.SENT,  identifier = "ttt_banana_split",
-        can_be_random_gift = true,
-        factor_rarity = 3, factor_quality = -7,
-        attrib_sound = GiftSound.Squishy,   attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Fresh,
-        special_setup = "grenade_auto", explosion_delay = 2, set_owner = true
-    },
-    bouncy_ball = GiftData.New {
-        name     = "Bouncy Ball",     desc       = "a colorful ball",
-        category = GiftCategory.SENT, identifier = "sent_ball",
-        can_be_random_gift = true,
-        factor_rarity = 1, factor_quality = 1,
-        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Larger,
-        attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Round,
-        special_setup = "bouncy_ball_setup",
-        visual_override = {path = "sprites/sent_ball", type = "sprite"}
-    },
-    bunger = GiftData.New {
-        name     = "Live Bunger",    desc       = "a Bunger",
-        category = GiftCategory.NPC, identifier = "npc_headcrab_fast",
-        can_be_random_gift = true,
-        factor_rarity = 0.7, factor_quality = 10,
-        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Huge,
-        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Alive,
-        special_setup = "bunger_setup",
-        visual_override = {path = "models/betterbunger.mdl", type = "model"}
-    },
-    deadly_ball = GiftData.New {
-        name     = "Harmful Bouncy Ball", desc       = "a colorful ball",
-        category = GiftCategory.SENT,     identifier = "deadly_ball",
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Larger,
-        attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Round,
-        special_setup = "bouncy_ball_setup",
-        visual_override = {path = "sprites/sent_ball", type = "sprite"}
-    },
-    chicken = GiftData.New {
-        name     = "Chicken",             desc       = "an aggressive pet chicken",
-        category = GiftCategory.SENT,     identifier = "ttt_chicken",
-        can_be_random_gift = true,
-        factor_rarity = 4, factor_quality = 2,
-        attrib_sound = GiftSound.Rustling, attrib_size = GiftSize.Large,
-        attrib_smell = GiftSmell.Food,     attrib_feel = GiftFeel.Alive,
-    },
-    chomik = GiftData.New {
-        name     = "Chomik",          desc       = "a collectible",
-        category = GiftCategory.SENT, identifier = "ttt_chomik",
-        can_be_random_gift = false,
-        --factor_rarity = 2, factor_quality = -1,
-        attrib_sound = GiftSound.Muffled, attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Flat,
-        up_vel = 400, up_min = 0, up_max = 2,
-    },
-    det_hat = GiftData.New {
-        name     = "Detective Hat",   desc       = "a hat",
-        category = GiftCategory.SENT, identifier = "ttt_hat_deerstalker",
-        can_be_random_gift = true,
-        factor_rarity = 1, factor_quality = 4,
-        attrib_sound = GiftSound.None, attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Wool, attrib_feel = GiftFeel.Sus,
-        paper_cost = 10,
-    },
-    flame = GiftData.New {
-        name     = "Flame",           desc       = "a flame",
-        category = GiftCategory.SENT, identifier = "ttt_flame",
-        can_be_random_gift = true,
-        factor_rarity = 2, factor_quality = -3,
-        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Ash,       attrib_feel = GiftFeel.Hot,
-        visual_override = {path = "particles/flamelet4", type = "sprite"},
-        up_vel = 300, up_min = 1, up_max = 2,
-        special_setup = "flame_setup"
-    },
-    force_shield = GiftData.New {
-        name     = "Live Force Shield", desc       = "a next-gen force shield",
-        category = GiftCategory.SENT,   identifier = "force_shield",
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.Pulsing,     attrib_size = 10,
-        attrib_smell = GiftSmell.Nondescript, attrib_feel = GiftFeel.Futuristic,
-        ambush_giftee = true, ambush_angle = 90, mark_invalid = true,
-        special_setup = "force_shield_setup",
-        paper_cost = 15
-    },
-    green_demon = GiftData.New {
-        name     = "Live Green Demon", desc       = "a 1-UP",
-        category = GiftCategory.SENT,  identifier = "sent_greendemon",
-        can_be_random_gift = true,
-        factor_rarity = 10, factor_quality = -10,
-        attrib_sound = GiftSound.Musical, attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Cursed,
-        set_owner = true,
-        mv_hook = "HUDDrawMarkerVisionGreenDemon",
-        visual_override = {path = "models/entities/entities/sent_greendemon/gd.png", type = "sprite"},
-        special_setup = "green_demon_setup"
-    },
-    headcrab = GiftData.New {
-        name     = "Headcrab",       desc       = "an aggressive pet crab",
-        category = GiftCategory.NPC, identifier = "npc_headcrab",
-        can_be_random_gift = true,
-        factor_rarity = 3, factor_quality = -8,
-        attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Larger,
-        attrib_smell = GiftSmell.Rotten, attrib_feel = GiftFeel.Alive,
-    },
-    headcrab_black = GiftData.New {
-        name     = "Black Headcrab", desc       = "a poisonous crab",
-        category = GiftCategory.NPC, identifier = "npc_headcrab_black",
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Big,
-        attrib_smell = GiftSmell.Toxic,  attrib_feel = GiftFeel.Alive,
-    },
-    kfc = GiftData.New {
-        name     = "KFC Bucket",      desc       = "a bucket o' chicken",
-        category = GiftCategory.SENT, identifier = "ttt_kfc",
-        can_be_random_gift = true,
-        factor_rarity = 3, factor_quality = 6,
-        attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Warm,
-        paper_cost = 10,
-    },
-    maxwell = GiftData.New {
-        name     = "Maxwell",         desc       = "a dapper gentleman",
-        category = GiftCategory.SENT, identifier = "ttt_dingus",
-        can_be_random_gift = false,
-        --factor_rarity = 4, factor_quality = 5,
-        attrib_sound = GiftSound.Meowing, attrib_size = GiftSize.Large,
-        attrib_smell = GiftSmell.Nice,    attrib_feel = GiftFeel.Soft,
-    },
-    max = GiftData.New {
-        name     = "Max",             desc       = "Max",
-        category = GiftCategory.SENT, identifier = "ttt_dingwell",
-        can_be_random_gift = false,
-        --factor_rarity = 5, factor_quality = 8,
-        attrib_sound = GiftSound.Meowing, attrib_size = GiftSize.Large,
-        attrib_smell = GiftSmell.Fur,     attrib_feel = GiftFeel.Soft,
-    },
-    mc_arrow = GiftData.New {
-        name     = "Minecraft Arrow",  desc      = "a pixel arrow",
-        category = GiftCategory.SENT, identifier = "ttt_minecraft_arrow",
-        can_be_random_gift = true,
-        factor_rarity = 2, factor_quality = -4,
-        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Big,
-        attrib_smell = GiftSmell.Woody,     attrib_feel = GiftFeel.Otherworldly,
-        up_vel = 800, up_min = 1, up_max = 3, up_angvel = 0,
-        paper_cost = 5,
-    },
-    molotov_grenade = GiftData.New {
-        name     = "Live Molotov Cocktail (Timed)", desc       = "a spicy cocktail",
-        category = GiftCategory.SENT,               identifier = "sent_molotov_timed",
-        can_be_random_gift = false,
-        attrib_sound = GiftSound.Splashing, attrib_size = GiftSize.Normal,
-        attrib_smell = GiftSmell.Oily,      attrib_feel = GiftFeel.Hot,
-        special_setup = "timed_molotov_setup", set_owner = true,
-        paper_cost = 100,
-    },
-    moonball = GiftData.New { --TODO: look into error when walking on it
-        name     = "Moonball",        desc       = "a bouncy marble",
-        category = GiftCategory.SENT, identifier = "moonball",
-        can_be_random_gift = true,
-        factor_rarity = 1, factor_quality = -1,
-        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Mini,
-        attrib_smell = GiftSmell.Mineral, attrib_feel = GiftFeel.Round,
-        special_setup = "moonball_setup", up_vel = 200,
-        paper_cost = 5,
-    },
-    present = GiftData.New {
-        name     = "Present",         desc       = "a different type of gift",
-        category = GiftCategory.SENT, identifier = "christmas_present",
-        can_be_random_gift = true,
-        factor_rarity = 0.8, factor_quality = 4,
-        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Huge,
-        attrib_smell = GiftSmell.Paper,    attrib_feel = GiftFeel.Jolly,
-        special_setup = "snuffles_present_setup"
-    },
-    seekgull = GiftData.New {
-        name     = "Live Seekgull",   desc       = "a homing seagull",
-        category = GiftCategory.SENT, identifier = "ttt_seekgull_bird",
-        can_be_random_gift = true,
-        factor_rarity = 3, factor_quality = -5,
-        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Big,
-        attrib_smell = GiftSmell.Salty,     attrib_feel = GiftFeel.Alive,
-        special_setup = "seekgull_setup", set_owner = true
-    },
-    shard_of_greed = GiftData.New {
-        name     = "Shard of Greed",  desc       = "an ominous shard",
-        category = GiftCategory.SENT, identifier = "ttt_shard_of_greed",
-        can_be_random_gift = true,
-        factor_rarity = 0.7, factor_quality = 2,
-        attrib_sound = GiftSound.Glass, attrib_size = GiftSize.Small,
-        attrib_smell = GiftSmell.Clay,  attrib_feel = GiftFeel.Cursed,
-        special_setup = "pog_shard_setup", up_vel = 400, up_min = 0, up_max = 2,
-        paper_cost = 5,
-    },
-    zombie = GiftData.New {
-        name     = "Zombie",          desc       = "a zombie",
-        category = GiftCategory.NPC, identifier = "npc_zombie",
-        can_be_random_gift = true,
-        factor_rarity = 4, factor_quality = -7,
-        attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Gigantic,
-        attrib_smell = GiftSmell.Rotten, attrib_feel = GiftFeel.Alive,
-    },
-
-    ----------------------------------------------------------------------
-    -- Func PhysBoxes (map-bound model-less props)
+table.Merge(giftDataCatalog, { -- Func PhysBoxes (map-bound model-less props)
     bbh_bridge_block = GiftData.New {
         name     = "Bridge Block",       desc        = "part of the bridge",
         category = GiftCategory.PhysBox, identifiers = {
@@ -1253,9 +1041,9 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Dusty,    attrib_feel = GiftFeel.Soft,
         only_on_map = "ttt_seliana",
     },
+})
 
-    ----------------------------------------------------------------------
-    -- Ragdolls
+table.Merge(giftDataCatalog, { -- Ragdolls
     seekgull_corpse = GiftData.New {
         name     = "Dead Seekgull",      desc       = "a dead seagull",
         category = GiftCategory.Ragdoll, identifier = "models/seagull.mdl",
@@ -1430,9 +1218,9 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Stinky,  attrib_feel = GiftFeel.Heavy,
         disable_flies = true,
     },
+})
 
-    ----------------------------------------------------------------------
-    -- Vehicles
+table.Merge(giftDataCatalog, { -- Vehicles & Seats
     airboat = GiftData.New {
         name     = "Airboat",            desc       = "an airboat",
         category = GiftCategory.Vehicle, identifier = "models/airboat.mdl",
@@ -1482,7 +1270,6 @@ local giftDataCatalog = {
         adjAngle = Angle(-90, 0, 0), special_setup = "auto_drive"
     },
 
-    ----------------------------------------------------------------------
     -- Vehicle Seats
     airboat_seat = GiftData.New {
         name     = "Airboat Seat",       desc       = "a seat",
@@ -1504,9 +1291,217 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Leather, attrib_feel = GiftFeel.Soft,
     },
+})
 
-    ----------------------------------------------------------------------
-    -- WorldSWEPs / AutoEquipSWEPs
+table.Merge(giftDataCatalog, { -- Scripted Entities
+    banana_split = GiftData.New {
+        name     = "Live Banana Split", desc      = "dangerous levels of potassium",
+        category = GiftCategory.SENT,  identifier = "ttt_banana_split",
+        can_be_random_gift = true,
+        factor_rarity = 3, factor_quality = -7,
+        attrib_sound = GiftSound.Squishy,   attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Fresh,
+        special_setup = "grenade_auto", explosion_delay = 2, set_owner = true
+    },
+    bouncy_ball = GiftData.New {
+        name     = "Bouncy Ball",     desc       = "a colorful ball",
+        category = GiftCategory.SENT, identifier = "sent_ball",
+        can_be_random_gift = true,
+        factor_rarity = 1, factor_quality = 1,
+        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Round,
+        special_setup = "bouncy_ball_setup",
+        visual_override = {path = "sprites/sent_ball", type = "sprite"}
+    },
+    deadly_ball = GiftData.New {
+        name     = "Harmful Bouncy Ball", desc       = "a colorful ball",
+        category = GiftCategory.SENT,     identifier = "deadly_ball",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Round,
+        special_setup = "bouncy_ball_setup",
+        visual_override = {path = "sprites/sent_ball", type = "sprite"}
+    },
+    chicken = GiftData.New {
+        name     = "Chicken",             desc       = "an aggressive pet chicken",
+        category = GiftCategory.SENT,     identifier = "ttt_chicken",
+        can_be_random_gift = true,
+        factor_rarity = 4, factor_quality = 2,
+        attrib_sound = GiftSound.Rustling, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Food,     attrib_feel = GiftFeel.Alive,
+    },
+    chomik = GiftData.New {
+        name     = "Chomik",          desc       = "a collectible",
+        category = GiftCategory.SENT, identifier = "ttt_chomik",
+        can_be_random_gift = false,
+        --factor_rarity = 2, factor_quality = -1,
+        attrib_sound = GiftSound.Muffled, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Strange, attrib_feel = GiftFeel.Flat,
+        up_vel = 400, up_min = 0, up_max = 2,
+    },
+    det_hat = GiftData.New {
+        name     = "Detective Hat",   desc       = "a hat",
+        category = GiftCategory.SENT, identifier = "ttt_hat_deerstalker",
+        can_be_random_gift = true,
+        factor_rarity = 1, factor_quality = 4,
+        attrib_sound = GiftSound.None, attrib_size = GiftSize.Small,
+        attrib_smell = GiftSmell.Wool, attrib_feel = GiftFeel.Sus,
+        paper_cost = 10,
+    },
+    flame = GiftData.New {
+        name     = "Flame",           desc       = "a flame",
+        category = GiftCategory.SENT, identifier = "ttt_flame",
+        can_be_random_gift = true,
+        factor_rarity = 2, factor_quality = -3,
+        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Small,
+        attrib_smell = GiftSmell.Ash,       attrib_feel = GiftFeel.Hot,
+        visual_override = {path = "particles/flamelet4", type = "sprite"},
+        up_vel = 300, up_min = 1, up_max = 2,
+        special_setup = "flame_setup"
+    },
+    force_shield = GiftData.New {
+        name     = "Live Force Shield", desc       = "a next-gen force shield",
+        category = GiftCategory.SENT,   identifier = "force_shield",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Pulsing,     attrib_size = 10,
+        attrib_smell = GiftSmell.Nondescript, attrib_feel = GiftFeel.Futuristic,
+        ambush_giftee = true, ambush_angle = 90, mark_invalid = true,
+        special_setup = "force_shield_setup",
+        paper_cost = 15
+    },
+    green_demon = GiftData.New {
+        name     = "Live Green Demon", desc       = "a 1-UP",
+        category = GiftCategory.SENT,  identifier = "sent_greendemon",
+        can_be_random_gift = true,
+        factor_rarity = 10, factor_quality = -10,
+        attrib_sound = GiftSound.Musical, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Cursed,
+        set_owner = true,
+        mv_hook = "HUDDrawMarkerVisionGreenDemon",
+        visual_override = {path = "models/entities/entities/sent_greendemon/gd.png", type = "sprite"},
+        special_setup = "green_demon_setup"
+    },
+    kfc = GiftData.New {
+        name     = "KFC Bucket",      desc       = "a bucket o' chicken",
+        category = GiftCategory.SENT, identifier = "ttt_kfc",
+        can_be_random_gift = true,
+        factor_rarity = 3, factor_quality = 6,
+        attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Warm,
+        paper_cost = 10,
+    },
+    maxwell = GiftData.New {
+        name     = "Maxwell",         desc       = "a dapper gentleman",
+        category = GiftCategory.SENT, identifier = "ttt_dingus",
+        can_be_random_gift = false,
+        --factor_rarity = 4, factor_quality = 5,
+        attrib_sound = GiftSound.Meowing, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Nice,    attrib_feel = GiftFeel.Soft,
+    },
+    max = GiftData.New {
+        name     = "Max",             desc       = "Max",
+        category = GiftCategory.SENT, identifier = "ttt_dingwell",
+        can_be_random_gift = false,
+        --factor_rarity = 5, factor_quality = 8,
+        attrib_sound = GiftSound.Meowing, attrib_size = GiftSize.Large,
+        attrib_smell = GiftSmell.Fur,     attrib_feel = GiftFeel.Soft,
+    },
+    mc_arrow = GiftData.New {
+        name     = "Minecraft Arrow",  desc      = "a pixel arrow",
+        category = GiftCategory.SENT, identifier = "ttt_minecraft_arrow",
+        can_be_random_gift = true,
+        factor_rarity = 2, factor_quality = -4,
+        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Woody,     attrib_feel = GiftFeel.Otherworldly,
+        up_vel = 800, up_min = 1, up_max = 3, up_angvel = 0,
+        paper_cost = 5,
+    },
+    molotov_grenade = GiftData.New {
+        name     = "Live Molotov Cocktail (Timed)", desc       = "a spicy cocktail",
+        category = GiftCategory.SENT,               identifier = "sent_molotov_timed",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Splashing, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Oily,      attrib_feel = GiftFeel.Hot,
+        special_setup = "timed_molotov_setup", set_owner = true,
+        paper_cost = 100,
+    },
+    moonball = GiftData.New { --TODO: look into error when walking on it
+        name     = "Moonball",        desc       = "a bouncy marble",
+        category = GiftCategory.SENT, identifier = "moonball",
+        can_be_random_gift = true,
+        factor_rarity = 1, factor_quality = -1,
+        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Mini,
+        attrib_smell = GiftSmell.Mineral, attrib_feel = GiftFeel.Round,
+        special_setup = "moonball_setup", up_vel = 200,
+        paper_cost = 5,
+    },
+    present = GiftData.New {
+        name     = "Present",         desc       = "a different type of gift",
+        category = GiftCategory.SENT, identifier = "christmas_present",
+        can_be_random_gift = true,
+        factor_rarity = 0.8, factor_quality = 4,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Paper,    attrib_feel = GiftFeel.Jolly,
+        special_setup = "snuffles_present_setup"
+    },
+    seekgull = GiftData.New {
+        name     = "Live Seekgull",   desc       = "a homing seagull",
+        category = GiftCategory.SENT, identifier = "ttt_seekgull_bird",
+        can_be_random_gift = true,
+        factor_rarity = 3, factor_quality = -5,
+        attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Salty,     attrib_feel = GiftFeel.Alive,
+        special_setup = "seekgull_setup", set_owner = true
+    },
+    shard_of_greed = GiftData.New {
+        name     = "Shard of Greed",  desc       = "an ominous shard",
+        category = GiftCategory.SENT, identifier = "ttt_shard_of_greed",
+        can_be_random_gift = true,
+        factor_rarity = 0.7, factor_quality = 2,
+        attrib_sound = GiftSound.Glass, attrib_size = GiftSize.Small,
+        attrib_smell = GiftSmell.Clay,  attrib_feel = GiftFeel.Cursed,
+        special_setup = "pog_shard_setup", up_vel = 400, up_min = 0, up_max = 2,
+        paper_cost = 5,
+    },
+})
+
+table.Merge(giftDataCatalog, { -- NPCs
+    bunger = GiftData.New {
+        name     = "Live Bunger",    desc       = "a Bunger",
+        category = GiftCategory.NPC, identifier = "npc_headcrab_fast",
+        can_be_random_gift = true,
+        factor_rarity = 0.7, factor_quality = 10,
+        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Huge,
+        attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Alive,
+        special_setup = "bunger_setup",
+        visual_override = {path = "models/betterbunger.mdl", type = "model"}
+    },
+    headcrab = GiftData.New {
+        name     = "Headcrab",       desc       = "an aggressive pet crab",
+        category = GiftCategory.NPC, identifier = "npc_headcrab",
+        can_be_random_gift = true,
+        factor_rarity = 3, factor_quality = -8,
+        attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Larger,
+        attrib_smell = GiftSmell.Rotten, attrib_feel = GiftFeel.Alive,
+    },
+    headcrab_black = GiftData.New {
+        name     = "Black Headcrab", desc       = "a poisonous crab",
+        category = GiftCategory.NPC, identifier = "npc_headcrab_black",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Toxic,  attrib_feel = GiftFeel.Alive,
+    },
+    zombie = GiftData.New {
+        name     = "Zombie",          desc       = "a zombie",
+        category = GiftCategory.NPC, identifier = "npc_zombie",
+        can_be_random_gift = true,
+        factor_rarity = 4, factor_quality = -7,
+        attrib_sound = GiftSound.Fleshy, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Rotten, attrib_feel = GiftFeel.Alive,
+    },
+})
+
+table.Merge(giftDataCatalog, { -- WorldSWEPs / AutoEquipSWEPs
     boomerang = GiftData.New {
         name     = "Boomerang",            desc       = "a brand-new boomerang",
         category = GiftCategory.WorldSWEP, identifier = "weapon_ttt_boomerang",
@@ -2064,9 +2059,9 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Muffled, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Sterile,  attrib_feel = GiftFeel.Negative,
     },
+})
 
-    ----------------------------------------------------------------------
-    -- Items
+table.Merge(giftDataCatalog, { -- Shop Items
     amaterasu = GiftData.New {
         name     = "Amaterasu",       desc       = "Naruto-branded contacts",
         category = GiftCategory.Item, identifier = "amaterasu_name",
@@ -2174,8 +2169,7 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Revving, attrib_size = GiftSize.Larger,
         attrib_smell = GiftSmell.Ash,     attrib_feel = GiftFeel.Warm,
     },
-}
-
+})
 
 
 -------------------------------

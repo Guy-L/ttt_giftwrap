@@ -798,8 +798,9 @@ function SWEP:GetPaperOnUndo()
     if not self:HasGift() then return end
 
     local giftData  = GetGiftDataFromLabel(self:GetCachedDataLabel())
-    local paperCost = giftData:GetPaperAmount(self)
+    if not giftData then return end
 
+    local paperCost = giftData:GetPaperAmount(self)
     return math.max(0, self:GetRemainingPaper() - paperCost), paperCost
 end
 
@@ -831,6 +832,7 @@ function SWEP:Reload()
     if self:OwnedByWrapper(owner) and not self:GetIsOpening() and not self:GetIsRandomGift() then
         local curPaper = self:GetRemainingPaper()
         local paperOnUndo, paperCost = self:GetPaperOnUndo()
+        if not paperOnUndo then return end
 
         if SERVER then
             if paperOnUndo > 0 then
