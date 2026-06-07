@@ -415,13 +415,13 @@ function CLGAMEMODESUBMENU:Populate(parent)
         end
     })
 
-    if not gwRef:HasGift() then
+    if not gwRef:HasGift() or not giftData or gwRef:GetIsOpening() then
         dropBtn:SetEnabled(false)
         dropBtn:SetTooltip(TL("gift_opt_change_form_drop_error_none"))
 
-    elseif not giftData or giftData:IsDropBlocked() or gwRef:GetIsOpening() then
+    elseif gwRef:GetPaperOnUndo() <= 0 then
         dropBtn:SetEnabled(false)
-        dropBtn:SetTooltip(TL("gift_opt_change_form_drop_error_block"))
+        dropBtn:SetTooltip(TL("gift_opt_change_form_drop_error_paper"))
 
     elseif not gwRef:OwnedByWrapper(owner) or gwRef:GetIsRandomGift() then
         dropBtn:SetEnabled(false)

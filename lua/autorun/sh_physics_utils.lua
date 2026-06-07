@@ -287,7 +287,7 @@ if SERVER then
             end
 
             local ent = entry.ent
-            GW_Utils.TpViewing(ply, ent, 100, -40)
+            GW_Utils.TpViewing(ply, ent, 100, -40, t-1)
             debugoverlay.Sphere(ent:GetPos(), 10, t-1, GW_DBG.Red)
 
             print("Entity "..entCnt.."/"..#unwrappables..": "..tostring(ent).." ("..unwrappables[entCnt].reason..")")
@@ -351,9 +351,10 @@ if SERVER then
         })
     end
 
-    function GW_Utils.FindViewablePos(targetEnt, radius, incRad)
+    function GW_Utils.FindViewablePos(targetEnt, radius, incRad, t)
         if not radius then radius = 100 end
         if not incRad then incRad = math.pi/16 end
+        if not t then t = 1 end
 
         local trueRad = math.sqrt(2) * radius
         local startAng = math.random(0, 2 * math.pi)
@@ -374,8 +375,8 @@ if SERVER then
             })
 
             if GW_DBG.Cvar:GetBool() then
-                debugoverlay.Line(tr.StartPos, tr.HitPos, 5, GW_DBG.Red, true)
-                debugoverlay.Line(tr.StartPos, pos, 5, GW_DBG.Blue, true)
+                debugoverlay.Line(tr.StartPos, tr.HitPos, t, GW_DBG.Red, true)
+                debugoverlay.Line(tr.StartPos, pos, t, GW_DBG.Blue, true)
             end
 
             if tr.Fraction >= 1 and util.IsInWorld(tr.HitPos) then
@@ -387,9 +388,9 @@ if SERVER then
         return targetEnt:GetPos() + Vector(100, 100, 0)
     end
 
-    function GW_Utils.TpViewing(ply, targetEnt, radius, zOff)
+    function GW_Utils.TpViewing(ply, targetEnt, radius, zOff, t)
         local entPos = targetEnt:GetPos()
-        local pos = GW_Utils.FindViewablePos(targetEnt, radius)
+        local pos = GW_Utils.FindViewablePos(targetEnt, radius, nil, t)
         local ang = (entPos - pos):Angle()
         ply:SetPos(pos + Vector(0, 0, zOff or 0))
         ply:SetEyeAngles(ang)
@@ -535,11 +536,13 @@ if SERVER then
             -- give things with move children a few extra ticks to propagate their new position
             -- before restarting physics (otherwise things like vehicles go flying off randomly)
             timer.Simple(stabilize and 0.25 or 0, function()
-                ent:SetNWBool("GWPhysStasis", false)
+                if IsValid(ent) then
+                    ent:SetNWBool("GWPhysStasis", false)
 
-                if IsValid(phys) and not ent._DontWake then
-                    phys:EnableMotion(true)
-                    phys:Wake()
+                    if IsValid(phys) and not ent._DontWake then
+                        phys:EnableMotion(true)
+                        phys:Wake()
+                    end
                 end
             end)
         end

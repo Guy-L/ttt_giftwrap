@@ -505,7 +505,7 @@ models/executive/hr_model_advert02.mdl
 models/executive/hr_model_advert03.mdl
 models/executive/hr_model_flagbanner01.mdl
 models/executive/hr_model_rail128.mdl
-models/executive/hr_model_xbox.mdl
+[supported] models/executive/hr_model_xbox.mdl
 
 models/extras/crank.mdl
 models/extras/info_speech.mdl
@@ -3712,7 +3712,7 @@ models/props_c17/consolebox01a.mdl
 models/props_c17/consolebox03a.mdl
 models/props_c17/consolebox05a.mdl
 models/props_c17/display_cooler01a.mdl
-models/props_c17/doll01.mdl
+[supported] models/props_c17/doll01.mdl
 [supported] models/props_c17/door01_left.mdl
 models/props_c17/door02_double.mdl
 models/props_c17/door03_left.mdl
@@ -3761,7 +3761,7 @@ models/props_c17/furnitureshelf002a.mdl
 models/props_c17/furnituresink001a.mdl
 models/props_c17/furniturestove001a.mdl
 models/props_c17/furnituretable001a.mdl
-models/props_c17/furnituretable002a.mdl
+[supported] models/props_c17/furnituretable002a.mdl
 models/props_c17/furnituretable003a.mdl
 models/props_c17/furnituretoilet001a.mdl
 models/props_c17/furniturewashingmachine001a.mdl
@@ -4041,7 +4041,7 @@ models/props_citizen_tech/windmill_blade004b.mdl
 models/props_combine/advisorpod_docked.mdl
 models/props_combine/breen_arm.mdl
 models/props_combine/breen_tube.mdl
-models/props_combine/breenbust.mdl
+[supported] models/props_combine/breenbust.mdl
 models/props_combine/breenbust_chunk01.mdl
 models/props_combine/breenbust_chunk02.mdl
 models/props_combine/breenbust_chunk03.mdl
@@ -5028,7 +5028,7 @@ models/props_junk/wood_crate001a_chunk06.mdl
 models/props_junk/wood_crate001a_chunk07.mdl
 models/props_junk/wood_crate001a_chunk09.mdl
 models/props_junk/wood_crate001a_damaged.mdl
-models/props_junk/wood_crate001a_damagedmax.mdl
+[supported] models/props_junk/wood_crate001a_damagedmax.mdl
 [supported] models/props_junk/wood_crate002a.mdl
 models/props_junk/wood_crate002a_big.mdl
 [supported] models/props_junk/wood_pallet001a.mdl
@@ -5057,7 +5057,7 @@ models/props_lab/blastdoor001c.mdl
 models/props_lab/blastwindow.mdl
 models/props_lab/box01a.mdl
 models/props_lab/box01b.mdl
-models/props_lab/cactus.mdl
+[supported] models/props_lab/cactus.mdl
 models/props_lab/cactus_big.mdl
 models/props_lab/chess.mdl
 models/props_lab/citizenradio.mdl
@@ -6104,7 +6104,7 @@ models/props_vehicles/cara_95sedan_wrecked_glass.mdl
 models/props_vehicles/carparts_axel01a.mdl
 models/props_vehicles/carparts_door01a.mdl
 models/props_vehicles/carparts_muffler01a.mdl
-models/props_vehicles/carparts_tire01a.mdl
+[supported] models/props_vehicles/carparts_tire01a.mdl
 models/props_vehicles/carparts_wheel01a.mdl
 models/props_vehicles/deliveryvan.mdl
 models/props_vehicles/deliveryvan_glass.mdl

@@ -17,6 +17,7 @@ local ChangeCategory = {
     Item      = "Passive Item",
     Metatable = "Global Namespace",
     Meta      = "Engine Meta",
+    HUD       = "HUD Element",
     None      = nil,
 }
 
@@ -94,6 +95,58 @@ local function RemoteGiftExplosion(ent, ogExplode, parryFunc)
         parryFunc(ent)
     else
         ogExplode(ent)
+    end
+end
+
+if CLIENT then
+    function GetUIPlayer()
+        local ply = LocalPlayer()
+
+        if not utils.IsLivingPlayer(ply) then
+            local tgt = ply:GetObserverTarget()
+
+            if IsValid(tgt) and tgt:IsPlayer() then
+                return tgt
+            end
+        end
+
+        return ply
+    end
+
+    function GiftWrapAmmoTextFilter(text)
+        local ply = GetUIPlayer()
+
+        if utils.IsLivingPlayer(ply) then
+            local wrap = utils.GetInventoryGiftwrap(ply)
+
+            if IsValid(wrap) then -- disable reserve ammo display
+                local clipStr = tostring(wrap:Clip1())
+
+                if text == clipStr.." + 00" then
+                    return clipStr
+                end
+            end
+        end
+
+        return text
+    end
+
+    function GiftWrapGetPaperOnUndo(wep, ply)
+        if wep:HasGift() then
+            return wep:GetPaperOnUndo()
+        end
+
+        local tr = utils.GetEyeTrace(ply, true)
+
+        if IsValid(tr.Entity) and tr.HitPos:Distance(tr.StartPos) <= 150 then
+            local constraint, paperCost = QueryWrapData(tr.Entity)
+
+            if not constraint and paperCost then
+                return math.max(0, wep:GetRemainingPaper() - paperCost)
+            end
+        end
+
+        return nil
     end
 end
 
@@ -825,6 +878,135 @@ local initChanges = {
             end
         end
     },
+
+    {   name = "ammo_reserve_txt_override",
+        addon = "TTT2 (Base)", icon = "vgui/ttt/icon_halp",
+        desc = "Overrides UI text methods to disable drawing reserve ammo for GiftWrap", realm = ChangeRealm.CLIENT,
+        identifier = "draw", category = ChangeCategory.Metatable,
+        original_keys = {"AdvancedText", "Text"},
+        apply = function(meta, og)
+
+            draw.AdvancedText = function(text, font, x, y, color, xalign, yalign, shadow, scale, angle)
+                if HUDManager.GetHUD() == "pure_skin" then
+                    text = GiftWrapAmmoTextFilter(text)
+                end
+
+                og.AdvancedText(text, font, x, y, color, xalign, yalign, shadow, scale, angle)
+            end
+
+            draw.Text = function(textData) -- used in weapon switcher
+                if HUDManager.GetHUD() == "old_ttt" then
+                    textData.text = GiftWrapAmmoTextFilter(textData.text)
+                end
+
+                og.Text(textData)
+            end
+        end
+    },
+
+    {   name = "ammo_hud_override",
+        addon = "TTT2 (PureSkin HUD)", icon = "vgui/ttt/icon_halp",
+        desc = "Overrides UI method to make Gift Wrap ammo bar fancier", realm = ChangeRealm.CLIENT,
+        identifier = "pure_skin_element", category = ChangeCategory.HUD, --pure_skin_playerinfo (debug) => base pure_skin_element (release)
+        original_keys = {"DrawBar"},
+        apply = function(hud, og)
+
+            hud.BulletIcons["wrap_paper"] = Material("vgui/ttt/wrap_ammo")
+
+            hud.DrawBar = function(self, x, y, width, height, col, progress, scale, text)
+                -- note: may be used regarldess of HUD by the Advanced Spectator addon (which bases off pure_skin)
+                if col.r == 238 and col.g == 151 and col.b == 0 then
+                    local ply = GetUIPlayer()
+
+                    if utils.IsLivingPlayer(ply) then
+                        local wep = ply:GetActiveWeapon()
+
+                        if utils.IsGiftWrap(wep) then -- change ammo bar colors
+                            local giftColor = UnpackColor(wep:GetGiftBoxColor())
+                            giftColor.r = math.min(200, math.max(75, giftColor.r))
+                            giftColor.g = math.min(200, math.max(75, giftColor.g))
+                            giftColor.b = math.min(200, math.max(75, giftColor.b))
+
+                            og.DrawBar(self, x, y, width, height, giftColor, progress, scale, text)
+                            local paperOnUndo = GiftWrapGetPaperOnUndo(wep, ply)
+
+                            if paperOnUndo then
+                                local undoProgress = paperOnUndo / wep:GetMaxClip1()
+
+                                local diffW = math.Round((progress - undoProgress) * width)
+                                local diffX = x + math.Round(progress * width) - diffW
+
+                                if undoProgress > 0 then
+                                    local alpha = (math.sin(CurTime()*2.5) + 1) * 50 -- (this is half the max alpha)
+                                    surface.SetDrawColor(0, 0, 0, alpha)
+                                else
+                                    surface.SetDrawColor(0, 0, 0, 100)
+                                end
+
+                                surface.DrawRect(diffX, y, diffW, height)
+                            end
+
+                            return
+                        end
+                    end
+                end
+
+                og.DrawBar(self, x, y, width, height, col, progress, scale, text)
+            end
+        end
+    },
+
+    {   name = "old_hud_overrides",
+        addon = "TTT2 (old_ttt HUD)", icon = "vgui/ttt/icon_halp",
+        desc = "Overrides UI methods to make Gift Wrap ammo bar fancier", realm = ChangeRealm.CLIENT,
+        identifier = "old_ttt_element", category = ChangeCategory.HUD,  -- old_ttt_info (debug) => base old_ttt_element (release)
+        original_keys = {"ShadowedText", "PaintBar"},
+        apply = function(hud, og)
+
+            hud.ShadowedText = function(self, text, font, x, y, color, xalign, yalign)
+                if HUDManager.GetHUD() == "old_ttt" then
+                    text = GiftWrapAmmoTextFilter(text)
+                end
+
+                og.ShadowedText(self, text, font, x, y, color, xalign, yalign)
+            end
+
+            hud.PaintBar = function(self, x, y, width, height, colors, value)
+                if HUDManager.GetHUD() == "old_ttt" and colors.fill.r == 205
+                  and colors.fill.g == 155 and colors.fill.b == 0 then
+                    local ply = LocalPlayer()
+
+                    if utils.IsLivingPlayer(ply) then
+                        local wep = ply:GetActiveWeapon()
+
+                        if utils.IsGiftWrap(wep) then -- change ammo bar colors
+                            local paperOnUndo = GiftWrapGetPaperOnUndo(wep, ply)
+
+                            if paperOnUndo then
+                                og.PaintBar(self, x, y, width, height, colors, value)
+                                local undoVal = paperOnUndo / wep:GetMaxClip1()
+
+                                local diffW = math.Round((value - undoVal) * width)
+                                local diffX = x + math.Round(value * width) - diffW
+
+                                if undoVal > 0 then
+                                    local alpha = (math.sin(CurTime()*2.5) + 1) * 50
+                                    surface.SetDrawColor(0, 0, 0, alpha)
+                                else
+                                    surface.SetDrawColor(0, 0, 0, 100)
+                                end
+
+                                surface.DrawRect(diffX, y, diffW, height)
+                                return
+                            end
+                        end
+                    end
+                end
+
+                og.PaintBar(self, x, y, width, height, colors, value)
+            end
+        end
+    },
 }
 
 -- Add similar fixes for COD perk bottles
@@ -882,10 +1064,13 @@ local function GetBaseMeta(change)
 
     elseif change.category == ChangeCategory.Metatable then
         return _G[change.identifier]
+
+    elseif change.category == ChangeCategory.HUD then
+        return hudelements.GetStored(change.identifier)
     end
 end
 
-hook.Add("Initialize", INIT_FIXES_HOOK, function()
+hook.Add("PostInitialize", INIT_FIXES_HOOK, function()
     if SERVER and not dbg.Cvar:GetBool() then
         print("[Notice] Gift Wrap is applying "..#initChanges.." changes to make third party addons work better with itself.")
         print("         To see a full list of changes instead of this notice, turn on the ttt2_giftwrap_debug cvar.")
@@ -1075,4 +1260,4 @@ function GiftWrapThirdPartySettings(parent)
 end
 
 -- used when debugging only
---hook.GetTable()["Initialize"][INIT_FIXES_HOOK]()
+--hook.GetTable()["PostInitialize"][INIT_FIXES_HOOK]()

@@ -246,10 +246,10 @@ function GW_Utils.GetChildNamed(panel, name)
     end
 end
 
-function GW_Utils.GetEyeTrace(ply)
+function GW_Utils.GetEyeTrace(ply, silent)
     for _, ent in ipairs(ents.GetAll()) do
         if ent:GetCollisionGroup() == COLLISION_GROUP_IN_VEHICLE then
-            GW_DBG.Log("Temporarily override collision group for", ent)
+            if not silent then GW_DBG.Log("Temporarily override collision group for", ent) end
             ent._HadInVehicleCollision = true
             ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
         end
@@ -285,7 +285,9 @@ function GW_Utils.IsMapClass(ent)
         or class == "func_button"
         or class == "func_brush"
         or class == "func_clip_vphysics"
+        or class == "func_lod"
         or class == "func_movelinear"
+        or class == "func_monitor"
         or class == "func_reflective_glass"
         or class == "func_rotating"
         or class == "func_tanktrain"
@@ -445,6 +447,7 @@ GW_Utils.sharedNetTable = {
     { type = "Bool",   name = "IsContentsOnFire" },
     { type = "Int",    name = "GiftBoxColor" },
     { type = "Int",    name = "GiftRibbonColor" },
+    { type = "Int",    name = "RemainingPaper" },
     { type = "String", name = "WrapperSID" },
     { type = "String", name = "CachedDataLabel" },
     { type = "String", name = "UnwrapNote" },

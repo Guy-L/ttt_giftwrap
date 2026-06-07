@@ -545,7 +545,7 @@ if SERVER then
 
         if IsValid(newGift) then
             utils.TransferNetVars(self, newGift)
-            newGift:SetClip1(-1)
+            newGift:SetClip1((pickupByWrapper and self:GetNW2Bool("ClipRevealed")) and self:GetRemainingPaper() or -1)
 
             if self.mvWrapper then
                 if pickupByWrapper then
@@ -954,27 +954,32 @@ elseif CLIENT then
                 tData:SetSubtitle("Press ["..Key("+use", "USE").."] to place with other gifts")
                 tData:AddDescriptionLine("Ho ho ho!")
             end
+        end
 
         -- looking at wrap target
-        else
-            local wep = client:GetActiveWeapon()
+        local wep = client:GetActiveWeapon()
 
-            if utils.IsGiftWrap(wep) and not wep:HasGift() and not utils.IsMapClass(ent)
-              and tData:GetEntityDistance() <= 150 then
-                local color = UnpackColor(wep:GetGiftRibbonColor())
-                tData:EnableOutline()
+        if utils.IsGiftWrap(wep) and not wep:HasGift() and not utils.IsMapClass(ent)
+          and tData:GetEntityDistance() <= 150 then
+            local color = UnpackColor(wep:GetGiftBoxColor())
+            tData:EnableOutline()
 
-                local wrapConstraint = QueryWrapConstraint(ent)
-                if wrapConstraint then
-                    local darker = 100
-                    color = Color(math.max(color.r-darker,0), math.max(color.g-darker,0), math.max(color.b-darker,0))
-                    tData:SetOutlineColor(color)
+            local wrapConstraint, wrapPaper = QueryWrapData(ent)
 
+            if wrapConstraint then
+                local darker = 100
+                color = Color(math.max(color.r-darker,0), math.max(color.g-darker,0), math.max(color.b-darker,0))
+                tData:SetOutlineColor(color)
+                tData:EnableText()
+
+                --tData:AddDescriptionLine("Can't be wrapped!")
+                tData:AddDescriptionLine(wrapConstraint, color)
+            else
+                tData:SetOutlineColor(color)
+
+                if wrapPaper and wep:GetRemainingPaper() - wrapPaper <= 0 then
                     tData:EnableText()
-                    --tData:AddDescriptionLine("Can't be wrapped!")
-                    tData:AddDescriptionLine(wrapConstraint, color)
-                else
-                    tData:SetOutlineColor(color)
+                    tData:AddDescriptionLine("Requires all the paper on your roll (can't undo wrap!)", Color(255, 100, 100))
                 end
             end
         end
@@ -1003,33 +1008,39 @@ elseif CLIENT then
     end)
 
     -- ask server for constraint data (needed; no phys on client) & cache it
-    local constraintQueries = {}
+    local GiftWrapDataQueryCache = {}
 
-    function QueryWrapConstraint(ent)
+    function QueryWrapData(ent)
         local key = ent:EntIndex()
-        local query = constraintQueries[key]
+        local query = GiftWrapDataQueryCache[key]
 
-        if query and CurTime() < query.time + 3 then
-            return query.result
+        if query and CurTime() < query.time + 2 then
+            return query.constraint, query.paper
         end
 
         net.Start(WRAP_CONSTRAINT_QUERY_MSG)
         net.WriteEntity(ent)
         net.SendToServer()
 
-        local prevResult = query and query.result
-        constraintQueries[key] = {
+        local prevConstraint = query and query.constraint
+        local prevPaper = query and query.paper
+
+        GiftWrapDataQueryCache[key] = {
             time = CurTime(),
-            result = prevResult
+            constraint = prevConstraint,
+            paper = prevPaper,
         }
-        return prevResult
+
+        return prevConstraint, prevPaper
     end
 
     net.Receive(WRAP_CONSTRAINT_REPLY_MSG, function()
-        local key = net.ReadFloat()
-        local result = net.ReadString()
+        local key        = net.ReadFloat()
+        local constraint = net.ReadString()
+        local paper      = net.ReadFloat()
 
-        constraintQueries[key].result = (result ~= "") and result
+        GiftWrapDataQueryCache[key].constraint = (constraint ~= "") and constraint
+        GiftWrapDataQueryCache[key].paper = paper
     end)
 
     -- ugly; unfortunately needed to work on external servers

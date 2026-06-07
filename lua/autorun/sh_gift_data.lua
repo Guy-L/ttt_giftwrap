@@ -29,18 +29,18 @@ local SCORE_PARA_MAX  = 30
 local SCORE_INTERCEPT = -5
 
 GiftCategory = {
-    PhysProp      = {id=1,  text="Prop",           icon="vgui/ttt/menu/icon_box",      weight=PROP_WEIGHT_NAME},
-    PhysBox       = {id=2,  text="Map Prop",       icon="vgui/ttt/menu/icon_box",      weight=PROP_WEIGHT_NAME},
-    SENT          = {id=3,  text="Special Entity", icon="vgui/ttt/menu/icon_sparkles", weight=SPECIAL_WEIGHT_NAME},
-    NPC           = {id=4,  text="NPC",            icon="vgui/ttt/menu/icon_headcrab", weight=SPECIAL_WEIGHT_NAME},
-    FloorSWEP     = {id=5,  text="Floor Weapon",   icon="vgui/ttt/menu/icon_gun",      weight=FLOOR_WEIGHT_NAME},
-    WorldSWEP     = {id=6,  text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME},
-    AutoEquipSWEP = {id=7,  text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME},
-    Item          = {id=8,  text="Shop Item",      icon="vgui/ttt/menu/icon_bottle",   weight=SHOP_WEIGHT_NAME},
-    Ammo          = {id=9,  text="Ammo Box",       icon="vgui/ttt/menu/icon_ammo",     weight=FLOOR_WEIGHT_NAME},
-    Vehicle       = {id=10, text="Vehicle",        icon="vgui/ttt/menu/icon_car",      weight=SPECIAL_WEIGHT_NAME},
-    Ragdoll       = {id=11, text="Ragdoll",        icon="vgui/ttt/menu/icon_ragdoll",  weight=SPECIAL_WEIGHT_NAME},
-    Unknown       = {id=12, text="Unknown",        icon="vgui/ttt/menu/icon_question", weight=SPECIAL_WEIGHT_NAME},
+    PhysProp      = {id=1,  text="Prop",           icon="vgui/ttt/menu/icon_box",      weight=PROP_WEIGHT_NAME,    paper=5},
+    PhysBox       = {id=2,  text="Map Prop",       icon="vgui/ttt/menu/icon_box",      weight=PROP_WEIGHT_NAME,    paper=5},
+    SENT          = {id=3,  text="Special Entity", icon="vgui/ttt/menu/icon_sparkles", weight=SPECIAL_WEIGHT_NAME, paper=20},
+    NPC           = {id=4,  text="NPC",            icon="vgui/ttt/menu/icon_headcrab", weight=SPECIAL_WEIGHT_NAME, paper=30},
+    FloorSWEP     = {id=5,  text="Floor Weapon",   icon="vgui/ttt/menu/icon_gun",      weight=FLOOR_WEIGHT_NAME,   paper=1},
+    WorldSWEP     = {id=6,  text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME,    paper=15},
+    AutoEquipSWEP = {id=7,  text="Shop Weapon",    icon="vgui/ttt/menu/icon_knife",    weight=SHOP_WEIGHT_NAME,    paper=nil},
+    Item          = {id=8,  text="Shop Item",      icon="vgui/ttt/menu/icon_bottle",   weight=SHOP_WEIGHT_NAME,    paper=nil},
+    Ammo          = {id=9,  text="Ammo Box",       icon="vgui/ttt/menu/icon_ammo",     weight=FLOOR_WEIGHT_NAME,   paper=1},
+    Vehicle       = {id=10, text="Vehicle",        icon="vgui/ttt/menu/icon_car",      weight=SPECIAL_WEIGHT_NAME, paper=50},
+    Ragdoll       = {id=11, text="Ragdoll",        icon="vgui/ttt/menu/icon_ragdoll",  weight=SPECIAL_WEIGHT_NAME, paper=25},
+    Unknown       = {id=12, text="Unknown",        icon="vgui/ttt/menu/icon_question", weight=SPECIAL_WEIGHT_NAME, paper=25},
 }
 
 GiftSound = {
@@ -270,6 +270,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Hollow,   attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Metallic, attrib_feel = GiftFeel.Round,
     },
+    bust_breen = GiftData.New {
+        name     = "Bust of Dr. Breen",   desc       = "a bust",
+        category = GiftCategory.PhysProp, identifier = "models/props_combine/breenbust.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Mineral,  attrib_feel = GiftFeel.Powerful,
+    },
     cannonball_prop = GiftData.New {
         name     = "Used Cannonball",     desc       = "an inert cannonball",
         category = GiftCategory.PhysProp, identifier = "models/props_phx/misc/smallcannonball.mdl",
@@ -439,6 +446,13 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Metallic, attrib_size = GiftSize.Max,
         attrib_smell = GiftSmell.Dusty,    attrib_feel = GiftFeel.Long,
+    },
+    doll_baby = GiftData.New {
+        name     = "Creepy Baby Doll",    desc       = "a creepy baby doll",
+        category = GiftCategory.PhysProp, identifier = "models/props_c17/doll01.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Creaky, attrib_size = 1.25,
+        attrib_smell = GiftSmell.Stinky, attrib_feel = GiftFeel.Cursed,
     },
     door = GiftData.New {
         name     = "Door",                desc       = "a door",
@@ -682,6 +696,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Rustling, attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Earthy,   attrib_feel = GiftFeel.Round,
     },
+    potted_cactus = GiftData.New {
+        name     = "Potted Cactus",        desc      = "a cactus",
+        category = GiftCategory.PhysProp, identifier = "models/props_lab/cactus.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Rustling, attrib_size = GiftSize.Normal,
+        attrib_smell = GiftSmell.Earthy,   attrib_feel = GiftFeel.Sharp,
+    },
     prop_radio = GiftData.New {
         name     = "Radio (Prop)",        desc       = "a broken radio",
         category = GiftCategory.PhysProp, identifier = "models/props/cs_office/radio.mdl",
@@ -750,6 +771,13 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Creaky, attrib_size = 4,
         attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Flat,
     },
+    table_wooden = GiftData.New {
+        name     = "Wooden Table",        desc = "a table",
+        category = GiftCategory.PhysProp, identifier = "models/props_c17/furnituretable002a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Creaky, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Flat,
+    },
     takeout_carton = GiftData.New {
         name     = "Asian Takeout Carton", desc       = "some takeout",
         category = GiftCategory.PhysProp,  identifier = "models/props_junk/garbage_takeoutcarton001a.mdl",
@@ -758,10 +786,13 @@ local giftDataCatalog = {
         attrib_smell = GiftSmell.Food,       attrib_feel = GiftFeel.Warm,
     },
     tire_car = GiftData.New {
-        name     = "Car Tire",            desc       = "a tire",
-        category = GiftCategory.PhysProp, identifier = "models/props_vehicles/tire001c_car.mdl",
+        name     = "Car Tire",            desc        = "a tire",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props_vehicles/tire001c_car.mdl",
+            "models/props_vehicles/carparts_tire01a.mdl",
+        },
         can_be_random_gift = false,
-        attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Big,
+        attrib_sound = GiftSound.Springy, attrib_size = 3,
         attrib_smell = GiftSmell.Rubbery, attrib_feel = GiftFeel.Round,
     },
     toy_train = GiftData.New {
@@ -866,11 +897,22 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Creaky, attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Light,
     },
-    wooden_crate = GiftData.New {
-        name     = "Wooden Crate",        desc       = "a wooden crate",
-        category = GiftCategory.PhysProp, identifier = "models/props_junk/wood_crate001a.mdl",
+    wooden_chair_bbh = GiftData.New {
+        name     = "Wooden Chair",        desc       = "a wooden chair",
+        category = GiftCategory.PhysProp, identifier = "models/big_boos_haunt/chair.mdl",
         can_be_random_gift = false,
-        attrib_sound = GiftSound.Creaky, attrib_size = GiftSize.Huge,
+        attrib_sound = GiftSound.Creaky, attrib_size = 4.5,
+        attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Spooky,
+        only_on_map = "ttt_sm64_big_boos_haunt"
+    },
+    wooden_crate = GiftData.New {
+        name     = "Wooden Crate",        desc        = "a wooden crate",
+        category = GiftCategory.PhysProp, identifiers = {
+            "models/props_junk/wood_crate001a.mdl",
+            "models/props_junk/wood_crate001a_damagedmax.mdl",
+        },
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Creaky, attrib_size = 4,
         attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Box,
     },
     wooden_crate_big = GiftData.New {
@@ -903,6 +945,14 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Creaky, attrib_size = 3,
         attrib_smell = GiftSmell.Woody,  attrib_feel = GiftFeel.Round,
+    },
+    xbox = GiftData.New {
+        name     = "Xbox",                desc       = "a classic Xbox",
+        category = GiftCategory.PhysProp, identifier = "models/executive/hr_model_xbox.mdl",
+        can_be_random_gift = true,
+        factor_rarity = 1, factor_quality = 10,
+        attrib_sound = GiftSound.Whirring, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Sterile,  attrib_feel = GiftFeel.Box,
     },
 
     ----------------------------------------------------------------------
@@ -969,6 +1019,7 @@ local giftDataCatalog = {
         factor_rarity = 1, factor_quality = 4,
         attrib_sound = GiftSound.None, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Wool, attrib_feel = GiftFeel.Sus,
+        paper_cost = 10,
     },
     flame = GiftData.New {
         name     = "Flame",           desc       = "a flame",
@@ -988,7 +1039,8 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Pulsing,     attrib_size = 10,
         attrib_smell = GiftSmell.Nondescript, attrib_feel = GiftFeel.Futuristic,
         ambush_giftee = true, ambush_angle = 90, mark_invalid = true,
-        special_setup = "force_shield_setup"
+        special_setup = "force_shield_setup",
+        paper_cost = 15
     },
     green_demon = GiftData.New {
         name     = "Live Green Demon", desc       = "a 1-UP",
@@ -1024,6 +1076,7 @@ local giftDataCatalog = {
         factor_rarity = 3, factor_quality = 6,
         attrib_sound = GiftSound.Squishy, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Food,    attrib_feel = GiftFeel.Warm,
+        paper_cost = 10,
     },
     maxwell = GiftData.New {
         name     = "Maxwell",         desc       = "a dapper gentleman",
@@ -1048,7 +1101,8 @@ local giftDataCatalog = {
         factor_rarity = 2, factor_quality = -4,
         attrib_sound = GiftSound.Whooshing, attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Woody,     attrib_feel = GiftFeel.Otherworldly,
-        up_vel = 800, up_min = 1, up_max = 3, up_angvel = 0
+        up_vel = 800, up_min = 1, up_max = 3, up_angvel = 0,
+        paper_cost = 5,
     },
     molotov_grenade = GiftData.New {
         name     = "Live Molotov Cocktail (Timed)", desc       = "a spicy cocktail",
@@ -1056,7 +1110,8 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Splashing, attrib_size = GiftSize.Normal,
         attrib_smell = GiftSmell.Oily,      attrib_feel = GiftFeel.Hot,
-        special_setup = "timed_molotov_setup", set_owner = true
+        special_setup = "timed_molotov_setup", set_owner = true,
+        paper_cost = 100,
     },
     moonball = GiftData.New { --TODO: look into error when walking on it
         name     = "Moonball",        desc       = "a bouncy marble",
@@ -1065,7 +1120,8 @@ local giftDataCatalog = {
         factor_rarity = 1, factor_quality = -1,
         attrib_sound = GiftSound.Springy, attrib_size = GiftSize.Mini,
         attrib_smell = GiftSmell.Mineral, attrib_feel = GiftFeel.Round,
-        special_setup = "moonball_setup", up_vel = 200
+        special_setup = "moonball_setup", up_vel = 200,
+        paper_cost = 5,
     },
     present = GiftData.New {
         name     = "Present",         desc       = "a different type of gift",
@@ -1093,6 +1149,7 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Glass, attrib_size = GiftSize.Small,
         attrib_smell = GiftSmell.Clay,  attrib_feel = GiftFeel.Cursed,
         special_setup = "pog_shard_setup", up_vel = 400, up_min = 0, up_max = 2,
+        paper_cost = 5,
     },
     zombie = GiftData.New {
         name     = "Zombie",          desc       = "a zombie",
@@ -1105,6 +1162,17 @@ local giftDataCatalog = {
 
     ----------------------------------------------------------------------
     -- Func PhysBoxes (map-bound model-less props)
+    bbh_bridge_block = GiftData.New {
+        name     = "Bridge Block",       desc        = "part of the bridge",
+        category = GiftCategory.PhysBox, identifiers = {
+            "bridge_1", "bridge_2", "bridge_3", "bridge_4", "bridge_5",
+            "bridge_6", "bridge_7", "bridge_8", "bridge_9", "bridge_10"
+        },
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Gigantic,
+        attrib_smell = GiftSmell.Dusty,    attrib_feel = GiftFeel.Box,
+        only_on_map = "ttt_sm64_big_boos_haunt"
+    },
     mc_city_tnt = GiftData.New {
         name     = "TNT Block",          desc        = "a TNT block",
         category = GiftCategory.PhysBox, identifiers = {
@@ -1116,7 +1184,7 @@ local giftDataCatalog = {
         can_be_random_gift = false,
         attrib_sound = GiftSound.Hissing,   attrib_size = GiftSize.Big,
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Box,
-        only_on_map = "ttt_minecraftcity",
+        only_on_map = "ttt_minecraftcity", paper_cost = 30,
     },
     mc_b5_dia_ore = GiftData.New {
         name     = "Diamonde Ore Block", desc        = "a diamond ore",
@@ -1167,7 +1235,7 @@ local giftDataCatalog = {
         attrib_sound = GiftSound.Hissing,   attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Gunpowder, attrib_feel = GiftFeel.Powerful,
         visual_override = {path = "custom/rpg_dynamite", type = "sprite"},
-        only_on_map = "ttt_rpgvillage",
+        only_on_map = "ttt_rpgvillage", paper_cost = 30,
     },
     rpg_village_firekey = GiftData.New {
         name     = "Burning Rod",        desc       = "a torch",
@@ -2297,7 +2365,7 @@ local deployableSWEPs = {
                SWEP_category = GiftCategory.FloorSWEP,
                SENT_id = "ttt_banana_peel", SWEP_id = "ttt_banana",
                SWEP_setup_var = {k = "visual_override", v = {path = "models/props/cs_italy/bananna.mdl", type = "model"}},
-               SENT_setup_var = {k = "adjAngle", v = Angle(90, 0, 0)},
+               SENT_setup_var = {k = "adjAngle", v = Angle(90, 0, 0)}, SENT_cost = 10,
                SENT_random = true, SENT_rarity = 1, SENT_quality = -5,
                SWEP_random = false,
                SENT_size = GiftSize.Normal, SWEP_size = GiftSize.Small,
@@ -2306,7 +2374,7 @@ local deployableSWEPs = {
 
     banana_bomb = {name = "Banana Bomb", desc = "an explosive bunch",
                SENT_id = "ttt_banana_proj", SWEP_id = "weapon_ttt_banana",
-               SENT_setup = "grenade", SENT_setup_var = {{k = "set_owner"}, {k = "explosion_delay", v = 2}},
+               SENT_setup = "grenade", SENT_setup_var = {{k = "set_owner"}, {k = "explosion_delay", v = 2}}, SENT_cost = 100,
                SWEP_setup_var = {k = "visual_override", v = {path = "models/props/cs_italy/bananna_bunch.mdl", type = "model"}},
                SENT_random = true, SENT_rarity = 6, SENT_quality = -10,
                SWEP_random = false,
@@ -2387,7 +2455,7 @@ local deployableSWEPs = {
 
     conc_mine = {name = "Concussion Mine", desc = "a whoopie cushion",
                SENT_id = "ttt_conmine", SWEP_id = "weapon_ttt_concussionmine",
-               SENT_setup = "conc_mine_setup", SENT_setup_var = {{k = "set_owner"}, {k = "mv_hook", v = "HUDDrawMarkerVisionConmine"}},
+               SENT_setup = "conc_mine_setup", SENT_setup_var = {{k = "set_owner"}, {k = "mv_hook", v = "HUDDrawMarkerVisionConmine"}}, SENT_cost = 35,
                SENT_random = true, SENT_rarity = 4, SENT_quality = -7,
                SWEP_random = false,
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
@@ -2480,7 +2548,7 @@ local deployableSWEPs = {
     fortnite = {name = "Fortnite Building", desc = "a Fortnite structure",
                SWEP_category = GiftCategory.AutoEquipSWEP,
                SENT_id = "ent_fortnitestructure", SWEP_id = "weapon_ttt_fortnite_building",
-               SENT_setup = "fortnite_struct_setup", SENT_setup_var = {{k = "no_physwake"}, {k = "dont_furnish"}},
+               SENT_setup = "fortnite_struct_setup", SENT_setup_var = {{k = "no_physwake"}, {k = "dont_furnish"}}, SENT_cost = 10,
                SENT_random = true, SENT_rarity = 1, SENT_quality = 1,
                SWEP_random = true, SWEP_rarity = 7, SWEP_quality = 9,
                SENT_size = 10, SWEP_size = GiftSize.Large,
@@ -2489,7 +2557,7 @@ local deployableSWEPs = {
 
     frag_grenade = {name = "Frag Grenade", desc = "an actual grenade",
                SENT_id = "ttt_frag_proj", SWEP_id = "weapon_ttt_frag",
-               SENT_setup = "grenade",
+               SENT_setup = "grenade", SENT_cost = 100,
                SENT_random = false, SWEP_random = false,
                SENT_size = GiftSize.Mini, SWEP_size = GiftSize.Mini,
                sound = GiftSound.Thudding, smell = GiftSmell.Gunpowder, feel = GiftFeel.Round},
@@ -2504,7 +2572,7 @@ local deployableSWEPs = {
                SWEP_size = GiftSize.Huge,
                sound = GiftSound.Rustling, smell = GiftSmell.Paper, feel = GiftFeel.Jolly},
 
-    glue_trap = {name = "Glue Trap", desc = "a sticky prank toy",
+    glue_trap = {name = "Glue Trap", desc = "a sticky prank toy", SENT_desc = "glue",
                SENT_id = "glue_trap_paste", SWEP_id = "weapon_ttt_glue_trap",
                SENT_setup_var = {{k = "stick_to_ground"}, {k = "move_to_giftee"}},
                SENT_random = true, SENT_rarity = 1, SENT_quality = -6,
@@ -2624,7 +2692,7 @@ local deployableSWEPs = {
 
     molotov  = {name = "Molotov Cocktail", desc = "a spicy cocktail",
                SENT_id = "sent_molotov", SWEP_id = "molotov_cocktail_for_ttt",
-               SENT_setup_var = {k = "set_owner"},
+               SENT_setup_var = {k = "set_owner"}, SENT_cost = 100,
                SENT_random = false, SWEP_random = false,
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Splashing, smell = GiftSmell.Oily, feel = GiftFeel.Hot},
@@ -2702,7 +2770,7 @@ local deployableSWEPs = {
 
     shellmet = {name = "Shellmet", desc = "a shiny helmet",
                SWEP_category = GiftCategory.Item,
-               SENT_setup = "shellmet_setup", SENT_setup_var = {k = "up_vel", v = 200},
+               SENT_setup = "shellmet_setup", SENT_setup_var = {k = "up_vel", v = 200}, SENT_cost = 10,
                SENT_id = "ttt2_hat_shellmet", SWEP_id = "item_ttt2_shellmet",
                SENT_random = true, SENT_rarity = 0.8, SENT_quality = 5,
                SWEP_random = false,
@@ -2753,7 +2821,7 @@ local deployableSWEPs = {
 
     super_discombob = {name = "Super Discombobulator", desc = "an air-packed grenade",
                SENT_id = "ttt_confgrenade_proj_super", SWEP_id = "weapon_ttt_confgrenade_s",
-               SENT_setup = "grenade", SENT_setup_var = {k = "explosion_delay", v = 2.5},
+               SENT_setup = "grenade", SENT_setup_var = {k = "explosion_delay", v = 2.5}, SENT_cost = 100,
                SENT_random = true, SENT_rarity = 4, SENT_quality = -7,
                SWEP_random = false,
                SENT_size = GiftSize.Huge, SWEP_size = GiftSize.Large,
@@ -2780,7 +2848,7 @@ local deployableSWEPs = {
     turret  = {name = "Turret", desc = "a next-gen turret",
                SENT_category = GiftCategory.NPC,
                SENT_id = "npc_turret_floor", SWEP_id = "weapon_ttt_turret",
-               SENT_setup_var = {{k = "ambush_giftee"}},
+               SENT_setup_var = {{k = "ambush_giftee"}}, SENT_cost = 30,
                SENT_random = true, SENT_rarity = 4, SENT_quality = -8,
                SWEP_random = false,
                SENT_size = GiftSize.Max, SWEP_size = GiftSize.Small,
@@ -2788,7 +2856,7 @@ local deployableSWEPs = {
 
     visualizer = {name = "Visualizer", desc = "a high-tech crime visualizer",
                SENT_id = "ttt_cse_proj", SWEP_id = "weapon_ttt_cse",
-               SENT_setup_var = {k = "set_thrower"},
+               SENT_setup_var = {k = "set_thrower"}, SENT_cost = 10,
                SWEP_setup_var = {k = "worldmodel_fix"},
                SENT_random = true, SENT_rarity = 1, SENT_quality = -2,
                SWEP_random = false,
@@ -2812,7 +2880,6 @@ local deployableSWEPs = {
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Talking, smell = GiftSmell.Rotten, feel = GiftFeel.Round,
                SWEP_desc = "a necromancy kit"},
-
 }
 
 for label, data in pairs(deployableSWEPs) do
@@ -2829,7 +2896,8 @@ for label, data in pairs(deployableSWEPs) do
         factor_quality = data.SENT_random and data.SENT_quality or nil,
         attrib_sound = data.sound, attrib_size = data.SENT_size or GiftSize.Larger,
         attrib_smell = data.smell, attrib_feel = data.feel,
-        special_setup = data.SENT_setup
+        special_setup = data.SENT_setup,
+        paper_cost = data.SENT_cost,
     })
     if data.SENT_setup_var then
         if #data.SENT_setup_var == 0 then
@@ -3014,13 +3082,21 @@ function GiftData:GetIdentifier(giftObj)
     end
 end
 
-function GiftData:GetSize(giftObj)
+function GiftData:GetSize(giftObj, wrappedEnt)
     if self.identifiers and IsValid(giftObj) then
         local idData = self.identifiers[giftObj:GetNW2Int("chosen_id")]
 
         if idData and idData.size then
             return idData.size
         end
+    end
+
+    if not wrappedEnt and IsValid(giftObj) then
+        wrappedEnt = giftObj:GetStoredGift()
+    end
+
+    if IsValid(wrappedEnt) and wrappedEnt:GetClass() == PROP_CLASS_NAME then
+        return wrappedEnt:GetGiftScale()
     end
 
     return self.attrib_size
@@ -3084,12 +3160,22 @@ function GiftData:IsSpawnable(giftee, giftObj)
     return false
 end
 
-function GiftData:IsDropBlocked()
-    return self.category == GiftCategory.SENT
-      or self.category == GiftCategory.NPC
-      or self.category == GiftCategory.Vehicle
-      or self.category == GiftCategory.Ragdoll
-      or self.category == GiftCategory.Unknown
+function GiftData:GetPaperAmount(giftObj, wrappedEnt)
+    if not wrappedEnt and IsValid(giftObj) then
+        wrappedEnt = giftObj:GetStoredGift()
+    end
+
+    if IsValid(wrappedEnt) and wrappedEnt:IsRagdoll()
+      and CORPSE.IsValidBody(wrappedEnt) and CORPSE.IsRealPlayerCorpse(wrappedEnt) then
+        return 100 -- unwrappable
+    end
+
+    if self.paper_cost then
+        return self.paper_cost
+    end
+
+    local size = self:GetSize(giftObj, wrappedEnt) -- formula calibrated via f(1) = 5, f(7) = 20
+    return math.Round(2.5 * (size+1)) + (self.category.paper or 5)
 end
 
 function GiftData:ApplyOnWrapAdjustments(wrappedEnt, giftObj)
@@ -4393,11 +4479,6 @@ elseif CLIENT then
         local closestDesc = "Unknown"
         local closestDiff = math.huge
         local giftSize = self:GetSize(giftObj)
-        local wrappedEnt = giftObj:GetStoredGift()
-
-        if IsValid(wrappedEnt) and wrappedEnt:GetClass() == PROP_CLASS_NAME then
-            giftSize = wrappedEnt:GetGiftScale()
-        end
 
         for descriptor, size in pairs(GiftSize) do
             local diff = math.abs(giftSize - size)

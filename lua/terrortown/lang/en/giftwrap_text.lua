@@ -2,7 +2,7 @@ local L = LANG.GetLanguageTableReference("en")
 
 -- General
 L["wrap_instruction_lmb"] = "Wrap gift"
-L["wrap_instruction_r"] = "Undo wrap"
+L["wrap_instruction_r"] = "Discard wrap"
 L["giftwrap_instruction_rmb"] = "Gift options"
 L["gift_instruction_wrapper_lmb"] = "Throw gift"
 L["gift_instruction_all_lmb"] = "Open gift"
@@ -88,7 +88,7 @@ L["gift_opt_change_form_error_full"] = "Something else is already wrapped."
 L["gift_opt_change_form_drop_desc"] = "Drop contents"
 L["gift_opt_change_form_drop"] = "Drop Contents"
 L["gift_opt_change_form_drop_error_none"] = "Nothing to drop!"
-L["gift_opt_change_form_drop_error_block"] = "Can't drop this kind of thing."
+L["gift_opt_change_form_drop_error_paper"] = "No paper left on the roll; can't return to wrap."
 L["gift_opt_change_form_drop_error_random"] = "Can't drop things you didn't wrap manually. Give it to someone else!"
 
 L["gift_opt_change_form_random_desc"] = "Wrap a random gift (cost: 1 credit)"

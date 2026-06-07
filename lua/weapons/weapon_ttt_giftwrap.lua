@@ -7,11 +7,12 @@ local utils = GW_Utils
 local WRAP_NAME = "Gift Wrap"
 local GIFT_NAME = "Gift"
 
+local HOOK_SPEC_ADD_AMMOTYPE = "TTT_GiftWrap_AddAmmoTypeInit"
 local HOOK_SPEC_GIFT_INDIC   = "TTT_GiftWrapCL_DrawSpectatorGiftHUD"
 local GIFTWRAP_PICKUP_MSG    = "TTT_GiftWrap_PickUpMsg"
 local GIFTWRAP_HL_CHAT_MSG   = "TTT_GiftWrap_HighlightChatMsg"
 local GIFTWRAP_GIFT_DATA_MSG = "TTT_GiftWrap_SendWrapperDataMsg"
-local CLIENT_FLOURISH_MSG     = "TTT_GiftWrapSV_WrappedPlayerFlourishMsg"
+local CLIENT_FLOURISH_MSG    = "TTT_GiftWrapSV_WrappedPlayerFlourishMsg"
 local HOOK_GIFTWRAP_PICKUP   = "TTT_GiftWrap_PickUp"
 local HOOK_GIFTWRAP_TREE_USE = "TTT_GiftWrap_UseTree"
 local HOOK_ANGLE_CORRECTION  = "TTT_GiftWrap_CorrectGiftAngle"
@@ -259,17 +260,25 @@ if SERVER then
 
     net.Receive(WRAP_CONSTRAINT_QUERY_MSG, function(_, ply)
         local ent = net.ReadEntity()
-        local constraint = GetWrapConstraint(ent, ply, true)
 
         net.Start(WRAP_CONSTRAINT_REPLY_MSG)
-        net.WriteFloat(ent:EntIndex()) -- zero clue why WriteInt/WriteUInt wouldn't accept this number
+        net.WriteFloat(ent:EntIndex())
+
+        -- same operation performed when wrapping
+        local moveParent = ent:GetMoveParent()
+        if IsValid(moveParent) and not ent:IsWeapon() then ent = moveParent end
+
+        local constraint  = GetWrapConstraint(ent, ply, true)
+        local _, giftData = GetEntGiftData(ent, true)
+
         net.WriteString((constraint and not ent:GetNWBool("GWPhysStasis")) and constraint or "")
+        net.WriteFloat(giftData:GetPaperAmount(nil, ent))
         net.Send(ply)
     end)
 
     -- Tell clients to update UI when it enters their inventory (no reliable clientside hook?)
-    hook.Add("AllowPlayerPickup", HOOK_GIFTWRAP_PICKUP, function(ply, ent)
-        if utils.IsGiftWrap(ent) then
+    hook.Add("WeaponEquip", HOOK_GIFTWRAP_PICKUP, function(wep, ply)
+        if utils.IsGiftWrap(wep) then
             net.Start(GIFTWRAP_PICKUP_MSG)
             net.Send(ply)
         end
@@ -320,9 +329,7 @@ elseif CLIENT then
     GW_METASWEP.EquipMenuData = {type = "Utility Weapon", desc = [[It's the season of giving!
 • Gift Wrap: Left click to wrap something into a Gift for someone else to open.
 • Gift: Left click to toss it out!
-            Reload to undo the wrap.
-
-While holding your Gift, you can place it neatly under a Christmas Tree with E.
+            Reload to discard the wrap.
 
 Gifts made by others can be opened with LMB (while holding them or via crowbar), and shaken with RMB to get some hints as to what might be inside!]]}
     GW_METASWEP.Slot = 6
@@ -340,6 +347,7 @@ Gifts made by others can be opened with LMB (while holding them or via crowbar),
             ownedGiftwrap:UpdateUI(reason)
             ownedGiftwrap:UpdateModel(reason)
             ownedGiftwrap:UpdateMarkerVision(reason)
+            ownedGiftwrap:UpdateAmmo(reason)
         end
     end
 
@@ -453,14 +461,20 @@ SWEP.idleResetFix = true
 SWEP.Primary.Damage      = -1
 SWEP.Primary.ClipSize    = -1
 SWEP.Primary.DefaultClip = -1
-SWEP.Primary.Automatic   = true
+SWEP.Primary.Automatic   = -1
 SWEP.Primary.Delay       = 0.5
-SWEP.Primary.Ammo        = "none"
+SWEP.Primary.Ammo        = "wrap_paper"
 
 SWEP.Kind        = WEAPON_EQUIP
 SWEP.CanBuy      = {ROLE_TRAITOR, ROLE_JACKAL}
 SWEP.AllowDrop   = true
 SWEP.DeploySpeed = 2
+
+hook.Add("Initialize", HOOK_SPEC_ADD_AMMOTYPE, function()
+    -- only added due to annoying extra checks Advanced Spectator does
+    -- when retrieving the ammo icon
+    game.AddAmmoType({name = "wrap_paper"})
+end)
 
 function SWEP:Initialize() --on buy
     self:UpdateModel("initialize")
@@ -475,6 +489,7 @@ function SWEP:Initialize() --on buy
 
     elseif SERVER then
         RollGiftColors(self)
+        self:SetRemainingPaper(100)
     end
 
     return self.BaseClass.Initialize(self)
@@ -779,6 +794,59 @@ function SWEP:Throw(owner, force)
     end
 end
 
+function SWEP:GetPaperOnUndo()
+    if not self:HasGift() then return end
+
+    local giftData  = GetGiftDataFromLabel(self:GetCachedDataLabel())
+    local paperCost = giftData:GetPaperAmount(self)
+
+    return math.max(0, self:GetRemainingPaper() - paperCost), paperCost
+end
+
+ -- will also reveal ammo if it was hidden
+function SWEP:UpdateAmmo(reason, remainingPaper)
+    if not remainingPaper then remainingPaper = self:GetRemainingPaper() end
+    self:SetClip1(remainingPaper)
+
+    dbg.Log("Updating ammo ("..reason.."): "..remainingPaper)
+
+    if self:GetMaxClip1() == -1 then
+        dbg.Log(" => Revealing clip size")
+        self.Primary.ClipSize = 100
+        self:SetNW2Bool("ClipRevealed", true)
+    end
+end
+
+function SWEP:Reload()
+    local curTime = CurTime()
+    if self._LastReload and curTime < self._LastReload + 1 then return end
+    self._LastReload = curTime
+
+    if not self:HasGift() and self:GetMaxClip1() == -1 then
+        self:UpdateAmmo("dry reload")
+    end
+
+    local owner = self:GetOwner()
+
+    if self:OwnedByWrapper(owner) and not self:GetIsOpening() and not self:GetIsRandomGift() then
+        local curPaper = self:GetRemainingPaper()
+        local paperOnUndo, paperCost = self:GetPaperOnUndo()
+
+        if SERVER then
+            if paperOnUndo > 0 then
+                self:DropContents(true)
+                self:SetRemainingPaper(paperOnUndo)
+
+            else
+                owner:ChatPrint("There wouldn't be any paper left on the roll (costs "..(paperCost)..").")
+                owner:EmitSound("weapons/pistol/pistol_empty.wav", 50, math.random(90, 105))
+            end
+        end
+
+        self:UpdateAmmo("discard attempt", paperOnUndo > 0 and paperOnUndo or curPaper)
+    end
+end
+
 ----------------------------------
 ----- SERVER REALM SWEP DEFS -----
 ----------------------------------
@@ -937,15 +1005,15 @@ if SERVER then
             end
 
             local intendedGiftee = giftObj:GetGiftee()
-            local rightText = "!"
+            local rightText = (isUndo and "." or "!")
 
             if not isUndo and IsValid(intendedGiftee) and gifteePly != intendedGiftee
               and utils.ConfirmedDead(gifteePly, intendedGiftee) then
-                rightText = " meant for "..intendedGiftee:Nick().." (RIP)!"
+                rightText = " meant for "..intendedGiftee:Nick().." (RIP)"..rightText
             end
 
             net.Start(GIFTWRAP_HL_CHAT_MSG)
-            net.WriteString("You unwrapped ")
+            net.WriteString(isUndo and "You discarded the wrap containing " or "You unwrapped ")
             net.WriteString(giftData:GetDesc(giftObj, gifteePly))
             net.WriteString(rightText)
             net.Send(gifteePly)
@@ -1073,6 +1141,7 @@ if SERVER then
 
             dbg.Log("Dropped gift contents")
             EmptyGift(self)
+            self:Extinguish()
         end
     end
 
@@ -1084,20 +1153,6 @@ if SERVER then
         giftProp:SetNotRetrievable(notRetrievable)
 
         return giftProp
-    end
-
-    function SWEP:Reload()
-        local owner = self:GetOwner()
-
-        if self:OwnedByWrapper(owner) and not self:GetIsOpening() and not self:GetIsRandomGift() then
-            local giftData = GetCachedGiftData(self, owner)
-
-            if not giftData:IsDropBlocked() then
-                self:DropContents(true)
-            else
-                utils.NonSpamMessage(owner, "ReloadAttempt", "Undoing wrap for special entities is currently disabled as a precaution.")
-            end
-        end
     end
 
     function SWEP:Wrap(ent)
@@ -1152,6 +1207,9 @@ if SERVER then
         self:SetCachedDataLabel(label)
         self:SetWrapperSID(owner:SteamID64())
         self:SetIsRandomGift(true)
+        self:SetClip1(-1)
+        self:SetNW2Bool("ClipRevealed", false)
+
         data:ApplyOnAutoWrapAdjustments(self)
 
         -- Note: I have no clue why I need to do this for the colors
@@ -1236,12 +1294,15 @@ elseif CLIENT then
 
         if not self:HasGift() then
             self:AddTTT2HUDHelp("wrap_instruction_lmb", "giftwrap_instruction_rmb")
+
         else
             if not IsValid(owner) or not self:OwnedByWrapper(owner) then
                 self:AddTTT2HUDHelp("gift_instruction_all_lmb", "gift_instruction_all_rmb")
+
             else
                 self:AddTTT2HUDHelp("gift_instruction_wrapper_lmb", "giftwrap_instruction_rmb")
-                if not self:GetIsRandomGift() then
+
+                if not self:GetIsRandomGift() and self:GetPaperOnUndo() > 0 then
                     self:AddHUDHelpLine("wrap_instruction_r", Key("+reload", "R"))
                 end
             end
