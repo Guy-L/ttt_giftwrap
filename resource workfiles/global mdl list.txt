@@ -3352,7 +3352,7 @@ models/props/de_prodigy/prodtracks.mdl
 models/props/de_prodigy/pushcart.mdl
 models/props/de_prodigy/spool.mdl
 models/props/de_prodigy/spoolwire.mdl
-models/props/de_prodigy/tire1.mdl
+[supported] models/props/de_prodigy/tire1.mdl
 models/props/de_prodigy/tire2.mdl
 models/props/de_prodigy/tirestack.mdl
 models/props/de_prodigy/tirestack2.mdl
@@ -4893,9 +4893,9 @@ models/props_junk/cardboard_box002a_gib01.mdl
 models/props_junk/cardboard_box002b.mdl
 [supported] models/props_junk/cardboard_box003a.mdl
 models/props_junk/cardboard_box003a_gib01.mdl
-models/props_junk/cardboard_box003b.mdl
+[supported] models/props_junk/cardboard_box003b.mdl
 models/props_junk/cardboard_box003b_gib01.mdl
-models/props_junk/cardboard_box004a.mdl
+[supported] models/props_junk/cardboard_box004a.mdl
 models/props_junk/cardboard_box004a_gib01.mdl
 models/props_junk/cinderblock01a.mdl
 models/props_junk/cinderblock01a_big.mdl
@@ -4947,7 +4947,7 @@ models/props_junk/garbage_plasticbottle002a_big.mdl
 models/props_junk/garbage_plasticbottle003a.mdl
 [supported] models/props_junk/garbage_takeoutcarton001a.mdl
 models/props_junk/garbage_takeoutcarton001a_big.mdl
-models/props_junk/gascan001a.mdl
+[supported] models/props_junk/gascan001a.mdl
 models/props_junk/gascan001a_big.mdl
 [supported] models/props_junk/glassbottle01a.mdl
 models/props_junk/glassbottle01a_big.mdl
@@ -4976,7 +4976,7 @@ models/props_junk/plasticbucket001a_big.mdl
 models/props_junk/plasticcrate01a_big.mdl
 [supported] models/props_junk/popcan01a.mdl
 models/props_junk/popcan01a_big.mdl
-models/props_junk/propane_tank001a.mdl
+[supported] models/props_junk/propane_tank001a.mdl
 models/props_junk/propane_tank001a_big.mdl
 models/props_junk/propanecanister001a.mdl
 models/props_junk/pushcart01a.mdl

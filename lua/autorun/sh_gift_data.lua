@@ -316,6 +316,8 @@ table.Merge(giftDataCatalog, { -- PhysProps
             {mdl="models/props_junk/cardboard_box001a.mdl", size=4},
             {mdl="models/props_junk/cardboard_box001b.mdl", size=4},
             {mdl="models/props_junk/cardboard_box002a.mdl", size=GiftSize.Huge},
+            {mdl="models/props_junk/cardboard_box003b.mdl", size=3},
+            {mdl="models/props_junk/cardboard_box004a.mdl", size=GiftSize.Large},
             "models/props_junk/cardboard_box003a.mdl",
             "models/props/cs_office/cardboard_box01.mdl",
             {mdl="models/props/cs_office/cardboard_box02.mdl", size=GiftSize.Large},
@@ -497,6 +499,13 @@ table.Merge(giftDataCatalog, { -- PhysProps
         can_be_random_gift = false,
         attrib_sound = GiftSound.Thudding, attrib_size = GiftSize.Max,
         attrib_smell = GiftSmell.Food,     attrib_feel = GiftFeel.Massive,
+    },
+    gas_can = GiftData.New {
+        name     = "Gas Can",             desc       = "a gas can",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/gascan001a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Splashing, attrib_size = GiftSize.Big,
+        attrib_smell = GiftSmell.Oily,      attrib_feel = GiftFeel.Heavy,
     },
     glass_bottle = GiftData.New {
         name     = "Glass Bottle",        desc        = "a bottle",
@@ -703,6 +712,13 @@ table.Merge(giftDataCatalog, { -- PhysProps
         attrib_sound = GiftSound.Musical, attrib_size = GiftSize.Large,
         attrib_smell = GiftSmell.Sterile, attrib_feel = GiftFeel.Fragile,
     },
+    propane_tank = GiftData.New {
+        name     = "Propane Tank",        desc       = "a propane tank",
+        category = GiftCategory.PhysProp, identifier = "models/props_junk/propane_tank001a.mdl",
+        can_be_random_gift = false,
+        attrib_sound = GiftSound.Metallic, attrib_size = 3,
+        attrib_smell = GiftSmell.Oily,     attrib_feel = GiftFeel.Long,
+    },
     rat = GiftData.New {
         name     = "Rat",                 desc       = "a rat",
         category = GiftCategory.PhysProp, identifier = "models/goobers/jermarat/rat.mdl",
@@ -783,6 +799,7 @@ table.Merge(giftDataCatalog, { -- PhysProps
         category = GiftCategory.PhysProp, identifiers = {
             "models/props_vehicles/tire001c_car.mdl",
             "models/props_vehicles/carparts_tire01a.mdl",
+            {mdl="models/props/de_prodigy/tire1.mdl", size=4},
         },
         can_be_random_gift = false,
         attrib_sound = GiftSound.Springy, attrib_size = 3,
@@ -2474,6 +2491,7 @@ local deployableSWEPs = {
     decoy   = {name = "Decoy",        desc = "a high-tech decoy",
                SENT_id = "ttt_decoy", SWEP_id = "weapon_ttt_decoy",
                SWEP_setup_var = {k = "worldmodel_fix"},
+               SENT_setup_var = {k = "follow_gift"},
                SENT_random = false,   SWEP_random = false,
                SENT_size = GiftSize.Large, SWEP_size = GiftSize.Large,
                sound = GiftSound.Whirring, smell = GiftSmell.Sterile, feel = GiftFeel.Scientific},
