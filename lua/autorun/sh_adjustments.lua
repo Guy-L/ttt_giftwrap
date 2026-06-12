@@ -2,1262 +2,1520 @@ include("sh_giftwrap_utils.lua")
 local utils = GW_Utils
 local dbg   = GW_DBG
 
-local INIT_FIXES_HOOK            = "GiftWrap_InitThirdPartyChanges"
-local CLUTTERBOMB_LIGHT_FIX_HOOK = "GiftWrap_ClutterbombLightFix"
-local ENT_KILL_INPUT_HOOK        = "GiftWrapSV_PreventWrappedEntKillInputs"
-local ENT_TAKE_DAMAGE_HOOK       = "GiftWrapSV_VehicleOccupantsDamageFix"
-local PLAYER_USE_HOOK            = "GiftWrapSV_InternalVehicleSeatFix"
+local MAT_INFO = "vgui/ttt/menu/icon_info"
+local MAT_WARN = "vgui/ttt/menu/icon_warn"
 
-local VDFIX_MULT_DRIVER = utils.Cvar("ttt2_vehicle_damagefix_driver_mult",    30, 0, 100, "Damage multiplier for driver when hitting other parts of vehicle (%)")
-local VDFIX_MULT_PASNGR = utils.Cvar("ttt2_vehicle_damagefix_passenger_mult", 20, 0, 100, "Damage multiplier for passengers when hitting any part of vehicle (%)")
+local CORPSE_STINK_ENABLE = utils.Cvar("ttt2_giftwrap_corpse_stink_enable", "1", 0, 1, "Whether gifts containing fleshy ragdolls will start to stink (particles+sound).")
+local CORPSE_STINK_DELAY  = utils.Cvar("ttt2_giftwrap_corpse_stink_delay", "15", 0, 120, "Delay before gifts containing fleshy ragdolls start to stink if enabled, in seconds.")
 
-local ChangeCategory = {
-    SWEP      = "Scripted Weapon",
-    SENT      = "Scripted Entity",
-    Item      = "Passive Item",
-    Metatable = "Global Namespace",
-    Meta      = "Engine Meta",
-    HUD       = "HUD Element",
-    None      = nil,
-}
+utils.adjustments = {
+    grenade = {
+        desc = "Stores detonation time on wrap, applies it with an extra delay on unwrap. Used for weapon_tttbasegrenade SENTs.",
+        on_wrap = function(ent)
+            local curTime = CurTime()
 
-local ChangeRealm = {
-    CLIENT      = {name = "Client", val = CLIENT},
-    SERVER      = {name = "Server", val = SERVER},
-    SHARED      = {name = "Shared", val = true},
-}
+            ent:SetNWFloat("StoredExplodeTime", ent:GetExplodeTime() - curTime)
+            ent:SetExplodeTime(curTime + 1e9)
+        end,
 
-if not GW_InitChangesCache then
-    GW_InitChangesCache = {}
-end
+        on_spawn = function(ent, ply)
+            if ent.GetThrower and not IsValid(ent:GetThrower()) then
+                ent:SetThrower(ply)
+            end
+        end,
 
--- Util methods for gifts that can be remotely detonated while wrapped
-local function RemoteGiftDetonation(ent, fuse, sound, funcs)
-    if ent then
-        if ent._isSelfDestructing then return end
-        ent._isSelfDestructing = true
-    end
+        on_unwrap = function(ent, _, args)
+            local storedExplodeTime = ent:GetNWFloat("StoredExplodeTime", 1.5)
+            local addedTime = args.explosion_delay or 1.5
+            ent:SetDetonateTimer(storedExplodeTime + addedTime)
+        end,
 
-    dbg.Log("Starting remote detonation for", ent)
-    local parentGift, wrapLevel = utils.GetTopmostWrap(ent)
+        info = function(giftEnt, args)
+            local wrappedEnt = giftEnt:GetStoredGift()
+            local explodeTime = IsValid(wrappedEnt) and wrappedEnt:GetNWFloat("StoredExplodeTime", 1.5) or 1.5
+            explodeTime = explodeTime + (args.explosion_delay or 1.5)
 
-    if IsValid(parentGift) then
-        local giftee = parentGift:GetOwner()
+            if explodeTime < 1000 and not args.no_info then
+                return { img = MAT_WARN, msg = "Will detonate "..(math.Round(explodeTime, 1)).."s after unwrap." }
+            end
+        end,
+    },
 
-        if IsValid(giftee) then
-            giftee:EmitSound(sound.path, sound.vol, sound.pitch)
-            giftee:ChatPrint("Your gift is beeping!")
-        else
-            parentGift:EmitSound(sound.path, sound.vol, sound.pitch)
-        end
+    grenade_auto = {
+        desc = "Nullifies explosion method while wrapped and calls it after a delay on unwrap. Used for grenades that use timer.Simple & an Explode method.",
+        on_wrap = function(ent)
+            ent._StoredExplode = ent.Explode
+            ent.Explode = function(s) end
+        end,
 
-        for _, ply in ipairs(player.GetAll()) do
-            if ply ~= giftee then
-                if ply:GetPos():Distance(parentGift:GetPos()) <= 300 then
-                    ply:ChatPrint("A nearby gift is beeping!")
+        on_unwrap = function(ent, _, args)
+            if not ent._StoredExplode then return end
+
+            local fuse = args.explosion_delay or 2
+            ent.Explode = ent._StoredExplode
+
+            timer.Simple(fuse, function()
+                if IsValid(ent) then
+                    ent:Explode()
+                end
+            end)
+        end,
+
+        info = function(_, args)
+            local explodeTime = args.explosion_delay or 2
+            return { img = MAT_WARN, msg = "Will detonate "..(math.Round(explodeTime, 1)).."s after unwrap." }
+        end,
+    },
+
+    item_buy = {
+        desc = "Calls an item's Bought method when spawned by Gift Wrap.",
+        on_spawn = function(_, ply, args)
+            items.GetStored(args.val):Bought(ply)
+        end,
+    },
+
+    set_owner = {
+        desc = "Sets the entity's owner when spawned by Gift Wrap.",
+        on_spawn = function(ent, ply)
+            ent:SetOwner(ply)
+
+            ent.Owner = ply
+            ent.owner = ply
+        end,
+    },
+
+    set_thrower = {
+        desc = "Sets the entity's thrower/originator when spawned by Gift Wrap.",
+        on_spawn = function(ent, ply)
+            if ent.SetThrower then ent:SetThrower(ply) end
+            if ent.SetOriginator then ent:SetOriginator(ply) end
+        end,
+    },
+
+    set_angles = {
+        desc = "Sets the entity's angles when unwrapped.",
+        on_unwrap = function(ent, _, args)
+            ent:SetAngles(args.val)
+        end,
+    },
+
+    set_mass = {
+        desc = "Sets the entity's mass when unwrapped.",
+        on_unwrap = function(ent, _, args)
+            local phys = ent:GetPhysicsObject()
+
+            if IsValid(phys) then
+                phys:SetMass(args.val)
+            end
+        end,
+    },
+
+    break_constraints = {
+        desc = "Removes constraints attached to the entity upon wrap.",
+        on_wrap = function(ent)
+            constraint.RemoveAll(ent)
+        end,
+    },
+
+    no_physwake = {
+        desc = "Tells Gift Wrap not to wake up the entity's physics on unwrap.",
+        on_unwrap = function(ent)
+            ent._DontWake = true
+        end,
+    },
+
+    mark_invalid = {
+        desc = "Makes the entity fail validity checks while wrapped.", -- cf. isvalid_condition in sh_tweaks
+        on_wrap = function(ent)
+            ent._Invalid = true
+        end,
+
+        on_unwrap = function(ent)
+            ent._Invalid = false
+        end,
+    },
+
+    wrap_sleep = {
+        desc = "Prevents entity from calling its Think method while wrapped.",
+        on_wrap = function(ent)
+            ent:NextThink(CurTime() + 1e9)
+        end,
+
+        on_unwrap = function(ent)
+            ent:NextThink(CurTime())
+        end,
+    },
+
+    auto_fire_chance = {
+        desc = "Chance to set the gift's contents ablaze when auto-wrapped.",
+        on_autowrap = function(_, _, args)
+            local p = args.val or 0.5
+
+            if math.random() < p then
+                args.giftbox:SetIsContentsOnFire(true)
+            end
+        end,
+    },
+
+    stick_to_ground = {
+        desc = "Sticks the entity to the ground directly under where it's unwrapped.",
+        on_unwrap = function(ent, _, args)
+            local groundTr = utils.GetGroundHit(utils.GetEntCenter(ent), ent)
+
+            if groundTr.Hit then
+                ent:SetPos(groundTr.HitPos)
+
+                timer.Simple(0, function()
+                    ent:SetAngles(groundTr.HitNormal:Angle() + (args.ground_angles and args.ground_angles or Angle(90, 0, 0)))
+                    if ent.WeldToSurface then ent:WeldToSurface(true) end
+                end)
+                ent:SetMoveType(MOVETYPE_NONE)
+
+                local phys = ent:GetPhysicsObject()
+                if IsValid(phys) then
+                    phys:AddGameFlag(FVPHYSICS_NO_PLAYER_PICKUP)
                 end
             end
-        end
+        end,
+    },
 
-        timer.Simple(fuse, function()
-            if not IsValid(ent) then return end
+    up_throw = {
+        desc = "Gives the entity some upwards velocity on unwrap.",
+        on_unwrap = function(ent, _, args)
+            local upMin = args.min or 10
+            local upMax = args.max or upMin
+            local upAmt = math.Rand(upMin, upMax)
+            local vel   = utils.GetRandomUpwardsVel(upAmt) * args.vel
+            local angle_vel = args.angvel or -500
 
-            local newWrapLevel
-            parentGift, newWrapLevel = utils.GetTopmostWrap(ent)
+            timer.Simple(0, function()
+                local phys = ent:GetPhysicsObject()
 
-            if IsValid(parentGift) then
-                if newWrapLevel > wrapLevel then
-                    ent._isSelfDestructing = false
-                    funcs.parry(ent)
+                phys:EnableMotion(true)
+                phys:Wake()
+                phys:SetVelocity(vel)
+                phys:AddAngleVelocity(Vector(0, angle_vel, 0))
+                ent:SetAngles(vel:Angle())
+            end)
+        end,
 
-                else
-                    parentGift._PreventThrow = true
-                    funcs.explosion(parentGift)
-                    parentGift:Remove()
-                end
+        info = function(_, args)
+            if not args.max and not args.min then
+                return { img = MAT_INFO, msg = "Will fling upwards when unwrapped." }
             else
-                funcs.explosion(ent)
-                ent:Remove()
+                return { img = MAT_INFO, msg = "Will fling upwards in a random direction when unwrapped." }
             end
-        end)
+        end,
+    },
 
-    else
-        funcs.ogDetonate(ent)
-    end
-end
+    follow_gift = {
+        desc = "Makes the entity's position match that of its parent giftbox while wrapped.",
+        on_wrap = function(ent)
+            dbg.Log("Setting "..tostring(ent).." to track its giftbox...")
+            local hookName = "TTT_GiftWrapSV_WrappedEntFollowBox_"..ent:EntIndex()
 
--- Parry mechanic for detonatable entities wrapped mid-explosion
-local function RemoteGiftExplosion(ent, ogExplode, parryFunc)
-    dbg.Log("Confirming explosion for", ent)
-
-    if IsValid(ent:GetNW2Entity("WrappedByGift")) then
-        ent._isSelfDestructing = false
-        parryFunc(ent)
-    else
-        ogExplode(ent)
-    end
-end
-
-if CLIENT then
-    function GetUIPlayer()
-        local ply = LocalPlayer()
-
-        if not utils.IsLivingPlayer(ply) then
-            local tgt = ply:GetObserverTarget()
-
-            if IsValid(tgt) and tgt:IsPlayer() then
-                return tgt
-            end
-        end
-
-        return ply
-    end
-
-    function GiftWrapAmmoTextFilter(text)
-        local ply = GetUIPlayer()
-
-        if utils.IsLivingPlayer(ply) then
-            local wrap = utils.GetInventoryGiftwrap(ply)
-
-            if IsValid(wrap) then -- disable reserve ammo display
-                local clipStr = tostring(wrap:Clip1())
-
-                if text == clipStr.." + 00" then
-                    return clipStr
+            hook.Add("Think", hookName, function()
+                if not IsValid(ent) then
+                    hook.Remove("Think", hookName)
+                    return
                 end
-            end
-        end
 
-        return text
-    end
+                local parentGift = ent:GetNW2Entity("WrappedByGift")
+                if IsValid(parentGift) then
+                    local pos = parentGift:GetPos()
 
-    function GiftWrapGetPaperOnUndo(wep, ply)
-        if wep:HasGift() then
-            return wep:GetPaperOnUndo()
-        end
+                    if parentGift:IsWeapon() then
+                        pos = pos + Vector(0, 0, 30)
+                    end
 
-        local tr = utils.GetEyeTrace(ply, true)
+                    ent:SetPos(pos)
+                    ent.LastPos = pos -- c4
 
-        if IsValid(tr.Entity) and tr.HitPos:Distance(tr.StartPos) <= 150 then
-            local constraint, paperCost = QueryWrapData(tr.Entity)
-
-            if not constraint and paperCost then
-                return math.max(0, wep:GetRemainingPaper() - paperCost)
-            end
-        end
-
-        return nil
-    end
-end
-
--- Catch-all hook to prevent kill events on wrapped entities (used by Fireballs & others)
-hook.Add("AcceptInput", ENT_KILL_INPUT_HOOK, function(ent, input, activator, caller, value)
-    if (input == "kill" or input == "Kill") and IsValid(ent) and IsValid(ent:GetNW2Entity("WrappedByGift")) then
-        dbg.Log("Prevented kill input for wrapped entity", ent)
-        return true
-    end
-end)
-
-
-
-local initChanges = {
-    --[[
-    {   name = "change_name",
-        addon = "Addon Name", icon = "",
-        desc = "Template change", realm = ChangeRealm.SHARED,
-        identifier = "identifier", category = ChangeCategory.SENT,
-        original_keys = {},
-        apply = function(sent, og)
-        end
-    },]]
-
-    {   name = "fix_extra_seat_entry",
-        addon = "TTT2 (Base)", icon = "vgui/ttt/icon_halp",
-        desc = "Fix seats inside of vehicles being inaccessible even if main seat occupied", realm = ChangeRealm.SERVER,
-        identifier = nil, category = ChangeCategory.None,
-        apply = function()
-
-            hook.Add("PlayerUse", PLAYER_USE_HOOK, function(ply, ent)
-                if IsValid(ent) and ent:IsVehicle() and IsValid(ent:GetDriver()) then
-                    local eyePos = ply:EyePos()
-
-                    local tr = util.TraceLine({
-                        start  = eyePos,
-                        endpos = eyePos + ply:EyeAngles():Forward() * 80,
-                        filter = function(ent)
-                            return (IsValid(ent) and ent:IsVehicle() and not ent.FixInternalSeats)
-                        end
-                    })
-
-                    if IsValid(tr.Entity) then
-                        --ply:EnterVehicle(tr.Entity) --instant
-                        tr.Entity:Use(ply)
+                    if ent.IsADisguise then -- prop disguiser
+                        ent.TiedPly:SetNWFloat("PD_TimeLeft", CurTime() + ent.TiedPly.StoredTimeLeft)
                     end
                 end
             end)
+        end,
+
+        on_unwrap = function(ent)
+            hook.Remove("Think", "TTT_GiftWrapSV_WrappedEntFollowBox_"..ent:EntIndex())
+        end,
+    },
+
+    spawn_info = {
+        desc = "Extra custom options menu info for gift behavior when spawned by Gift Wrap.",
+        info = function(giftEnt, args)
+            local wrappedEnt = giftEnt:GetStoredGift()
+
+            if not IsValid(wrappedEnt) or (IsValid(wrappedEnt:GetNWEntity("GW_Spawner")) and args.post_spawn) then
+                return { img = args.warn and MAT_WARN or MAT_INFO, msg = args.msg }
+            end
         end
     },
 
-    {   name = "fix_vehicle_damage",
-        addon = "TTT2 (Base)", icon = "vgui/ttt/icon_halp",
-        desc = "Fix driver taking almost no damage & other riders being invincible", realm = ChangeRealm.SERVER,
-        identifier = nil, category = ChangeCategory.None,
-        cvars = {VDFIX_MULT_DRIVER, VDFIX_MULT_PASNGR},
-        apply = function()
+    produce_flies = {
+        desc = "Flies will emanate from the giftbox after a delay (until it's unwrapped).",
+        on_wrap = function(ent)
+            if not CORPSE_STINK_ENABLE:GetBool() then return end
 
-            hook.Add("EntityTakeDamage", ENT_TAKE_DAMAGE_HOOK, function(target, dmgInfo)
-                local dmg = dmgInfo:GetDamage()
+            local stinkDelay = CORPSE_STINK_DELAY:GetFloat()
+            ent:SetNWFloat("FliesArrival", CurTime() + stinkDelay)
 
-                if IsValid(target) and target:IsVehicle() then
-                    if dmg < 0.01 then
-                        dmg = math.floor(dmg * 10000 + 0.5)
-                        dmgInfo:SetDamage(dmg * VDFIX_MULT_DRIVER:GetFloat()/100)
-
-                        local driver = target:GetDriver()
-                        if IsValid(driver) then
-                            dbg.Log("Corrected near-zero damage for driver", driver, dmgInfo)
-                        end
-                    end
-
-                    -- apply damage to passenger seats (one layer down)
-                    for _, child in ipairs(target:GetChildren()) do
-                        if IsValid(child) and child:IsVehicle() then
-                            local seatDmg = DamageInfo()
-                            seatDmg:SetDamage(dmg * VDFIX_MULT_PASNGR:GetFloat()/100)
-                            seatDmg:SetAttacker(dmgInfo:GetAttacker())
-                            child:TakeDamageInfo(seatDmg)
-
-                            local seatPsgr = child:GetDriver()
-                            if IsValid(seatPsgr) then
-                                dbg.Log("Applied damage to passenger", seatPsgr, seatDmg)
-                            end
-                        end
-                    end
+            timer.Create("GWCorpseStink"..ent:EntIndex(), stinkDelay, 1, function()
+                if IsValid(ent) then
+                    utils.StartStink(ent:GetNW2Entity("WrappedByGift"))
                 end
             end)
-        end
-    },
+        end,
 
-    {   name = "pog_default_det",
-        addon = "Pot of Greed", icon = "vgui/ttt/icon_weapon_ttt_potofgreedier",
-        desc = "Fix for Pot of Greedier not defaulting to Detective shop for non-shopping role pots", realm = ChangeRealm.SHARED,
-        identifier = "PotOfGreedier", category = ChangeCategory.Metatable,
-        original_keys = {"GetEquipmentServerSided"},
-        apply = function(meta, og)
+        on_autowrap = function(_, _, args)
+            if CORPSE_STINK_ENABLE:GetBool() then
+                utils.StartStink(args.giftbox)
+            end
+        end,
 
-            meta.GetEquipmentServerSided = function(ply, subRole, noModification)
-                local subRoleData = utils.GetSubRoleData(subRole)
+        on_unwrap = function(ent)
+            timer.Remove("GWCorpseStink"..ent:EntIndex())
+        end,
 
-                if not subRoleData or not subRoleData:IsShoppingRole() then
-                    return og.GetEquipmentServerSided(ply, ROLE_DETECTIVE, noModification)
+        info = function(giftEnt, args)
+            local wrappedEnt = giftEnt:GetStoredGift()
+            local self = utils.adjustments.produce_flies.info
+
+            if not IsValid(wrappedEnt) or giftEnt:GetNW2Bool("GWStinky") then
+                return { img = MAT_INFO, msg = "Flies have amassed...", fn = self }
+            else
+                local stinkTime = wrappedEnt:GetNWFloat("FliesArrival", -1)
+
+                if stinkTime == -1 then
+                    return { img = MAT_WARN, msg = "Flies will swarm the giftbox soon...", fn = self }
                 else
-                    return og.GetEquipmentServerSided(ply, subRole, noModification)
+                    return { img = MAT_WARN, msg = "Flies will swarm the giftbox in "..(math.Round(stinkTime - CurTime(), 1)).."s.", fn = self }
                 end
             end
-        end
+        end,
     },
 
-    {   name = "manhack_disable_wrapped",
-        addon = "Controllable Manhack", icon = "controllable_manhack/manhack",
-        desc = "Disable right click while it's in a Gift Wrap giftbox", realm = ChangeRealm.SERVER,
-        identifier = "weapon_controllable_manhack", category = ChangeCategory.SWEP,
-        original_keys = {"SecondaryAttack"},
-        apply = function(swep, og)
+    --------------------------------------------
+    -- Common Traps
 
-            swep.SecondaryAttack = function(slf)
-                local manhack = slf:GetSpawnedManhack()
+    ambush_giftee = {
+        desc = "Places the entity on the ground on unwrap, facing the giftee. If unwrap is an undo from the wrapper, it faces away from them by default.",
+        on_unwrap = function(ent, ply, args)
+            local groundTr = utils.GetGroundHit(utils.GetEntCenter(ent), ent)
 
-                if IsValid(manhack) then
-                    if not IsValid(manhack:GetNW2Entity("WrappedByGift")) then
-                        og.SecondaryAttack(slf)
-                    else
-                        utils.NonSpamMessage(slf:GetOwner(), "wrapped_manhack", "Sorry, your manhack is wrapped inside a giftbox.")
-                    end
+            if groundTr.Hit then
+                local ang = groundTr.HitNormal:Angle() + Angle(90, 0, 0)
+
+                local dir = (ply:GetPos() - ent:GetPos()):GetNormalized()
+                dir = (dir - groundTr.HitNormal * dir:Dot(groundTr.HitNormal)):GetNormalized()
+
+                local forward = ang:Forward()
+                local rot = math.deg(math.atan2(
+                    forward:Cross(dir):Dot(groundTr.HitNormal),
+                    forward:Dot(dir)
+                ))
+
+                if args.is_undo and not args.face_wrapper then
+                    rot = rot + 180
                 end
+
+                ang:RotateAroundAxis(groundTr.HitNormal, rot + (args.angle or 0))
+                ent:SetAngles(ang)
+                ent:SetPos(groundTr.HitPos + Vector(0, 0, args.y_off or 0))
+            else
+                ent:SetAngles(Angle(0, ang.y - 90, 0))
+            end
+        end,
+
+        info = function(_, args)
+            if args.face_wrapper or args.cant_undo then
+                return { img = MAT_WARN, msg = "Spawns on the ground in front of the player who unwraps it, facing them." }
+            else
+                return { img = MAT_WARN, msg = "Spawns on the ground in front of the player who unwraps it, facing them.\nIf you drop the contents, it'll face away from you instead." }
+            end
+        end,
+    },
+
+    under_giftee = {
+        desc = "Places the entity under the giftee on unwrap. Does nothing if unwrap is an undo from the wrapper.",
+        on_unwrap = function(ent, ply, args)
+            if args.is_undo then return end
+
+            local curMoveType = ent:GetMoveType()
+            ent:SetMoveType(MOVETYPE_VPHYSICS)
+            ent:SetPos(ply:GetPos())
+            ent:SetMoveType(curMoveType)
+        end,
+
+        info = function(_, args)
+            if args.cant_undo then
+                return { img = MAT_WARN, msg = "Spawns directly under the player who unwraps it." }
+            else
+                return { img = MAT_WARN, msg = "Spawns directly under the player who unwraps it, unless that player is you." }
+            end
+        end,
+    },
+
+    auto_drive = {
+        desc = "Makes giftee enter the vehicle on unwrap. Does nothing if unwrap is an undo from the wrapper.",
+        on_unwrap = function(ent, ply, args)
+            if args.is_undo then return end
+            ply:EnterVehicle(ent)
+
+            timer.Simple(1.5, function()
+                if ply:InVehicle() then
+                    utils.NonSpamMessage(ply, "AutoDriveHint", "Hint: Press the use key to exit the vehicle.")
+                end
+            end)
+        end,
+
+        info = function(_, args)
+            if args.cant_undo then
+                return { img = MAT_WARN, msg = "The player who unwraps this vehicle will automatically enter it." }
+            else
+                return { img = MAT_WARN, msg = "The player who unwraps this vehicle will automatically enter it, unless that player is you." }
+            end
+        end,
+    },
+
+    unwrap_throw = {
+        desc = "Throws the entity in the direction the giftee is looking on unwrap after a delay and with some random offset. The delay is lower and the offset is removed if the entity was considered \"parried\" by being wrapped mid-flight.",
+        on_wrap = function(ent)
+            if ent.dt and ent.dt.Collided then -- hwapoon
+                ent:SetNWBool("WasParried", false)
+            else
+                ent:SetNWBool("WasParried", true)
+            end
+        end,
+
+        on_unwrap = function(ent, ply, args)
+            local phys = ent:GetPhysicsObject()
+            local isParry = ent:GetNWBool("WasParried")
+
+            timer.Simple(isParry and 0.5 or args.delay, function()
+                if phys:IsValid() then
+                    local aim = ply:GetAimVector()
+                    local randVec = args.up_only and utils.GetRandomUpwardsVel(0) or VectorRand()
+                    local randMult = isParry and 0 or args.rngMult
+                    local finalVel = (aim + randVec * randMult):GetNormalized() * args.force
+
+                    phys:Wake()
+                    phys:EnableMotion(true)
+                    phys:SetVelocity(finalVel)
+                end
+            end)
+        end,
+
+        info = function(giftEnt, args)
+            local wrappedEnt = giftEnt:GetStoredGift()
+
+            if IsValid(wrappedEnt) and wrappedEnt:GetNWBool("WasParried") then
+                return { img = MAT_WARN, msg = "Successfully parried! Directly thrown forward when unwrapped." }
+            elseif args.delay > 0 then
+                return { img = MAT_INFO, msg = "Thrown forward when unwrapped, with a random angle offset, after a short delay." }
+            else
+                return { img = MAT_INFO, msg = "Thrown forward when unwrapped with a random angle offset." }
+            end
+        end,
+    },
+
+    --------------------------------------------
+    -- Entity-Specific Setups
+
+    bunger_setup = {
+        desc = "Fixes visibility of Bunger model overlay on wrap/unwrap; also sets up friendly bunger gift (random spawn).",
+        on_wrap = function(ent)
+            local bungerChild = utils.GetEntChildAt(ent, 1)
+
+            if IsValid(bungerChild) then
+                bungerChild:SetNoDraw(true)
+            end
+        end,
+
+        on_spawn = function(ent, ply)
+            -- copied from bunger addon
+            ent:SetNPCState(2)
+            ent:SetNoDraw(true)
+            ent:SetNWEntity("Thrower", ply)
+            ent:SetNWBool("GWFriendlyBunger", true)
+
+            local bunger = ents.Create("prop_dynamic")
+            bunger:SetModel("models/betterbunger.mdl")
+            bunger:SetPos(ent:GetPos())
+            bunger:SetAngles(Angle(0, 270 ,0))
+            bunger:SetParent(ent)
+            bunger:SetModelScale(2, 0) -- for cute
+
+            local hat = ents.Create("prop_dynamic")
+            hat:SetModel("models/ttt/propeller_hat/propeller_hat.mdl")
+            hat:SetPos(bunger:GetPos() + Vector(2, 0, 20.5))
+            hat:SetAngles(Angle(0, 270, 1))
+            hat:SetParent(bunger)
+            hat:SetModelScale(3.5, 0)
+
+            hat:Spawn()
+            hat:SetSequence("spin_max")
+            hat:ResetSequence("spin_max")
+        end,
+
+        on_unwrap = function(ent)
+            local bungerChildren = ent:GetChildren()
+            if #bungerChildren <= 0 then return end
+            local bungerChild = bungerChildren[1]
+
+            if IsValid(bungerChild) then
+                bungerChild:SetNoDraw(false)
+                ent:SetNoDraw(true)
+            end
+
+            -- npc health must be set after spawning
+            if ent:GetNWBool("GWFriendlyBunger") then
+                ent:SetMaxHealth(1200)
+                ent:SetHealth(1200)
+            end
+        end,
+
+        gift_desc = function(ent)
+            if not IsValid(ent) or ent:GetNWBool("GWFriendlyBunger") then
+                return "a pet Bunger"
+            else
+                return "an angry Bunger"
             end
         end
     },
 
-    {   name = "manhack_explode_wrap",
-        addon = "Controllable Manhack", icon = "controllable_manhack/manhack",
-        desc = "Explode giftbox when self-destructing + wrap to parry", realm = ChangeRealm.SERVER,
-        identifier = "sent_controllable_manhack", category = ChangeCategory.SENT,
-        original_keys = {"SelfDestruct", "Explode"},
-        apply = function(sent, og)
+    timed_molotov_wrap = {
+        desc = "Prevents Timed Molotovs exploding & their fire trail rendering while wrapped.",
+        on_wrap = function(ent)
+            local curTime = CurTime()
 
-            local function manhackParry(self)
-                local owner = self:GetPlayerController()
-                if not IsValid(owner) then owner = self.damageInfoPlayer end
+            ent:SetNWFloat("StoredFuse", math.max(2.5, 5 - (curTime - ent.SpawnTime)))
+            ent.SpawnTime = curTime + 1e9
 
-                owner:ChatPrint("Detonation was parried by Gift Wrap!")
-                self:SetPlayerController(owner)
-                self:SetHealth(ControllableManhack.ConVarHealth())
-                self.isSelfDestructing = false
+            local trail = utils.GetEntChildAt(ent, 1)
+            if IsValid(trail) then
+                trail:Remove()
             end
+        end,
 
-            sent.SelfDestruct = function(self)
-                RemoteGiftDetonation(self, 3, {path = self.SoundStunned}, {
-                    explosion = function(parentEnt)
-                        local explode = ents.Create("env_explosion")
-                        explode:SetPos(utils.GetEntCenter(parentEnt))
-                        explode:SetOwner(self:GetPlayerController())
-                        explode:Spawn()
-                        explode:SetKeyValue("iMagnitude", self.ExplosionSize)
-                        explode:Fire("Explode", 0, 0)
-                    end,
+        on_unwrap = function(ent)
+            ent.SpawnTime = CurTime() - ent:GetNWFloat("StoredFuse", 1)
 
-                    ogDetonate = og.SelfDestruct,
-                    parry = manhackParry,
-                })
+            local trail = utils.GetEntChildAt(ent, 1)
+            if not IsValid(trail) then
+                trail = ents.Create("env_fire_trail")
+                trail:SetPos(ent:GetPos())
+                trail:SetParent(ent)
+                trail:Spawn()
+                trail:Activate()
             end
+        end,
 
-            sent.Explode = function(self)
-                RemoteGiftExplosion(self, og.Explode, manhackParry)
-            end
-        end
+        info = function(giftEnt, args)
+            local ent = giftEnt:GetStoredGift()
+            local explodeTime = IsValid(ent) and ent:GetNWFloat("StoredFuse", 1) or 1
+
+            return { img = MAT_WARN, msg = "Will detonate "..(math.Round(explodeTime + 0.5, 1)).."s after unwrap." }
+        end,
     },
 
-    {   name = "slam_explode_wrap",
-        addon = "M4 SLAM", icon = "vgui/ttt/icon_slam",
-        desc = "Explode giftbox when self-destructing + wrap to parry", realm = ChangeRealm.SHARED,
-        identifier = "ttt_slam_base", category = ChangeCategory.SENT,
-        original_keys = {"StartExplode", "Explode"},
-        apply = function(sent, og)
+    moon_grenade_setup = {
+        desc = "Prevents Moon Grenade exploding while wrapped & fixes spawning new ones.",
+        on_wrap = function(ent)
+            timer.Remove(ent.FuseID)
+            timer.Remove("MG_Unwrap_"..ent:EntIndex())
+            ent:SetNWFloat("FuseTime", math.max(1.5, ent.FuseTime))
+        end,
 
-            local function slamParry(self)
-                self:GetPlacer():ChatPrint("Detonation was parried by Gift Wrap!")
-            end
+        on_spawn = function(ent, ply)
+            ent.GrenadeOwner = ply
+        end,
 
-            sent.StartExplode = function(self)
-                RemoteGiftDetonation(self, 1.5, {path = self.PreExplosionSound}, {
-                    explosion = function(parentEnt)
-                        local pos = parentEnt:GetPos()
-                        local radius = self.BlastRadius
-                        local damage = self.BlastDamage
+        on_unwrap = function(ent)
+            timer.Create("MG_Unwrap_"..ent:EntIndex(), ent:GetNWFloat("FuseTime", 5), 1, function()
+                if IsValid(ent) then
+                    ent:DoBoom()
+                end
+            end)
+        end,
 
-                        local effect = EffectData()
-                        effect:SetStart(pos)
-                        effect:SetOrigin(pos)
-                        effect:SetScale(radius)
-                        effect:SetRadius(radius)
-                        effect:SetMagnitude(damage)
-                        util.Effect("Explosion", effect, true, true)
-                        util.BlastDamage(parentEnt, self:GetPlacer(), pos, radius, damage)
-                        parentEnt:EmitSound(self.ExplosionSound, 60, math.random(125, 150))
-                    end,
+        info = function(giftEnt, args)
+            local ent = giftEnt:GetStoredGift()
+            local explodeTime = IsValid(ent) and ent:GetNWFloat("FuseTime", 5) or 5
 
-                    ogDetonate = og.StartExplode,
-                    parry = slamParry,
-                })
-
-            end
-
-            sent.Explode = function(self)
-                RemoteGiftExplosion(self, og.Explode, slamParry)
-            end
-        end
+            return { img = MAT_WARN, msg = "Will detonate "..(math.Round(explodeTime, 1)).."s after unwrap." }
+        end,
     },
 
-    {   name = "paper_plane_gift_targetting",
-        addon = "Paper Plane", icon = "vgui/ttt/paper_plane_icon",
-        desc = "Override targetting behavior for random gift planes", realm = ChangeRealm.SHARED,
-        identifier = "ttt_paper_plane_proj", category = ChangeCategory.SENT,
-        original_keys = {"GetClosestPlayer"},
-        apply = function(sent, og)
+    manhack_stop_control = {
+        desc = "Stops the Manhack remote control upon wrap.",
+        on_wrap = function(ent)
+            local owner = ent:GetPlayerController()
+            ent:StopControlling()
 
-            sent.GetClosestPlayer = function(self, ent, plys)
-                local spawner = self:GetNWEntity("GW_Spawner")
+            if IsValid(owner) then
+                owner:ChatPrint("Your manhack was wrapped into a giftbox!")
+            end
+        end,
 
-                if IsValid(spawner) then
-                    local sphere = ents.FindInSphere(self:GetPos(), 5000)
-                    local possibleTargets = {}
+        info = function(giftEnt, args)
+            local wrappedEnt = giftEnt:GetStoredGift()
 
-                    for key, v in pairs(sphere) do
-                        if v:IsPlayer() and v:Alive() and not v:IsSpec() and v ~= spawner then
-                            table.insert(possibleTargets, v)
-                        end
-                    end
+            if IsValid(wrappedEnt) then
+                local owner = wrappedEnt:GetPlayerController()
 
-                    return og.GetClosestPlayer(self, ent, possibleTargets)
+                if owner == LocalPlayer() then
+                    return { img = MAT_INFO, msg = "Can remotely detonate the Manhack inside the giftbox by pressing "..Key("+reload").."." }
                 else
-                    return og.GetClosestPlayer(self, ent, plys)
+                    return { img = MAT_WARN, msg = "Can be remotely detonated by the player who deployed it!" }
                 end
             end
-        end
+        end,
     },
 
-    {   name = "star_burster_ammo_fix",
-        addon = "Star Burster", icon = "vgui/ttt/ttt_plasma_icon.png",
-        desc = "Fix clipsize discrepancy & related Lua error when spawning as worldmodel", realm = ChangeRealm.CLIENT,
-        identifier = "ttt_plasma_burster_nade", category = ChangeCategory.SWEP,
-        original_keys = {"Initialize"},
-        apply = function(swep, og)
-
-            swep.Initialize = function(self)
-                local defaultClip = GetConVar("ttt_plasmaburster_ammo"):GetFloat()
-                self.Primary.ClipSize = defaultClip
-                self:SetClip1(defaultClip)
-                og.Initialize(self)
+    green_demon_wrap = {
+        desc = "Resets Green Demon's state on unwrap (half the usual wake up time if it was already moving).",
+        on_wrap = function(ent)
+            if ent.Solidified then
+                ent.LoopSound:Stop()
+                ent:SetNWBool("Awoken", true)
+            else
+                ent.ActivateTime = CurTime() + 1e9
+                ent:SetNWBool("Awoken", false)
             end
-        end
-    },
+        end,
 
-    {   name = "star_burster_wrap_fix",
-        addon = "Star Burster", icon = "vgui/ttt/ttt_plasma_icon.png",
-        desc = "Make Star Burster entity wrappable", realm = ChangeRealm.SHARED,
-        identifier = "plasma_burster_nade", category = ChangeCategory.SENT,
-        original_keys = {"Initialize"},
-        apply = function(sent, og)
+        on_unwrap = function(ent)
+            local wakeUpTime = GetConVar("sv_ttt2_greendemon_spawn_delay"):GetFloat()
 
-            sent.Initialize = function(self)
-                og.Initialize(self)
-
-                -- need to do this for collisions to work, surprisingly the box size doesn't change anything
-                self:SetCollisionBounds(Vector(-1, -1, -1), Vector(1, 1, 1))
+            if ent.Solidified then
+                ent.Solidified = false
+                wakeUpTime = wakeUpTime / 2
             end
-        end
+
+            ent:EmitSound(ent.SpawnSound)
+            ent.ActivateTime = CurTime() + wakeUpTime
+        end,
+
+        info = function(giftEnt, args)
+            local ent = giftEnt:GetStoredGift()
+            local wakeUpTime = GetConVar("sv_ttt2_greendemon_spawn_delay"):GetFloat()
+
+            if IsValid(ent) and ent:GetNWBool("Awoken") then
+                return { img = MAT_WARN, msg = "Will start moving "..(math.Round(wakeUpTime / 2, 1)).."s after unwrap (moving speed reset)." }
+            else
+                return { img = MAT_WARN, msg = "Will start moving "..(math.Round(wakeUpTime, 1)).."s after unwrap." }
+            end
+        end,
     },
 
-    {   name = "minecraft_arrow_wrap_fix",
-        addon = "Minecraft Bow", icon = "vgui/ttt/icon_minecraft_bow.png",
-        desc = "Make Minecraft arrow entity wrappable", realm = ChangeRealm.SHARED,
-        identifier = "ttt_minecraft_arrow", category = ChangeCategory.SENT,
-        original_keys = {"Think"},
-        apply = function(sent, og)
+    seekgull_wrap = {
+        desc = "Freezes Seekgull while it's wrapped.",
+        on_wrap = function(ent)
+            ent.SecondsPerTick = 1e9
+        end,
 
-            sent.Think = function(self)
-                og.Think(self)
+        on_unwrap = function(ent)
+            ent.SecondsPerTick = 0.01
+            ent:NextThink(CurTime())
+        end,
+    },
 
-                if self.Disabled and not self:IsSolid() then
-                    self:SetMoveType(MOVETYPE_VPHYSICS)
-                    self:SetNotSolid(false)
-                    self:SetColor(Color(180, 180, 180))
+    starburst_ent_wrap = {
+        desc = "Freezes Starburst while it's wrapped & resets its explosion counter on unwrap.",
+        on_wrap = function(ent)
+            ent:NextThink(CurTime() + 1e9)
+            timer.Remove("killPlasmaBurster2AfterTime")
+        end,
+
+        on_unwrap = function(ent, ply)
+            ent.Trail = util.SpriteTrail(ent, 0, Color(255, 100, 0), false, 32, 1, 0.3, 0.01, "trails/plasma.vmt")
+            ent.charges = GetConVar("ttt_plasmaburster_bounces"):GetInt()
+            ent:NextThink(CurTime() + 0.1)
+        end,
+    },
+
+    harpoon_unwrap = {
+        desc = "Gives the Harpoon a random angle on unwrap and changes its unwrap distance + allow original thrower to be hit.",
+        on_unwrap = function(ent, ply)
+            ent:Initialize()
+            local aim = ply:GetAimVector()
+            ent:SetAngles(aim:Angle())
+            ent:SetOwner(ply)
+
+            local targetPos = ply:EyePos() + Vector(aim.x, aim.y, 0):GetNormalized() * 150
+            local phys = ent:GetPhysicsObject()
+
+            if phys:IsValid() then
+                phys:Sleep()
+                phys:SetPos(targetPos)
+            end
+        end,
+    },
+
+    barnacle_setup = {
+        desc = "Fix for wrapping Barnacle with player in its clutches, notify player that random-made Barnacle can be shot, fix for unwrapping Barnacle (creates a new one, on top of the giftee unless it's an undo).",
+        on_wrap = function(ent)
+            ent:Fire("LetGo")
+            local enemy = ent:GetInternalVariable("m_hEnemy")
+
+            if IsValid(enemy) and enemy:IsPlayer() and enemy:Alive() then
+                enemy:RemoveEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
+            end
+        end,
+
+        on_spawn = function(_, ply)
+            timer.Simple(1.5, function()
+                if IsValid(ply) and ply:Alive() and ply:IsEFlagSet(EFL_IS_BEING_LIFTED_BY_BARNACLE) then
+                    ply:ChatPrint("NOTE: You CAN shoot it to escape!")
                 end
-            end
-        end
-    },
+            end)
+        end,
 
-    {   name = "isvalid_condition",
-        addon = "Garry's Mod", icon = "vgui/titlebaricon",
-        desc = "Allow marking arbitrary entities as not valid (used by Lethal Mine & Force Shield wraps)", realm = ChangeRealm.SHARED,
-        identifier = "Entity", category = ChangeCategory.Meta,
-        original_keys = {"IsValid"},
-        apply = function(meta, og)
+        on_unwrap = function(ent, ply, args)
+            local pos = ent:GetPos()
+            local ang = ent:GetAngles()
+            local owner = ent:GetDamageOwner()
+            ent:Remove() --tried very hard to properly move it but it's too involved
 
-            meta.IsValid = function(self)
-                if self._Invalid then return false end
-                return og.IsValid(self)
-            end
-        end
-    },
+            local startPos = args.is_undo and pos or ply:GetPos()
+            local upTr = util.TraceLine({
+                start = startPos,
+                endpos = startPos + Vector(0, 0, 10000),
+                filter = ply,
+                mask = MASK_SOLID_BRUSHONLY
+            })
 
---[[ -- seems unneeded due to above change? (mine can be set off more than once without issue)
-    {   addon = "Lethal Mine",
-        desc = "Prevent Lethal Mines exploding in giftbox", realm = ChangeRealm.SHARED,
-        identifier = "item_lethal_company_landmine", category = ChangeCategory.SENT,
-        original_keys = {"EndTouch"},
-        apply = function(sent, og)
+            local newPos = upTr.Hit and upTr.HitPos or startPos + Vector(0, 0, 100)
+            local newBarnacleOwner = IsValid(owner) and owner or ply
+            local newBarnacle = ents.Create("npc_barnacle")
+            newBarnacle:SetPos(newPos)
+            newBarnacle:SetAngles(ang)
+            newBarnacle:SetNWEntity("owner", newBarnacleOwner)
+            newBarnacle:SetDamageOwner(newBarnacleOwner)
+            newBarnacle:SetRenderMode(RENDERMODE_TRANSALPHA)
+            newBarnacle:SetColor(Color(0,0,0,30))
+            newBarnacle:SetKeyValue("RestDist",50)
+            newBarnacle:Spawn()
+            newBarnacle:Activate()
+            newBarnacle:SetHealth(50)
+            newBarnacle:Fire("SetDropTongueSpeed", 100)
 
-            sent.EndTouch = function(self, ent)
-                if IsValid(self:GetNW2Entity("WrappedByGift")) then return end
-                og.EndTouch(self, ent)
-            end
-        end
-    },]]
-
-    {   name = "hwapoon_wrap_fix",
-        addon = "Hwapoon", icon = "vgui/ttt/tttharpoonicon.png",
-        desc = "Make Hwapoon arrows wrappable & prevent them from disappearing", realm = ChangeRealm.SERVER,
-        identifier = "hwapoon_arrow", category = ChangeCategory.SENT,
-        original_keys = {"PhysicsCollide"},
-        apply = function(sent, og)
-
-            sent.PhysicsCollide = function(self, data, physObj)
-                og.PhysicsCollide(self, data, physObj)
-
-                if self:GetSolid() == SOLID_NONE then
-                    self:SetSolid(SOLID_VPHYSICS)
+            local timerName = newBarnacle:EntIndex().."_timer" --recreate barnacle addon logic
+            timer.Create(timerName, 0.1, 0, function()
+                if not IsValid(newBarnacle) then
+                    timer.Remove(timerName)
+                    return
                 end
-            end
 
-            sent.AcceptInput = function(self, inputName, activator, caller, param)
-                if inputName == "kill" then
-                    return true
+                local enemy = newBarnacle:GetInternalVariable("m_hEnemy")
+                if IsValid(enemy) and enemy:IsPlayer() and enemy:Alive() then
+                    newBarnacle:SetColor(Color(255, 255, 255, 255))
+                    if IsValid(owner) then enemy:SelectWeapon('weapon_ttt_unarmed') end
+
+                elseif not newBarnacle.Health or newBarnacle:Health() <= 0 then
+                    newBarnacle:SetColor(Color(255, 255, 255, 255))
+                    timer.Remove(timerName)
+
+                else
+                    newBarnacle:SetColor(Color(0, 0, 0, 25))
                 end
+            end)
+        end,
+
+        info = function(giftEnt, args)
+            local ent = giftEnt:GetStoredGift()
+
+            if not IsValid(ent) then
+                return { img = MAT_WARN, msg = "Spawns directly above the player who unwraps it, who can shoot it to escape." }
+            elseif args.cant_undo then
+                return { img = MAT_WARN, msg = "Spawns directly above the player who unwraps it." }
+            else
+                return { img = MAT_WARN, msg = "Spawns directly above the player who unwraps it, unless that player is you." }
             end
+        end,
+    },
+
+    force_shield_sfx = {
+        desc = "Stops the Force Shield's SFX while it's wrapped & restart it on unwrap.",
+        on_wrap = function(ent)
+            ent:StopSound("ambient/machines/combine_shield_touch_loop1.wav")
+
+            if ent._LoopSound then
+                ent._LoopSound:Stop()
+            end
+        end,
+
+        on_unwrap = function(ent)
+            --ent:EmitSound("ambient/machines/combine_shield_touch_loop1.wav", 55)
+
+            -- switching to CSoundPatch was less glitchy (StopSound didn't work the second/third/etc. time around)
+            ent._LoopSound = CreateSound(ent, "ambient/machines/combine_shield_touch_loop1.wav")
+            ent._LoopSound:SetSoundLevel(55)
+            ent._LoopSound:Play()
         end
     },
 
-    {   name = "ice_grenade_wrap_fix",
-        addon = "Ice Grenade", icon = "vgui/ttt/icon_64_icegrenade.png",
-        desc = "Allow ice grenade explosion to be interrupted by wrap", realm = ChangeRealm.SERVER,
-        identifier = "icegrenade_proj", category = ChangeCategory.SENT,
-        apply = function(sent)
+    icegrenade_wrap = {
+        desc = "Prevents Ice Grenade exploding while wrapped.",
+        on_wrap = function(ent)
+            local timerID = ent:EntIndex().."_timer"
+            ent:SetNWFloat("StoredFuse", timer.TimeLeft(timerID) + 1)
+            timer.Remove(timerID)
+        end,
 
-            sent.iceexplode = function(self, delay)
-                timer.Create(self:EntIndex().."_timer", delay or 1.8, 1, function()
-                    if IsValid(self) then
-                        ParticleEffect("ice_explosion", self:GetPos(), Angle(0, 0, 0))
-                        self:EmitSound("ice_explosion.wav", 85, 90, 1, CHAN_AUTO)
-                        self:FreezeAll()
-                        self:Remove()
+        on_unwrap = function(ent)
+            ent:iceexplode(ent:GetNWFloat("StoredFuse", 1.8))
+        end,
+
+        info = function(giftEnt, args)
+            local ent = giftEnt:GetStoredGift()
+            local explodeTime = IsValid(ent) and ent:GetNWFloat("StoredFuse", 1.8) or 1.8
+
+            return { img = MAT_WARN, msg = "Will detonate "..(math.Round(explodeTime, 1)).."s after unwrap." }
+        end,
+    },
+
+    flame_wrap = {
+        desc = "Prevents flame from dying while wrapped. Giftbox is also set ablaze (based on data label).",
+        on_wrap = function(ent)
+            ent:SetDieTime(CurTime() + 1e9)
+        end,
+
+        on_unwrap = function(ent)
+            ent:SetDieTime(CurTime() + 30)
+            ent:StartFire()
+        end,
+
+        info = function(giftEnt, args)
+            return { img = MAT_WARN, msg = "You probably shouldn't spend time reading this unless you have fire damage immunity..." }
+        end,
+    },
+
+    fireball_wrap = {
+        desc = "Freezes Fireball while wrapped & allows detecting it.",
+        on_wrap = function(ent)
+            ent._StoredCallback = ent:GetCallbacks("PhysicsCollide")[1]
+            ent:RemoveCallback("PhysicsCollide", 1)
+            timer.Pause("FireBallLife"..ent.Time)
+        end,
+
+        on_unwrap = function(ent, ply)
+            ent:AddCallback("PhysicsCollide", ent._StoredCallback)
+            timer.UnPause("FireBallLife"..ent.Time)
+        end,
+
+        detect = function(ent)
+            return ent:GetName() == "Fireball"
+        end,
+    },
+
+    fart_grenade_setup = {
+        desc = "Disables Fart Grenade while it's wrapped, restarts it on unwrap, allows spawning new ones & detecting it.",
+        on_wrap = function(ent)
+            if timer.Exists("fartsmoke_"..ent:EntIndex()) then
+                timer.Pause("fartsmoke_"..ent:EntIndex())
+                ent:SetNWBool("FartingStarted", true)
+
+            else
+                timer.Simple(2, function()
+                    if IsValid(ent) and timer.Exists("fartsmoke_"..ent:EntIndex()) then
+                        timer.Pause("fartsmoke_"..ent:EntIndex())
                     end
                 end)
             end
-        end
-    },
+        end,
 
-    {   name = "bunger_grenade_wrap_fix",
-        addon = "Killer Bungers", icon = "vgui/ttt/bungericon.png",
-        desc = "Make Bunger Grenade collision box match scale", realm = ChangeRealm.SHARED,
-        identifier = "ttt_bungernade_proj", category = ChangeCategory.SENT,
-        original_keys = {"Initialize", "Explode"},
-        apply = function(sent, og)
+        on_spawn = function(ent, ply)
+            local fart_grenade = weapons.GetStored("weapon_fartgrenade")
+            fart_grenade:CreateGrenade(Vector(0, 0, 0), Angle(0, 0, 0), Vector(0, 0, 0), Vector(0, 0, 0), ply)
 
-            sent.Initialize = function(self)
-                self.Entity:SetModelScale(2, 0)
-                og.Initialize(self)
+            return ents.GetAll()[#ents.GetAll()]
+        end,
 
-                self:SetSolid(SOLID_VPHYSICS)
-                self:SetMoveType(MOVETYPE_VPHYSICS)
-                self:PhysicsInit(SOLID_VPHYSICS)
-                self.Entity:Activate()
-            end
+        on_unwrap = function(ent)
+            local delay = ent:GetNWBool("FartingStarted") and 1.2 or 2.5
+            dbg.Log("Resuming fart in", delay)
 
-            -- this functions code is really fucking stupid (it RELIES on a client/server mismatch over the scale)
-            sent.Explode = function(self, tr)
-                self.Entity:SetModelScale(2, 0)
-                og.Explode(self, tr)
-            end
-        end
-    },
+            timer.Simple(delay, function()
+                if timer.Exists("fartsmoke_"..ent:EntIndex()) then
+                    timer.UnPause("fartsmoke_"..ent:EntIndex())
 
-    {   name = "bunger_pet_dmg",
-        addon = "Killer Bungers", icon = "vgui/ttt/bungericon.png",
-        desc = "Extend Killer Bungers damage method to conditionally disable damage (pet bunger)", realm = ChangeRealm.SERVER,
-        identifier = "weapon_ttt_bungernade", category = ChangeCategory.SWEP,
-        apply = function()
-
-            hook.Add("EntityTakeDamage", "TurtlenadeDmgHandle", function(victim, dmg)
-                local attacker = dmg:GetAttacker()
-
-                if attacker:IsValid() and attacker:GetNWBool("GWFriendlyBunger") then
-                    TurtleInnocentDamage = 0
-                    TurtleTraitorDamage  = 0
-
-                elseif victim:IsValid() and victim:GetNWBool("GWFriendlyBunger") then
-                    if dmg:GetInflictor():GetClass() == "weapon_zm_improvised" then
-                        dmg:SetInflictor(game.GetWorld())
-                    end
-
-                    local bunger = utils.GetEntChildAt(victim, 1)
-
-                    if IsValid(bunger) then
-                        local hat = utils.GetEntChildAt(bunger, 1)
-
-                        if IsValid(hat) then
-                            local oldHealth = victim:Health() - 980
-                            local newHealth = oldHealth - dmg:GetDamage()
-                            local maxHealth = victim:GetMaxHealth() - 980
-
-                            if oldHealth > maxHealth*0.75 and newHealth <= maxHealth*0.75 then
-                                hat:SetSequence("spin_fast")
-                                hat:ResetSequence("spin_fast")
-
-                            elseif oldHealth > maxHealth*0.5 and newHealth <= maxHealth*0.5 then
-                                hat:SetSequence("spin_med")
-                                hat:ResetSequence("spin_med")
-
-                            elseif oldHealth > maxHealth*0.25 and newHealth <= maxHealth*0.25 then
-                                hat:SetSequence("spin_slow")
-                                hat:ResetSequence("spin_slow")
-                            end
-                        end
-                    end
+                    ParticleEffect("fartsmoke", ent:GetPos() + Vector(-80, -40, 0), Angle(0, 0, 0), nil)
+                    ent:EmitSound(Sound("fart_1.wav"))
                 end
-
-                TurtleNadeDamage(victim, dmg)
-                TurtleInnocentDamage = 20 -- defaults
-                TurtleTraitorDamage  = 5
             end)
-        end
+        end,
+
+        detect = function(ent)
+            -- no better check unfortunately
+            return ent:GetModel() == "models/weapons/w_grenade.mdl"
+              and utils.NearEquals(ent:GetGravity(), 0.4)
+              and utils.NearEquals(ent:GetFriction(), 0.2)
+              and utils.NearEquals(ent:GetElasticity(), 0.45)
+        end,
+
+        can_spawn = function()
+            return weapons.GetStored("weapon_fartgrenade") ~= nil
+        end,
+
+        info = function(giftEnt, args)
+            local ent = giftEnt:GetStoredGift()
+
+            if IsValid(ent) and ent:GetNWBool("FartingStarted") then
+                return { img = MAT_WARN, msg = "Farting will resume 1.2s after unwrap." }
+            else
+                return { img = MAT_WARN, msg = "Farting will commence 2.5s after unwrap." }
+            end
+        end,
     },
 
-    {   name = "fortnite_font_fix",
-        addon = "Fortnite Building", icon = "vgui/ttt_fortnite_icon.png",
-        desc = "Ensure clients can render the custom font for structures even without SWEP init", realm = ChangeRealm.CLIENT,
-        identifier = "weapon_ttt_fortnite_building", category = ChangeCategory.SWEP,
-        apply = function()
+    conc_mine_wrap = {
+        desc = "Allows wrapping Concussion Mines after they're set off (but before they explode).",
+        on_wrap = function(ent)
+            if ent.setoff then
+                ent:NextThink(CurTime() + 1e9)
+                ent:SetNWBool("SetOff", true)
+            end
+        end,
 
-            -- What the original addon does on SWEP init; gives a warning but works out?
-            -- (CreateFont *should* only be ran once but outside debugging, it will be, so it's fine)
-            surface.CreateFont("Fortnite_Structure_Font", {font = "Trebuchet24", size = 18, weight = 750})
-            surface.CreateFont("Fortnite_HUD_Font", {font = "Trebuchet24", size = 20, weight = 1250})
-        end
+        on_unwrap = function(ent)
+            if ent.setoff then
+                ent:StartFuse()
+                ent:NextThink(CurTime() + 0.1)
+            end
+        end,
+
+        info = function(giftEnt, args)
+            local ent = giftEnt:GetStoredGift()
+
+            if IsValid(ent) and ent:GetNWBool("SetOff") then
+                return { img = MAT_WARN, msg = "Mine has been set off; will immediately detonate when it's unwrapped." }
+            end
+        end,
     },
 
-    {   name = "prop_exploder_wrap_fix",
-        addon = "Prop Exploder", icon = "vgui/ttt/icon_propexploder",
-        desc = "Explode giftbox when self-destructing + wrap to parry + rigging giftboxes", realm = ChangeRealm.SERVER,
-        identifier = "weapon_ttt_propexploder", category = ChangeCategory.SWEP,
-        original_keys = {"SecondaryAttack"},
-        apply = function(swep, og)
+    cannonball_wrap = {
+        desc = "Freezes Cannonballs while wrapped.",
+        on_wrap = function(ent)
+            ent.Stuck = true
+            ent._DontKill = true
+        end,
 
-            -- this function may look overly complex, but given all the ways a rigged prop can interact with giftwrap
-            -- (and the ways a rigged giftbox can be interacted with), it's actually just as complex as it needs to be
-
-            local function OGPropExploderExplosion(ent, owner)
-                local expl = ents.Create("env_explosion")
-                expl:SetPos(ent:GetPos())
-                expl:Spawn()
-                expl:SetOwner(owner)
-                expl:SetKeyValue("iMagnitude", "0")
-                expl:Fire("Explode", 0, 0)
-                expl:EmitSound("siege/big_explosion.wav", 400, 200)
-                util.BlastDamage(ent, owner, ent:GetPos(), 400, 200)
-            end
-
-            swep.SecondaryAttack = function(self)
-                RemoteGiftDetonation(self.Owner.PEProp, 1.2, {path = "weapons/gamefreak/wtf.mp3", vol = 400, pitch = 200}, {
-                    explosion = function(parentEnt)
-                        self:SendPEMessage("Exploded")
-                        self.Owner.PEProp = nil
-
-                        OGPropExploderExplosion(parentEnt, self.Owner)
-                        self:Remove()
-                    end,
-
-                    ogDetonate = function(ent)
-                        if IsValid(ent) then
-                            og.SecondaryAttack(self)
-
-                            if ent:IsWeapon() then -- should only be possible for giftboxes
-                                local entOwner = ent:GetOwner()
-                                entOwner:EmitSound("weapons/gamefreak/wtf.mp3", 400, 200)
-                                entOwner:ChatPrint("Your gift is exploding!")
-                            end
-
-                            local exploTimerName = "PEPlanting" .. ent:EntIndex()
-                            local owner = self.Owner
-
-                            timer.Simple(timer.TimeLeft(exploTimerName), function()
-                                if not IsValid(owner) then return end
-
-                                -- if the prop was a giftbox, it could've switched state & thus not be the same entity (PEProp is transferred though)
-                                if owner.PEProp ~= ent then ent = owner.PEProp end
-                                owner.PEProp = nil
-
-                                if IsValid(ent) then
-                                    if IsValid(ent:GetNW2Entity("WrappedByGift")) then
-                                        owner:ChatPrint("Detonation was parried by Gift Wrap!")
-
-                                    else
-                                        ent._PreventThrow = true -- in case its a giftbox
-                                        OGPropExploderExplosion(ent, owner)
-                                        ent:Remove()
-                                    end
-                                end
-                            end)
-
-                            timer.Remove(exploTimerName)
-                        else
-                            utils.NonSpamMessage(self.Owner, "PropExploderDet", "No prop selected!")
-                        end
-                    end,
-
-                    parry = function()
-                        self.Owner:ChatPrint("Detonation was parried by Gift Wrap!")
-                    end,
-                })
-            end
-        end
+        on_unwrap = function(ent, ply)
+            ent.StartPos = ply:GetPos() + Vector(0, 0, 10000) -- ensure explosion
+            ent.Stuck = false
+        end,
     },
 
-    {   name = "prop_exploder_v2_rig_gifts",
-        addon = "Prop Exploder v2", icon = "vgui/ttt/icon_propexploderv2",
-        desc = "Add giftboxes to valid explodable classes", realm = ChangeRealm.SHARED,
-        identifier = "weapon_ttt_propexploderv2", category = ChangeCategory.SWEP,
-        original_keys = {},
-        apply = function(swep, og)
+    c4_wrap = {
+        desc = "Add 10s to C4 on wrap & explode giftbox if wrapped when clock reaches 0. Also prevents Lua errors.",
+        on_wrap = function(ent)
+            ent:SetDetonateTimer(ent:GetExplodeTime() - CurTime() + 10)
+            ent.LastPos = ent:GetPos()
+            ent._OGThink = ent.Think
+            ent._OGExplode = ent.Explode
 
-            if not table.HasValue(swep.PhysicsClasses, PROP_CLASS_NAME) then
-                table.insert(swep.PhysicsClasses, PROP_CLASS_NAME)
-            end
-        end
-    },
+            ent.Explode = function(self, tr)
+                local wrap = utils.GetTopmostWrap(self)
+                self:RemoveCallOnRemove(WRAPPED_GIFT_REMOVE)
+                ent._OGExplode(self, tr)
 
-    {   name = "prop_exploder_v2_wrap_fix",
-        addon = "Prop Exploder v2", icon = "vgui/ttt/icon_propexploderv2",
-        desc = "Explode giftbox when self-destructing + wrap to parry", realm = ChangeRealm.SERVER,
-        identifier = "weapon_ttt_propexploderv2", category = ChangeCategory.SWEP,
-        original_keys = {"SecondaryAttack"},
-        apply = function(swep, og)
-
-            -- this function may look overly complex, but given all the ways a rigged prop can interact with giftwrap
-            -- (and the ways a rigged giftbox can be interacted with), it's actually just as complex as it needs to be
-
-            local function OGPropExploderExplosion(ent, owner)
-                local expl = ents.Create("env_explosion")
-                expl:SetPos(ent:GetPos())
-                expl:Spawn()
-                expl:SetOwner(owner)
-                expl:SetKeyValue("iMagnitude", "0")
-                expl:Fire("Explode", 0, 0)
-                expl:EmitSound("siege/big_explosion.wav", 400, 200)
-                util.BlastDamage(ent, owner, ent:GetPos(), 400, 200)
-            end
-
-            swep.SecondaryAttack = function(self)
-                RemoteGiftDetonation(self.PEProp, 1.2, {path = "weapons/gamefreak/wtf.mp3", vol = 400, pitch = 200}, {
-                    explosion = function(parentEnt)
-                        self:SendPEMessage("Exploded")
-                        if IsValid(self.PEProp) then
-                            self.PEProp:RemoveCallOnRemove("PEEarlyRemove" .. self.PEProp:EntIndex())
-                        end
-
-                        OGPropExploderExplosion(parentEnt, self:GetOwner())
-                        self:Remove()
-                    end,
-
-                    ogDetonate = function(ent)
-                        local owner = self:GetOwner()
-
-                        if IsValid(ent) then
-                            og.SecondaryAttack(self)
-
-                            if ent:IsWeapon() then -- should only be possible for giftboxes
-                                local entOwner = ent:GetOwner()
-                                entOwner:EmitSound("weapons/gamefreak/wtf.mp3", 400, 200)
-                                entOwner:ChatPrint("Your gift is exploding!")
-                            end
-
-                            local exploTimerName = "PEPlanting" .. ent:EntIndex()
-
-                            timer.Simple(timer.TimeLeft(exploTimerName), function()
-                                -- if the prop was a giftbox, it could've switched state & thus not be the same entity (PEProp is transferred though)
-                                if ent ~= self.PEProp then ent = self.PEProp end
-
-                                if IsValid(ent) then
-                                    if IsValid(ent:GetNW2Entity("WrappedByGift")) then
-                                        --self.PEPlanting = false
-                                        ent._isSelfDestructing = false
-
-                                        if IsValid(owner) then
-                                            owner:ChatPrint("Detonation was parried by Gift Wrap!")
-                                        end
-
-                                    else
-                                        ent._PreventThrow = true -- in case its a giftbox
-                                        OGPropExploderExplosion(ent, owner)
-                                        self:Remove()
-                                        ent:Remove()
-                                    end
-                                end
-                            end)
-
-                            timer.Remove(exploTimerName)
-                        else
-                            utils.NonSpamMessage(owner, "PropExploderDet", "No prop selected!")
-                        end
-                    end,
-
-                    parry = function()
-                        self:GetOwner():ChatPrint("Detonation was parried by Gift Wrap!")
-                    end,
-                })
-            end
-        end
-    },
-
-    {   name = "cannibalism_mark_rags",
-        addon = "Cannibalism", icon = "vgui/ttt/ttt_cannibalism.png",
-        desc = "Mark ragdolls as being eaten (to cancel it later)", realm = ChangeRealm.SHARED,
-        identifier = "weapon_ttt_cannibal", category = ChangeCategory.SWEP,
-        original_keys = {"PrimaryAttack"},
-        apply = function(swep, og)
-            swep.PrimaryAttack = function(self)
-                --og.PrimaryAttack(self)
-                -- unfortunately have to rewrite the whole thing
-                -- due to un-cancellable timer.Simple :(
-
-                if not self:CanPrimaryAttack() then return end
-                self.Weapon:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
-                self.Weapon:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
-
-                self.Owner:LagCompensation(true)
-                local tr = self.Owner:GetEyeTrace(MASK_SHOT)
-                self.Owner:LagCompensation(false)
-
-                if IsValid(tr.Entity) and tr.Entity.player_ragdoll then
-                    self.Owner:Freeze(true)
-                    self.Owner:SetColor(Color(255, 0, 0, 255))
-                    tr.Entity.BeingEaten = true
-                    tr.Entity.Cannibal = self.Owner
-
-                    timer.Create("CannibalismHeal_"..tr.Entity:EntIndex(), 0.5, 6, function()
-                        self.Owner:SetHealth(self.Owner:Health() + 5)
-                    end)
-
-                    timer.Create("CannibalismEnd_"..tr.Entity:EntIndex(), 3.1, 1, function()
-                        self.Owner:Freeze(false)
-                        self.Owner:SetColor(Color(255, 255, 255, 255))
-                        tr.Entity:Remove()
-                        self:Remove()
-                    end)
+                if IsValid(wrap) then
+                    wrap:Remove()
                 end
             end
-        end
+        end,
+
+        on_unwrap = function(ent)
+            ent.LastPos = ent:GetPos()
+
+            if ent._OGExplode then
+                ent.Explode = ent._OGExplode
+            end
+        end,
+
+        info = function(giftEnt, args)
+            local ent = giftEnt:GetStoredGift()
+            local self = utils.adjustments.c4_wrap.info
+
+
+            if IsValid(ent) and ent:GetArmed() then
+                return { img = MAT_WARN, msg = "Not frozen; will detonate from inside the giftbox in "..(math.Round(ent:GetExplodeTime() - CurTime(), 1)).."s...", fn = self }
+            else
+                return { img = MAT_INFO, msg = "Not armed.", fn = self }
+            end
+        end,
     },
 
-    {   name = "prop_diguiser_undisguise_notif",
-        addon = "Prop Disguiser", icon = "vgui/ttt/exho_propdisguiser.png",
-        desc = "Notify gift owner when a wrapped disguised player undisguises (+SFX, better position)", realm = ChangeRealm.SERVER,
-        identifier = "weapon_ttt_prop_disguiser", category = ChangeCategory.SWEP,
-        original_keys = {"PropDisguise", "PropUnDisguise"},
-        apply = function(swep, og)
+    groovitron_wrap = {
+        desc = "Stops Groovitron music & removes its spotlights on wrap.",
+        on_wrap = function(ent)
+            if ent.Collided then
+                ent:StopSound(ent.MusicName)
+                ent:StopSound(ent.MusicName)
 
-            swep.PropDisguise = function(self)
-                og.PropDisguise(self)
-
-                if IsValid(self.Prop) then
-                    self.Prop:CallOnRemove("PD_DisguiseRemove", function()
-                        local ply = self.Owner
-
-                        if IsValid(ply) then
-                            net.Start("PD_ChatPrint")
-                            net.WriteString("Your disguise mysteriously broke!")
-                            net.Send(ply)
-
-                            self:PropUnDisguise()
-                        end
-                    end)
-                end
-            end
-
-            swep.PropUnDisguise = function(self)
-                if IsValid(self.Prop) and IsValid(self.Owner) and self:GetNWBool("PD_WepDisguised") then
-                    local wrappedBy = self.Prop:GetNW2Entity("WrappedByGift")
-                    self.Prop:RemoveCallOnRemove("PD_DisguiseRemove")
-
-                    if IsValid(wrappedBy) then
-                        self.Owner:EmitSound("garrysmod/balloon_pop_cute.wav", 75, math.random(90, 110), 0.5)
-                        self.Prop:RemoveCallOnRemove(WRAPPED_GIFT_REMOVE)
-                        self.Owner:SetParent(NULL)
-                        EmptyGift(wrappedBy)
-
-                        local giftOwner = wrappedBy:GetOwner()
-                        if IsValid(giftOwner) then
-                            giftOwner:ChatPrint("Somehow, what was in your giftbox broke containment!")
-                        end
-                    end
-
-                    og.PropUnDisguise(self)
-
-                    if IsValid(wrappedBy) then
-                        utils.TpViewing(self.Owner, wrappedBy, 80, 20)
+                for _, ent in ipairs(ents.FindInSphere(ent._GWStoredPos, 3)) do
+                    if ent:GetClass() == "beam_spotlight" then
+                        ent:Remove()
                     end
                 end
             end
+        end,
+    },
 
-            -- just fixing this function's obvious lua error
-            swep.Reload = function(self)
-                if self:GetNWBool("PD_WepDisguised") then
-                    local curTime = CurTime()
-                    local ply = self.Owner
+    explo_barrel_unwrap = {
+        desc = "Heals barrel by a bit on unwrap & makes it attribute its damage to the wrapper.",
+        on_unwrap = function(ent, _, args)
+            local wrapper = utils.GetWrapper(args.giftbox)
+            local onFire = ent:IsOnFire() or args.giftbox:GetIsContentsOnFire()
 
-                    if SERVER and not ply._LastPDReload or CurTime() > ply._LastPDReload + 1 then
-                        net.Start("PD_ChatPrint")
-                        net.WriteString("You can't choose a new model while disguised!")
-                        net.Send(ply)
+            if wrapper and onFire then
+                local dmg = DamageInfo()
+                dmg:SetDamage(0)
+                dmg:SetAttacker(wrapper)
+                ent:TakeDamageInfo(dmg)
+                ent:SetHealth(math.min(ent:Health() + 6, ent:GetMaxHealth()))
+            end
+        end
+    },
 
-                        ply._LastPDReload = curTime
-                    end
+    fortnite_struct_setup = {
+        desc = "Picks a random structure on autowrap, spawns it, unwraps it in custom position, and overrides its desc/smell/visuals.",
+
+        on_autowrap = function(_, _, args)
+            local giftObj = args.giftbox
+            local mat = math.random(0, 2)
+            local mode = math.max(math.random(-1, 3), 0) -- bias to wall
+            if mode == FORTNITE_FLOOR then mode = 0 end  -- bias to wall + floors on the floor are weird
+
+            local matStr = ({
+                [FORTNITE_WOOD]  = "wood",
+                [FORTNITE_STONE] = "brick",
+                [FORTNITE_METAL] = "metal",
+            })[mat]
+
+            local modeStr = ({
+                [FORTNITE_WALL]   = "wall",
+                [FORTNITE_FLOOR]  = "floor",
+                [FORTNITE_STAIRS] = "stairw",
+                [FORTNITE_ROOF]   = "roofc",
+            })[mode]
+
+            giftObj:SetNW2String("fortnite_model", "models/fortnitea31/buildingparts/pbw/"..matStr .."/"..matStr.."_"..modeStr..".mdl")
+            giftObj:SetNW2Int("fortnite_mode", mode)
+            giftObj:SetNW2Int("fortnite_mat", mat)
+        end,
+
+        on_spawn = function(ent, _, args)
+            local giftObj = args.giftbox
+
+            ent:SetModel(giftObj:GetNW2String("fortnite_model", "models/fortnitea31/buildingparts/pbw/wood/wood_wall.mdl"))
+            ent.Mode    = giftObj:GetNW2Int("fortnite_mode", FORTNITE_WALL)
+            ent.Material = giftObj:GetNW2Int("fortnite_mat", FORTNITE_WOOD)
+            ent.Neighbours = {}
+        end,
+
+        on_unwrap = function(ent, ply, args)
+            local model = IsValid(ent) and ent:GetModel() or args.giftbox:GetNW2String("fortnite_model")
+            local pushDist = string.EndsWith(model, "wall.mdl") and 150 or 300
+
+            local aim = ply:GetAimVector()
+            local targetPos = ply:EyePos() + Vector(aim.x, aim.y, 0):GetNormalized() * pushDist
+
+            local yaw = (ply:GetPos() - targetPos):Angle().y
+            ent:SetAngles(Angle(0, yaw, 0))
+
+            local groundTr = utils.GetGroundHit(targetPos, ent)
+            if groundTr.Hit and groundTr.HitPos:Distance(targetPos) <= 150 then
+                ent:SetPos(groundTr.HitPos)
+
+            else
+                local yAdj = string.EndsWith(model, "wall.mdl") and 75 or 50
+                ent:SetPos(targetPos - Vector(0, 0, yAdj))
+            end
+        end,
+
+        gift_desc = function(ent, giftObj)
+            local model = IsValid(ent) and ent:GetModel() or giftObj:GetNW2String("fortnite_model")
+
+            if string.EndsWith(model, "wall.mdl") then
+                return "a wall"
+            elseif string.EndsWith(model, "floor.mdl") then
+                return "a floor"
+            elseif string.EndsWith(model, "stairw.mdl") then
+                return "a staircase"
+            elseif string.EndsWith(model, "roofc.mdl") then
+                return "a roof"
+            end
+        end,
+
+        gift_smell = function(ent, giftObj)
+            local model = IsValid(ent) and ent:GetModel() or giftObj:GetNW2String("fortnite_model")
+
+            if string.StartsWith(model, "models/fortnitea31/buildingparts/pbw/wood") then
+                return GiftSmell.Woody
+            elseif string.StartsWith(model, "models/fortnitea31/buildingparts/pbw/brick") then
+                return GiftSmell.Clay
+            elseif string.StartsWith(model, "models/fortnitea31/buildingparts/pbw/metal") then
+                return GiftSmell.Metallic
+            else
+                return GiftSmell.Nondescript
+            end
+        end,
+
+        gift_visuals = function(_, giftObj)
+            return giftObj:GetNW2String("fortnite_model")
+        end,
+
+        info = function(_, args)
+            return { img = MAT_INFO, msg = "Snaps to the ground if ground is nearby, but doesn't otherwise." }
+        end,
+    },
+
+    bouncy_ball_random_size = {
+        desc = "Spawns bouncy ball entity with a random size.",
+        on_spawn = function(ent)
+            ent:SetBallSize(math.random(20, 50))
+        end,
+    },
+
+    shield_deployer_spawn = {
+        desc = "Fixes Lua error when spawning Force Shield deployer.",
+        on_spawn = function(ent, ply)
+            ent.shieldDeployAngleYaw = ply:GetEyeTrace().Normal:Angle().yaw
+        end,
+    },
+
+    fan_spawn = {
+        desc = "Fixes spawning Fans & ensures they aren't invincible.",
+        on_spawn = function(ent, ply)
+            ent:SetName("ttt_fan")
+            ent.Owner = ply -- for some reason set_owner messes with health setup
+        end,
+
+        on_unwrap = function(ent)
+            local health = ent:GetNWInt("health")
+
+            if not health or health == 0 then --newly spawned
+                ent:SetNWInt("health", TTT_FAN.CVARS.fan_health)
+            end
+        end,
+    },
+
+    random_gift_spawn = {
+        desc = "Makes newly spawned Gift random & have boosted odds.",
+        on_spawn = function(ent, ply)
+            local newLabel, newData = GetRandomGiftData(ply, 10)
+            ent:SetCachedDataLabel(newLabel)
+            newData:ApplyOnAutoWrapAdjustments(ent)
+
+            ent:SetIsRandomGift(true)
+            ent:SetWrapperSID("WORLD")
+            RollGiftColors(ent)
+        end,
+
+        info = function(giftEnt, args)
+            local ent = giftEnt:GetStoredGift()
+
+            if not IsValid(ent) or ent:GetIsRandomGift() then
+                return { img = MAT_INFO, msg = "Contains a random gift!" }
+            end
+        end,
+    },
+
+    snuffles_present_spawn = {
+        desc = "Selects a random model for Snuffles presents.",
+        on_autowrap = function(_, _, args)
+            local presentModels = {
+                "models/katharsmodels/present/type-2/big/present.mdl",
+                "models/katharsmodels/present/type-2/big/present2.mdl",
+                "models/katharsmodels/present/type-2/big/present3.mdl"
+            }
+
+            args.giftbox:SetNW2String("snuffles_present_mdl", presentModels[math.random(#presentModels)])
+        end,
+
+        on_spawn = function(ent, _, args)
+            ent.Model = args.giftbox:GetNW2String("snuffles_present_mdl")
+        end,
+
+        gift_visuals = function(_, giftObj)
+            return giftObj:GetNW2String("snuffles_present_mdl")
+        end
+    },
+
+    slam_spawn = {
+        desc = "Sets the SLAM's placer on spawn to allow pickup.",
+        on_spawn = function(ent, ply)
+            ent:SetPlacer(ply)
+        end,
+
+        info = function(giftEnt, args)
+            local wrappedEnt = giftEnt:GetStoredGift()
+
+            if IsValid(wrappedEnt) then
+                return { img = MAT_WARN, msg = "Can be remotely detonated by the player who placed it!" }
+            end
+        end,
+    },
+
+    moonball_spawn = {
+        desc = "Selects a random skin for the Moonball and sets its owner.",
+        on_spawn = function(ent, ply)
+            local skindex = math.random(0, 18) -- awesome var name from the original addon
+
+            ent:SetSkin(skindex)
+            ent:SetMoonballSkin(skindex)
+            ent:SetNWEntity("MoonballOwner", ply)
+        end,
+    },
+
+    pog_set_role = {
+        desc = "Sets the role associated with a Live Pot of Greedier to the giftee's.",
+        on_spawn = function(ent, ply)
+            -- may be unnecessary?
+            ent:SetRole(ply:GetSubRole())
+        end,
+    },
+
+    pog_shard_role = {
+        desc = "Sets the role associated with a Shard of Greed to the giftee's, or Detective if giftee has no shop.",
+        on_spawn = function(ent, ply)
+            local gifteeRole = ply:GetSubRole()
+            local gifteeRoleData = utils.GetSubRoleData(gifteeRole)
+
+            if not gifteeRoleData or not gifteeRoleData:IsShoppingRole() then
+                ent.Role = ROLE_DETECTIVE
+            else
+                ent.Role = gifteeRole
+            end
+        end,
+    },
+
+    pap_setup = {
+        desc = "Makes PaP upgrade the type of weapon the player is using to open the gift (hands/holstered or crowbar).",
+        on_spawn = function(_, ply, args)
+            local giftObj = args.giftbox
+
+            local preferredWepName = giftObj:GetClass() == SWEP_CLASS_NAME and "weapon_ttt_unarmed" or "weapon_zm_improvised"
+            local preferredWep = ply:GetWeapon(preferredWepName)
+
+            if IsValid(preferredWep) and not preferredWep.PAPUpgrade then
+                ply:SelectWeapon(preferredWepName)
+                giftObj._UpgradeGiftWep = preferredWepName
+            else
+                ply:SelectWeapon("weapon_zm_improvised")
+                giftObj._UpgradeGiftWep = "weapon_zm_improvised"
+            end
+            TTTPAP:OrderPAP(ply, true)
+
+            -- note: copied from pap's OrderedEquipment hook (i would've called it directly,
+            --       but I need to know the old numeric ID EQUIP_PAP which somehow becomes nil over the namespace
+            timer.Simple(0.1, function()
+                if ply.RemoveEquipmentItem then
+                    ply:RemoveEquipmentItem("ttt2_pap_item")
                 else
-                    self:ModelHandler()
+                    ply.equipment_items = bit.bxor(ply.equipment_items, "ttt2_pap_item")
+                    ply:SendEquipment()
                 end
+            end)
+        end,
+
+        gift_desc = function(ent, giftObj)
+            if giftObj._UpgradeGiftWep == "weapon_zm_improvised" then
+                return "a fresh coat of paint for your crowbar"
+            elseif giftObj._UpgradeGiftWep == "weapon_ttt_unarmed" then
+                return "yellow bodypaint"
+            end
+        end,
+
+        can_spawn = function(_, _, ply)
+            -- player must have non-PaP crowbar or holstered
+            local foundUpgradeable = false
+
+            for _, wep in ipairs(ply:GetWeapons()) do
+                if IsValid(wep) and not wep.PAPUpgrade and wep:GetClass() == "weapon_zm_improvised"
+                  or wep:GetClass() == "weapon_ttt_unarmed" then
+                    foundUpgradeable = true
+                    break
+                end
+            end
+
+            if not foundUpgradeable then return false end
+        end,
+
+        info = function()
+            return { img = MAT_WARN, msg = "Upgrades Crowbar if opened via crowbar, or Holstered if opened in the player's hands." }
+        end,
+    },
+
+    sopd_spawn = {
+        desc = "Custom description for SoPD & nerfs ones spawned by Gift Wrap.",
+        on_purchase = function(_, _, args)
+            args.giftbox:SetNW2Bool("SwordBought", true) -- yeah this sucks i know
+        end,
+
+        on_spawn = function(ent, _, args)
+            if ent.SetGrabbedFromCorpse and not args.giftbox:GetNW2Bool("SwordBought") then
+                ent:SetGrabbedFromCorpse(true)
+            end
+        end,
+
+        gift_desc = function(_, _, ply)
+            if ply:SteamID64() == swordTarget.SID64 then
+                return "a sword meant just for you"
+            elseif swordTarget.name and swordTarget.name ~= "" then
+                if IsPlayer(swordTarget.player)
+                  and not utils.IsLivingPlayer(swordTarget.player) then
+                    return "a posthumous gift for "..swordTarget.name
+                else
+                    return "a gift for "..swordTarget.name
+                end
+            else
+                return "a loud sword"
+            end
+        end,
+
+        info = function(giftEnt)
+            if giftEnt:GetNW2Bool("SwordBought") then return end
+            local wrappedEnt = giftEnt:GetStoredGift()
+
+            if not IsValid(wrappedEnt) then
+                return { img = MAT_INFO, msg = "Doesn't grant speed boost." }
+            elseif not wrappedEnt:IsWeapon() or wrappedEnt:GetGrabbedFromCorpse() then
+                return { img = MAT_INFO, msg = "Doesn't grant speed boost nor destroys DNA on stab." }
             end
         end
     },
 
-    {   name = "ammo_reserve_txt_override",
-        addon = "TTT2 (Base)", icon = "vgui/ttt/icon_halp",
-        desc = "Overrides UI text methods to disable drawing reserve ammo for GiftWrap", realm = ChangeRealm.CLIENT,
-        identifier = "draw", category = ChangeCategory.Metatable,
-        original_keys = {"AdvancedText", "Text"},
-        apply = function(meta, og)
+    baron_hat_drop = {
+        desc = "Makes the Baron Hat properly drop when spawned.",
+        on_spawn = function(ent)
+            timer.Simple(0, function() ent:Drop() end)
+        end,
+    },
 
-            draw.AdvancedText = function(text, font, x, y, color, xalign, yalign, shadow, scale, angle)
-                if HUDManager.GetHUD() == "pure_skin" then
-                    text = GiftWrapAmmoTextFilter(text)
+    sandwich_spoil = {
+        desc = "Spoils sandwich after a short delay & notifies giftee.",
+        on_spawn = function(ent, ply)
+            local delay = math.random(2, 5)
+            ply:ChatPrint("Grab it while it's still fresh! ("..delay.." seconds)")
+
+            timer.Simple(delay, function()
+                if IsValid(ent) then
+                    ent:OnDrop()
                 end
+            end)
+        end,
+    },
 
-                og.AdvancedText(text, font, x, y, color, xalign, yalign, shadow, scale, angle)
+    shellmet_phys = {
+        desc = "Sets up physics for a newly spawned Shellmet entity.",
+        on_unwrap = function(ent, ply)
+            -- commented out: making the shellmet spawn auto-equipped
+            --if ply:HasEquipmentItem("item_ttt2_shellmet") then
+                -- lifted from addon
+            if not IsValid(ent:GetPhysicsObject()) then
+                ent:SetBeingWorn(false)
+                ent:SetUseType(SIMPLE_USE)
+                ent:PhysicsInit(SOLID_VPHYSICS)
+                ent:SetSolid(SOLID_VPHYSICS)
+                ent:SetMoveType(MOVETYPE_VPHYSICS)
             end
 
-            draw.Text = function(textData) -- used in weapon switcher
-                if HUDManager.GetHUD() == "old_ttt" then
-                    textData.text = GiftWrapAmmoTextFilter(textData.text)
-                end
+            --else
+            --    ent:WearHat(ply)
+            --end
+        end,
+    },
 
-                og.Text(textData)
+    amaterasu_buy = {
+        desc = "Prevents Amaterasu applying when bought for gift, and properly applies it on unwrap.",
+        on_purchase = function(_, ply)
+            ply:SetNWBool("TTTAmaterasu", false)
+        end,
+
+        on_unwrap = function(_, ply)
+            ply:SetNWBool("TTTAmaterasu", true)
+            SetGlobalBool("TTTAmaterasuBought", true)
+        end,
+    },
+
+    paper_plane_mass = {
+        desc = "Fixes Paper Planes having extreme speed when spawned by Gift Wrap.",
+        on_unwrap = function(ent)
+            local phys = ent:GetPhysicsObject()
+
+            -- otherwise it'll zoom at mach speed towards its target
+            if IsValid(phys) then
+                phys:SetMass(200)
+            end
+        end,
+    },
+
+    baron_hat_buy = {
+        desc = "Prevents Baron Hat being equipped when bought for gift.",
+        on_purchase = function(_, ply)
+            ply.baron_hat:Remove()
+            ply.baron_hat = nil
+            ply:RemoveEquipmentItem("item_ttt2_baron_hat")
+        end,
+    },
+
+    poison_station_desc = {
+        desc = "Reveals what the station is in its name/description for evil-role players.",
+        gift_desc = function(_, _, ply, args)
+            if PS2_Utils and PS2_Utils.IsMainEvil(ply) and not args.for_others then
+                return "a poisonous microwave"
+            else
+                return "a healing microwave"
+            end
+        end,
+
+        gift_name = function(_, _, ply)
+            if PS2_Utils and PS2_Utils.IsMainEvil(ply) then
+                return "Live Poison Station"
+            else
+                return "Live Health Station"
+            end
+        end,
+    },
+
+    giftwrap_desc = {
+        desc = "Matches description of Gift Wrap with whether it stores a gift. Note that wrapping a Gift Wrap SWEP with a gift in it (as opposed to a Gift SENT) is normally impossible.",
+        gift_desc = function(ent)
+            if ent.HasGift and ent:HasGift() then
+                return "another gift"
+            else
+                return "more wrapping paper"
             end
         end
     },
 
-    {   name = "ammo_hud_override",
-        addon = "TTT2 (PureSkin HUD)", icon = "vgui/ttt/icon_halp",
-        desc = "Overrides UI method to make Gift Wrap ammo bar fancier", realm = ChangeRealm.CLIENT,
-        identifier = "pure_skin_element", category = ChangeCategory.HUD, --pure_skin_playerinfo (debug) => base pure_skin_element (release)
-        original_keys = {"DrawBar"},
-        apply = function(hud, og)
+    tesla_bolt_wrap = {
+        desc = "Allows wrapping & spawning Tesla Bow bolts.",
+        on_wrap = function(ent)
+            ent._OGTouch = ent.Touch
+            ent.Touch = function() end
+            ent:NextThink(CurTime() + 1e9)
+            ent.Impact = 0
+        end,
 
-            hud.BulletIcons["wrap_paper"] = Material("vgui/ttt/wrap_ammo")
+        on_spawn = function(ent, ply)
+            ent:SetPos(ply:GetShootPos())
+            ent:SetAngles(ply:EyeAngles() + Angle( 90, 0, 0))
+            ent:SetGravity(math.random(0.5, 0.8))
 
-            hud.DrawBar = function(self, x, y, width, height, col, progress, scale, text)
-                -- note: may be used regarldess of HUD by the Advanced Spectator addon (which bases off pure_skin)
-                if col.r == 238 and col.g == 151 and col.b == 0 then
-                    local ply = GetUIPlayer()
+            util.SpriteTrail(ent, 0, Color(255, 155, 0), false, 20, 0, 0.6, 0.1, "trails/laser")
+        end,
 
-                    if utils.IsLivingPlayer(ply) then
-                        local wep = ply:GetActiveWeapon()
+        on_unwrap = function(ent, ply)
+            ent:SetNoDraw(true)
+            ent:SetMoveType(MOVETYPE_VPHYSICS)
+            ent:SetOwner(ply)
 
-                        if utils.IsGiftWrap(wep) then -- change ammo bar colors
-                            local giftColor = UnpackColor(wep:GetGiftBoxColor())
-                            giftColor.r = math.min(200, math.max(75, giftColor.r))
-                            giftColor.g = math.min(200, math.max(75, giftColor.g))
-                            giftColor.b = math.min(200, math.max(75, giftColor.b))
-
-                            og.DrawBar(self, x, y, width, height, giftColor, progress, scale, text)
-                            local paperOnUndo = GiftWrapGetPaperOnUndo(wep, ply)
-
-                            if paperOnUndo then
-                                local undoProgress = paperOnUndo / wep:GetMaxClip1()
-
-                                local diffW = math.Round((progress - undoProgress) * width)
-                                local diffX = x + math.Round(progress * width) - diffW
-
-                                if undoProgress > 0 then
-                                    local alpha = (math.sin(CurTime()*2.5) + 1) * 50 -- (this is half the max alpha)
-                                    surface.SetDrawColor(0, 0, 0, alpha)
-                                else
-                                    surface.SetDrawColor(0, 0, 0, 100)
-                                end
-
-                                surface.DrawRect(diffX, y, diffW, height)
-                            end
-
-                            return
-                        end
-                    end
-                end
-
-                og.DrawBar(self, x, y, width, height, col, progress, scale, text)
-            end
-        end
-    },
-
-    {   name = "old_hud_overrides",
-        addon = "TTT2 (old_ttt HUD)", icon = "vgui/ttt/icon_halp",
-        desc = "Overrides UI methods to make Gift Wrap ammo bar fancier", realm = ChangeRealm.CLIENT,
-        identifier = "old_ttt_element", category = ChangeCategory.HUD,  -- old_ttt_info (debug) => base old_ttt_element (release)
-        original_keys = {"ShadowedText", "PaintBar"},
-        apply = function(hud, og)
-
-            hud.ShadowedText = function(self, text, font, x, y, color, xalign, yalign)
-                if HUDManager.GetHUD() == "old_ttt" then
-                    text = GiftWrapAmmoTextFilter(text)
-                end
-
-                og.ShadowedText(self, text, font, x, y, color, xalign, yalign)
+            if not ent.origin then
+                ent.origin = ent
+                ent.dmg = 60
             end
 
-            hud.PaintBar = function(self, x, y, width, height, colors, value)
-                if HUDManager.GetHUD() == "old_ttt" and colors.fill.r == 205
-                  and colors.fill.g == 155 and colors.fill.b == 0 then
-                    local ply = LocalPlayer()
+            timer.Simple(0, function()
+                ent:NextThink(CurTime())
 
-                    if utils.IsLivingPlayer(ply) then
-                        local wep = ply:GetActiveWeapon()
-
-                        if utils.IsGiftWrap(wep) then -- change ammo bar colors
-                            local paperOnUndo = GiftWrapGetPaperOnUndo(wep, ply)
-
-                            if paperOnUndo then
-                                og.PaintBar(self, x, y, width, height, colors, value)
-                                local undoVal = paperOnUndo / wep:GetMaxClip1()
-
-                                local diffW = math.Round((value - undoVal) * width)
-                                local diffX = x + math.Round(value * width) - diffW
-
-                                if undoVal > 0 then
-                                    local alpha = (math.sin(CurTime()*2.5) + 1) * 50
-                                    surface.SetDrawColor(0, 0, 0, alpha)
-                                else
-                                    surface.SetDrawColor(0, 0, 0, 100)
-                                end
-
-                                surface.DrawRect(diffX, y, diffW, height)
-                                return
-                            end
-                        end
-                    end
+                if ent._OGTouch then
+                    ent.Touch = ent._OGTouch
                 end
-
-                og.PaintBar(self, x, y, width, height, colors, value)
-            end
-        end
+            end)
+        end,
     },
 }
 
--- Add similar fixes for COD perk bottles
-local perkItems = {
-    doubletap = "Doubletap Root Beer",
-    juggernog = "Juggernog",
-    phd = "PHD Flopper",
-    speedcola = "Speed Cola",
-    staminup = "Stamin-Up",
-}
+function utils.ApplyAdjustments(event, ent, ply, adjs, giftObj)
+    if not adjs then return end
+    local ret
 
-for itemID, itemName in pairs(perkItems) do
-    table.insert(initChanges, {
-        name = itemID.."_wrap_fix",
-        addon = itemName, icon = "vgui/ttt/ic_"..itemID,
-        desc = "Prevent effects happening when buying for gift", realm = ChangeRealm.SERVER,
-        identifier = "item_ttt_"..itemID, category = ChangeCategory.Item,
-        original_keys = {"Bought"},
-        apply = function(item, og)
+    for name, defaultArgs in pairs(adjs) do
+        local adjData = utils.adjustments[name]
+        local eventName = (type(event) == "table") and event.name or event
 
-            item.Bought = function(self, ply)
-                if not ply._gwInOptMenu then
-                    og.Bought(self, ply)
-                end
-            end
-        end
-    })
-end
+        if adjData and adjData["on_"..eventName] then
+            local args = utils.PrepareArgs(defaultArgs)
+            args.is_undo = event.state
+            args.giftbox = giftObj
 
--- Add cvars for toggling each change
-for _, change in ipairs(initChanges) do
-    utils.Cvar("ttt2_giftwrap_tweak_"..change.name, 1, 0, 1, "[Tweak for "..change.addon.."] "..change.desc)
-end
-
-
---------------------------------
---------------------------------
--- Apply all third-party changes
-local function GetBaseMeta(change)
-    if change.category == ChangeCategory.SENT then
-        local baseMeta = scripted_ents.GetStored(change.identifier)
-        return baseMeta and baseMeta.t or nil
-
-    elseif change.category == ChangeCategory.SWEP then
-        return weapons.GetStored(change.identifier)
-
-    elseif change.category == ChangeCategory.Item then
-        return items.GetStored(change.identifier)
-
-    elseif change.category == ChangeCategory.None then
-        return true
-
-    elseif change.category == ChangeCategory.Meta then
-        return FindMetaTable(change.identifier)
-
-    elseif change.category == ChangeCategory.Metatable then
-        return _G[change.identifier]
-
-    elseif change.category == ChangeCategory.HUD then
-        return hudelements.GetStored(change.identifier)
-    end
-end
-
-hook.Add("PostInitialize", INIT_FIXES_HOOK, function()
-    if SERVER and not dbg.Cvar:GetBool() then
-        print("[Notice] Gift Wrap is applying "..#initChanges.." changes to make third party addons work better with itself.")
-        print("         To see a full list of changes instead of this notice, turn on the ttt2_giftwrap_debug cvar.")
-        print("         You can also toggle them in Gift Wrap's settings menu if necessary.")
-    end
-
-    for i, change in ipairs(initChanges) do
-        if change.realm.val and GetConVar("ttt2_giftwrap_tweak_"..change.name):GetBool() then
-            local baseMeta = GetBaseMeta(change)
-
-            if baseMeta then
-                dbg.Log("[Change #" .. i .. "] " ..change.addon.. ": " .. change.desc)
-
-                if change.category then
-                    -- store original functions of addon overriden by Gift Wrap
-                    -- for idempotency when debugging changes
-                    if change.original_keys and not GW_InitChangesCache[change.name] then
-                        GW_InitChangesCache[change.name] = {}
-
-                        for _, key in ipairs(change.original_keys) do
-                            GW_InitChangesCache[change.name][key] = baseMeta[key]
-                        end
-                    end
-
-                    change.apply(baseMeta, GW_InitChangesCache[change.name])
-                else
-                    change.apply()
-                end
+            local retEnt = adjData["on_"..eventName](ent, ply, args)
+            if retEnt and not IsValid(ret) then
+                ret = retEnt
             end
         end
     end
 
-    print("Loaded all " ..#initChanges.. " third-party adjustments.")
-end)
+    return ret
+end
 
--- List changes in addon's settings menu
-function GiftWrapThirdPartySettings(parent)
-    local form = vgui.CreateTTT2Form(parent, "label_giftwrap_tweaks_form")
+function utils.AdjustmentRun(func, ent, adjs, giftObj, ply, args)
+    if not adjs then return end
 
-    form:MakeHelp({
-        label = "label_giftwrap_tweaks_desc"
-    })
+    for name, defaultArgs in pairs(adjs) do
+        local adjData = utils.adjustments[name]
 
-    local boxTall = 48
-    local boxPad = 3
-    local checkBoxTall = 32
-    local cvarTall = 24
-    local materialReset = Material("vgui/ttt/vskin/icon_reset")
-
-    for _, change in ipairs(initChanges) do
-        if GetBaseMeta(change) then
-            local changeBox = vgui.Create("DPanel", form)
-            changeBox:Dock(TOP)
-            changeBox:DockMargin(10, 5, 10, 2)
-            changeBox:DockPadding(boxPad, boxPad, boxPad, 0)
-            changeBox:SetTall(boxTall + (change.cvars and (cvarTall*1.1) * #change.cvars or 0))
-
-            changeBox.Paint = function(self, w, h)
-                draw.RoundedBox(8, 0, 0, w, h, util.GetChangedColor(vskin.GetBackgroundColor(), 20))
-            end
-
-            local iconSize = boxTall - boxPad
-            local iconWrap = vgui.Create("DPanel", changeBox)
-            iconWrap:Dock(LEFT)
-            iconWrap:DockMargin(8, 0, 0, 0)
-            iconWrap:DockPadding(0, 0, 0, 0)
-            iconWrap:SetWide(iconSize)
-            iconWrap.Paint = nil
-
-            local icon = vgui.Create("DImage", iconWrap)
-            icon:SetSize(iconSize, iconSize)
-            icon:SetImage(change.icon or "vgui/ttt/menu/icon_question")
-            if change.cvars then
-                icon:SetPos(0, (changeBox:GetTall() - iconSize) * 0.5)
-            end
-
-            local content = vgui.Create("DPanel", changeBox)
-            content:Dock(FILL)
-            content:DockMargin(8, 0, 1, boxPad)
-            content.Paint = nil
-
-            local titleRow = vgui.Create("DPanel", content)
-            titleRow:Dock(TOP)
-            titleRow:SetTall(16)
-            titleRow:DockMargin(0, 0, 0, 2)
-            titleRow.Paint = nil
-
-            local addonName = vgui.Create("DLabel", titleRow)
-            addonName:Dock(LEFT)
-            addonName:SetText(change.addon)
-            addonName:SetFont("DermaDefaultBold")
-            addonName:SetTextColor(Color(180, 180, 180))
-            addonName:SizeToContents()
-
-            local info = ""
-            if change.category then
-                info = info.." • "..change.category
-            end
-            info = info.." • "..change.realm.name
-
-            local rightText = vgui.Create("DLabel", titleRow)
-            rightText:Dock(LEFT)
-            rightText:SetText(info)
-            rightText:SetFont("DermaDefault")
-            rightText:SetTextColor(Color(120, 120, 120))
-            rightText:SizeToContents()
-            rightText:SetPos(addonName:GetWide() + 6, 0)
-
-            local toggleRow = vgui.Create("DPanel", content)
-            toggleRow:Dock(TOP)
-            toggleRow.Paint = nil
-
-            local toggle = vgui.Create("DCheckBoxLabelTTT2", toggleRow)
-            toggle:Dock(FILL)
-            toggle.roundedCorner = true
-
-            local toggleReset = vgui.Create("DButtonTTT2", toggleRow)
-            toggleReset:SetText("button_default")
-            toggleReset:SetWide(boxTall - boxPad - 18)
-            toggleReset.Paint = function(slf, w, h)
-                derma.SkinHook("Paint", "FormButtonIconTTT2", slf, w-3, h)
-                return true
-            end
-            toggleReset.iconMaterial = materialReset
-            toggleReset.roundedCorner = true
-            toggleReset:Dock(RIGHT)
-
-            toggle:SetResetButton(toggleReset)
-            toggle:SetServerConVar("ttt2_giftwrap_tweak_"..change.name)
-            toggle:SetText(change.desc)
-
-            if change.cvars then
-                local controls = {}
-
-                for _, cv in ipairs(change.cvars) do
-                    local cvBox = vgui.Create("DPanel", content)
-                    cvBox:Dock(TOP)
-                    cvBox:DockMargin(0, 2, 3, 0)
-                    cvBox.Paint = nil
-
-                    local left = vgui.Create("DLabelTTT2", cvBox)
-                    left:SetText(cv:GetHelpText())
-                    left.Paint = function(slf, w, h)
-                        derma.SkinHook("Paint", "FormLabelTTT2", slf, w, h)
-                        return true
-                    end
-                    left:Dock(LEFT)
-                    left:SetWide(425)
-
-                    local right = vgui.Create("DNumSliderTTT2", cvBox)
-                    right:SetMinMax(cv:GetMin(), cv:GetMax())
-                    right:SetDecimals(0)
-                    right:Dock(FILL)
-                    right:SetValue(cv:GetFloat())
-                    right:SetServerConVar(cv:GetName())
-
-                    local reset = vgui.Create("DButtonTTT2", cvBox)
-                    reset:SetText("button_default")
-                    reset:SetWide(cvarTall)
-                    reset.Paint = function(slf, w, h)
-                        derma.SkinHook("Paint", "FormButtonIconTTT2", slf, w, h)
-                        return true
-                    end
-                    reset.iconMaterial = materialReset
-                    reset.roundedCorner = true
-                    reset:Dock(RIGHT)
-                    right:SetResetButton(reset)
-
-                    local cvarEnabled = GetConVar("ttt2_giftwrap_tweak_"..change.name):GetBool()
-                    right.Slider:SetEnabled(cvarEnabled)
-                    reset:SetEnabled(cvarEnabled)
-                    table.insert(controls, right.Slider)
-                    table.insert(controls, reset)
-                end
-
-                local ogOnChange = toggle.OnChange
-                toggle.OnChange = function(self, val)
-                    ogOnChange(self, val)
-
-                    for _, ctrl in ipairs(controls) do
-                        ctrl:SetEnabled(val)
-                    end
-                end
-            end
+        if adjData and adjData[func] then
+            return adjData[func](ent, giftObj, ply, args)
         end
     end
 end
 
--- used when debugging only
---hook.GetTable()["PostInitialize"][INIT_FIXES_HOOK]()
+function utils.PrepareArgs(baseArgs)
+    local args = {}
+
+    if type(baseArgs) == "table" then -- create copy
+        for k, v in pairs(baseArgs) do
+            args[k] = v
+        end
+    else
+        args.val = baseArgs
+    end
+
+    return args
+end
+
+function utils.CollectInfo(giftData, giftEnt)
+    if not giftData then
+        giftData = GetGiftDataFromLabel(giftEnt:GetCachedDataLabel())
+    end
+
+    local info = {}
+    local cantUndo = giftEnt:IsWeapon() and (not giftEnt:HasGift() or giftEnt:GetIsOpening()
+      or giftEnt:GetPaperOnUndo() <= 0 or not giftEnt:OwnedByWrapper() or giftEnt:GetIsRandomGift())
+
+    if giftData then
+        if giftData.adjustments then
+            for name, defaultArgs in pairs(giftData.adjustments) do
+                local adjData = utils.adjustments[name]
+
+                if adjData and adjData.info then
+                    local args = utils.PrepareArgs(defaultArgs)
+                    args.cant_undo = cantUndo
+
+                    local newInfo = adjData.info(giftEnt, args)
+                    if newInfo then
+                        table.insert(info, newInfo)
+                    end
+                end
+            end
+        end
+
+        if giftData.category == GiftCategory.Ragdoll then
+            local wrappedEnt = giftEnt:GetStoredGift()
+
+            if not giftData.disable_flies or CORPSE.IsValidBody(wrappedEnt) then
+                table.insert(info, utils.adjustments.produce_flies.info(giftEnt))
+            end
+        end
+    end
+
+    return info
+end

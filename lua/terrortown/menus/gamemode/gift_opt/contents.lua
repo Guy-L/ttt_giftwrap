@@ -79,8 +79,9 @@ local function SetModelImage(dImage, giftEnt, giftData)
     local wrappedEnt = giftEnt:GetStoredGift()
     local entModel
 
-    if giftData and giftData.visual_override then
-        local override = giftData.visual_override
+    if giftData and giftData.adjustments and type(giftData.adjustments.visual_override) == "table" then
+        local override = giftData.adjustments.visual_override
+
         if override.type == "model" then
             entModel = override.path
 
@@ -232,7 +233,7 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
         surface.DrawRect(0, 0, w, h)
     end
     curContents:Dock(TOP)
-    curContents:DockMargin(curcont_pad, curcont_pad, curcont_pad, curcont_pad)
+    curContents:DockMargin(curcont_pad, curcont_pad, curcont_pad, 0)
     curContents:SetTall(giftData and 175 or 100)
 
     -- HEADER
@@ -331,6 +332,60 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
             sizeLine:DockMargin(0, 0, 0, 2)
         end
     end
+
+    -- BELOW: custom behavior info/warning
+    for _, info in ipairs(utils.CollectInfo(giftData, giftEnt)) do
+        local infoPanel = vgui.Create("DPanel", parent)
+        infoPanel:SetPaintBackground(true)
+        infoPanel.Paint = function(self, w, h)
+            surface.SetDrawColor(60, 60, 65, 255)
+            surface.DrawRect(0, 0, w, h)
+            surface.SetDrawColor(curcont_bg)
+            surface.DrawRect(0, 0, w, 1)
+        end
+        infoPanel:SetTall(35)
+        infoPanel:DockMargin(curcont_pad, 0, curcont_pad, 0)
+        infoPanel:Dock(TOP)
+
+        -- warn/info icon
+        local iconPanel = vgui.Create("DPanel", infoPanel)
+        iconPanel:DockMargin(5, 1, 3, 0)
+        iconPanel:Dock(LEFT)
+        iconPanel:SetWide(35)
+        iconPanel.Paint = nil
+        --dbg.HighlightUI(iconPanel)
+
+        local icon = vgui.Create("DImage", iconPanel)
+        icon:SetImage(info.img)
+        icon:SetSize(20, 20)
+
+        icon.PerformLayout = function(self)
+            local pw, ph = self:GetParent():GetSize()
+            self:SetPos((pw - self:GetWide()) / 2, (ph - self:GetTall()) / 2)
+        end
+
+        -- message
+        local textPanel = vgui.Create("DLabel", infoPanel)
+        textPanel:Dock(FILL)
+        textPanel:SetWrap(true)
+        textPanel:SetFont("DermaDefaultBold")
+        textPanel:SetText(info.msg)
+        textPanel:SetTall(30)
+
+        -- update
+        if info.fn then
+            infoPanel.Think = function(self)
+                local newInfo = info.fn(giftEnt)
+
+                icon:SetImage(newInfo.img)
+                textPanel:SetText(newInfo.msg)
+            end
+        end
+    end
+
+    local spacer = vgui.Create("Panel", parent)
+    spacer:SetTall(curcont_pad)
+    spacer:Dock(TOP)
 end
 
 function FancyLine(parent, leftGrayText, mainText, rightGrayText, highlightColor, font)
@@ -423,7 +478,7 @@ function CLGAMEMODESUBMENU:Populate(parent)
         dropBtn:SetEnabled(false)
         dropBtn:SetTooltip(TL("gift_opt_change_form_drop_error_paper"))
 
-    elseif not gwRef:OwnedByWrapper(owner) or gwRef:GetIsRandomGift() then
+    elseif not gwRef:OwnedByWrapper() or gwRef:GetIsRandomGift() then
         dropBtn:SetEnabled(false)
         dropBtn:SetTooltip(TL("gift_opt_change_form_drop_error_random"))
     end

@@ -6,8 +6,9 @@ function GW_DBG.Inspect(obj, noMeta)
     if not GW_DBG.Cvar:GetBool() then return end
     GW_DBG.Log(obj, ", of type "..type(obj))
 
-    if obj and not (type(obj) == "number") then
-        if type(obj) == "table" then
+    local objType = type(obj)
+    if obj and not (objType == "number" or objType == "boolean") then
+        if objType == "table" then
             PrintTable(obj)
 
         elseif obj.GetTable and obj:GetTable() then
@@ -294,6 +295,7 @@ function GW_Utils.IsMapClass(ent)
         or class == "func_tracktrain"
         or class == "func_water_analog"
         or class == "func_wall"
+        or class == "entity_blocker"
         or class == "fish"
         or class == "phys_bone_follower"
         or class == "ttt_traitor_button"

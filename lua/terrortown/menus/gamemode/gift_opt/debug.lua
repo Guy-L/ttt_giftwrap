@@ -79,6 +79,16 @@ function CLGAMEMODESUBMENU:Populate(parent)
         end
     end
 
+    local fullAmmoBtn = debugForm:MakeButton({
+        label = "gift_opt_debug_form_ammo_refill_desc",
+        buttonLabel = "gift_opt_debug_form_ammo_refill",
+        OnClick = function(slf)
+            net.Start(GIFTWRAP_REFILL_AMMO_MSG)
+            net.WriteEntity(gwRef)
+            net.SendToServer()
+        end
+    })
+
     local deleteBtn = debugForm:MakeButton({
         label = "gift_opt_debug_form_delete_desc",
         buttonLabel = "gift_opt_debug_form_delete",

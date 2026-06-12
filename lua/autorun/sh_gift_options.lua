@@ -9,6 +9,7 @@ GIFTWRAP_UPDATE_NOTE_MSG    = "TTT_GiftWrapCL_UpdateNoteMsg"
 GIFTWRAP_DELETE_SELF_MSG    = "TTT_GiftWrapCL_DebugDeleteSelfMsg"
 GIFTWRAP_REMOVE_WRAPPER_MSG = "TTT_GiftWrapCL_DebugRemoveWrapperTagMsg"
 GIFTWRAP_DBG_SELECT_MSG     = "TTT_GiftWrapCL_DebugSelectGiftLabelMsg"
+GIFTWRAP_REFILL_AMMO_MSG    = "TTT_GiftWrapCL_DebugRefillAmmoMsg"
 
 local GIFTWRAP_CLEAR_BUY_MSG   = "TTT_GiftWrapSV_ClearGiftBoughtFlag"
 local GIFTWRAP_CLOSE_DMS_MSG   = "TTT_GiftWrapSV_CloseDeathMatchShop"
@@ -27,9 +28,14 @@ if CLIENT then
 
     function OpenGiftOptions(gw)
         if IsValid(HELPSCRN._gwOptMenu) then return end
-        local peekMode = not utils.IsLivingPlayer(LocalPlayer())
-        local navWidth    = peekMode and 0 or 175
-        local frameHeight = peekMode and 275 or 500
+        local frameHeight = 500
+        local navWidth    = 175
+
+        if not utils.IsLivingPlayer(LocalPlayer()) then
+            local info = utils.CollectInfo(nil, gw)
+            frameHeight = 275 + 34 * #info
+            navWidth = 0
+        end
 
         dbg.Log("Opening gift options...")
         HELPSCRN._gwRef = gw -- Make gift reference global for menu (bad but idk)
@@ -185,6 +191,7 @@ elseif SERVER then
     util.AddNetworkString(GIFTWRAP_UPDATE_GIFTEE_MSG)
     util.AddNetworkString(GIFTWRAP_UPDATE_NOTE_MSG)
     util.AddNetworkString(GIFTWRAP_DELETE_SELF_MSG)
+    util.AddNetworkString(GIFTWRAP_REFILL_AMMO_MSG)
     util.AddNetworkString(GIFTWRAP_REMOVE_WRAPPER_MSG)
     util.AddNetworkString(GIFTWRAP_DBG_SELECT_MSG)
     util.AddNetworkString(GIFTWRAP_IN_OPTS_MSG)
@@ -267,6 +274,15 @@ elseif SERVER then
         end
     end)
 
+    net.Receive(GIFTWRAP_REFILL_AMMO_MSG, function(len, ply)
+        local giftEnt = net.ReadEntity()
+        if not IsValid(giftEnt) then return end
+        if not dbg.AllowDebugMenu() then return end
+
+        giftEnt:SetRemainingPaper(100)
+        giftEnt:UpdateAmmo("debug refill", 100)
+    end)
+
     net.Receive(GIFTWRAP_IN_OPTS_MSG, function(len, ply)
         ply._gwInOptMenu = net.ReadBool()
     end)
@@ -294,10 +310,12 @@ elseif SERVER then
             local newLabel, newData = GetItemGiftData(equipmentName)
             wrapEnt:AutoWrap(newLabel, newData)
             ply:RemoveEquipmentItem(equip)
-            newData:ApplyPostGiftPurchaseAdjustments(ply)
+            newData:ApplyPostGiftPurchaseAdjustments(wrapEnt, ply)
 
         else
+            local newLabel, newData = GetEntGiftData(equip, true)
             wrapEnt:AutoWrap(GetSWEPGiftData(equipmentName))
+            newData:ApplyPostGiftPurchaseAdjustments(wrapEnt, ply)
 
             if equipmentName ~= SWEP_CLASS_NAME then
                 equip:Remove()

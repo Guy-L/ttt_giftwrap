@@ -205,6 +205,7 @@ function ENT:GetGiftScale()
     if not giftData then
         dbg.Log("[WARNING] Gift prop has no valid data attached; using default size; label: '"..giftLabel.."'")
     end
+
     return giftData and giftData:GetSize(self) or 1.5
 end
 
@@ -826,6 +827,15 @@ elseif CLIENT then
             local dist = mvData:GetEntityDistance()
             if dist < 150 then return end
 
+            local giftLabel = ent:GetCachedDataLabel()
+            if giftLabel == "c4" then -- special exception
+                local wrappedEnt = ent:GetStoredGift()
+
+                if IsValid(wrappedEnt) and wrappedEnt:GetArmed() then
+                    return
+                end
+            end
+
             mvData:AddIcon(MAT_GIFT_ICON, Color(150, 150, 150))
             mvData:EnableText()
 
@@ -837,6 +847,11 @@ elseif CLIENT then
             else
                 mvData:SetTitle(utils.TL("gift_mv_wrapper"))
             end
+
+            local giftData  = GetGiftDataFromLabel(giftLabel)
+            mvData:AddDescriptionLine(LANG.GetParamTranslation("gift_mv_wrapper_contents", {
+                content = giftData:GetName(ent, LocalPlayer())
+            }))
 
             mvData:AddDescriptionLine(LANG.GetParamTranslation("marker_vision_distance", {
                 distance = util.DistanceToString(dist, 1)

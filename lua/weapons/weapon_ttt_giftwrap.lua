@@ -137,12 +137,14 @@ if SERVER then
         end
 
         local override_classes = {
+            "cannon_ent",
             "ttt_chicken",
             "force_shield",
             "ent_fortnitestructure",
             "glue_trap_paste",
             "hwapoon_arrow",
             "ttt_kfc",
+            "ttt_knife_proj",
             "item_lethal_company_landmine",
             "ttt_seekgull_bird",
             "ttt_soap",
@@ -163,6 +165,7 @@ if SERVER then
             "prop_physics_override",
             "prop_sphere",
             "ads", -- blocked later (affixed)
+            "sent_ball",
             "npc_barnacle",
             "ent_ttt_ttt2_camera", -- blocked later (affixed)
             "cannon_ent",
@@ -221,6 +224,7 @@ if SERVER then
             "ttt_soap",
             "ttt_springmine",
             "plasma_burster_nade",
+            "sent_teslabow_arrow",
             "npc_turret_floor",
             "ttt_wormhole",
             "ttt_zombieball_proj",

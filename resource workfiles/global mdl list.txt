@@ -3700,7 +3700,7 @@ models/props_c17/canisterchunk02k.mdl
 models/props_c17/canisterchunk02l.mdl
 models/props_c17/canisterchunk02m.mdl
 models/props_c17/cashregister01a.mdl
-models/props_c17/chair02a.mdl
+[supported] models/props_c17/chair02a.mdl
 models/props_c17/chair_kleiner03a.mdl
 [supported] models/props_c17/chair_office01a.mdl
 models/props_c17/chair_stool01a.mdl
@@ -3760,7 +3760,7 @@ models/props_c17/furnitureshelf001b.mdl
 models/props_c17/furnitureshelf002a.mdl
 models/props_c17/furnituresink001a.mdl
 models/props_c17/furniturestove001a.mdl
-models/props_c17/furnituretable001a.mdl
+[supported] models/props_c17/furnituretable001a.mdl
 [supported] models/props_c17/furnituretable002a.mdl
 models/props_c17/furnituretable003a.mdl
 models/props_c17/furnituretoilet001a.mdl
@@ -6105,7 +6105,7 @@ models/props_vehicles/carparts_axel01a.mdl
 models/props_vehicles/carparts_door01a.mdl
 models/props_vehicles/carparts_muffler01a.mdl
 [supported] models/props_vehicles/carparts_tire01a.mdl
-models/props_vehicles/carparts_wheel01a.mdl
+[supported] models/props_vehicles/carparts_wheel01a.mdl
 models/props_vehicles/deliveryvan.mdl
 models/props_vehicles/deliveryvan_glass.mdl
 models/props_vehicles/generatortrailer01.mdl
@@ -6145,7 +6145,7 @@ models/props_vents/vent_small_corner002.mdl
 models/props_vents/vent_small_straight002.mdl
 
 models/props_wasteland/antlionhill.mdl
-models/props_wasteland/barricade001a.mdl
+[supported] models/props_wasteland/barricade001a.mdl
 models/props_wasteland/barricade001a_big.mdl
 models/props_wasteland/barricade001a_chunk01.mdl
 models/props_wasteland/barricade001a_chunk02.mdl
