@@ -307,7 +307,7 @@ function CreateCurrentContentsBox(giftEnt, giftData, parent)
     else
         local desc
         if giftData then
-            local giftDesc = giftData:GetDesc(giftEnt, player)
+            local giftDesc = giftData:GetDesc(giftEnt, player, false, true)
             desc = FancyLine(textPanel, "It's ", giftDesc, giftData.autoGen and "! (auto-generated)" or "!")
         else
             desc = FancyLine(textPanel, "Go find something they'll ", "love", "!")

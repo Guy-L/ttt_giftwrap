@@ -1431,6 +1431,63 @@ utils.adjustments = {
             end)
         end,
     },
+
+    holy_watermelon_detect = {
+        desc = "Detection function for the Holy Watermelon on ttt_sky_resort.",
+        detect = function(ent, _, _, _, args)
+            local children = ent:GetChildren()
+
+            if #children == 1 and children[1]:GetName() == "godcrown" then
+                return args.is_holy
+            end
+        end,
+    },
+
+    turtle_cap_desc = {
+        desc = "Renders heart emoji in Plush Turtle Cap description if possible.",
+        gift_desc = function(_, _, _, args)
+            local customChatEnable = GetConVar("custom_chat_enable")
+
+            if not args.for_menu and customChatEnable and customChatEnable:GetBool() then
+                return "an \"I :heart: Turtle\" cap"
+            else
+                return "an \"I Love Turtle\" cap"
+            end
+        end,
+    },
+
+    rollermine_mute = {
+        desc = "Mutes Rollermine for clients while wrapped.",
+        on_wrap = function(ent)
+            ent:StopSound("npc/roller/mine/combine_mine_active_loop1.wav")
+            ent:StopSound("npc/roller/mine/rmine_movefast_loop1.wav")
+            ent:StopSound("npc/roller/mine/rmine_moveslow_loop1.wav")
+            ent:StopSound("npc/roller/mine/rmine_seek_loop2.wav")
+        end,
+    },
+
+    cscanner_mute = {
+        desc = "Mutes City Scanner for clients while wrapped.",
+        on_wrap = function(ent)
+            ent:StopSound("npc/scanner/cbot_fly_loop.wav")
+            ent:StopSound("npc/scanner/combat_scan_loop1.wav")
+            ent:StopSound("npc/scanner/combat_scan_loop2.wav")
+            ent:StopSound("npc/scanner/combat_scan_loop4.wav")
+            ent:StopSound("npc/scanner/combat_scan_loop6.wav")
+            ent:StopSound("npc/scanner/scanner_combat_loop1.wav")
+            ent:StopSound("npc/scanner/scanner_scan_loop1.wav")
+            ent:StopSound("npc/scanner/scanner_scan_loop2.wav")
+        end,
+    },
+
+    secret_formula_detect = {
+        desc = "Detection function for the Secret Formula on ttt_bikinibottom.",
+        detect = function(ent, _, _, _, args)
+            if ent:GetName() == "secretformula" then
+                return args.is_secret
+            end
+        end,
+    },
 }
 
 function utils.ApplyAdjustments(event, ent, ply, adjs, giftObj)
@@ -1463,7 +1520,7 @@ function utils.AdjustmentRun(func, ent, adjs, giftObj, ply, args)
         local adjData = utils.adjustments[name]
 
         if adjData and adjData[func] then
-            return adjData[func](ent, giftObj, ply, args)
+            return adjData[func](ent, giftObj, ply, args, defaultArgs)
         end
     end
 end

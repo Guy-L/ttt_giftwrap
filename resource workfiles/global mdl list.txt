@@ -122,7 +122,7 @@ models/h1lch.mdl
 models/headcrab.mdl
 models/headcrabblack.mdl
 models/headcrabclassic.mdl
-models/healthvial.mdl
+[supported] models/healthvial.mdl
 models/hl1bar.mdl
 models/hl1barnacle.mdl
 models/hl1gman.mdl
@@ -142,7 +142,7 @@ models/kleiner_monitor.mdl
 models/kleiner_post_ep1.mdl
 models/kleiner_post_ep2.mdl
 models/kleiner_postures.mdl
-models/lamarr.mdl
+[supported] models/lamarr.mdl
 models/leech.mdl
 models/m_anm.mdl
 models/magnusson.mdl
@@ -169,7 +169,7 @@ models/police.mdl
 models/police_animations.mdl
 models/police_cheaple.mdl
 models/police_ss.mdl
-models/roller.mdl
+[supported] models/roller.mdl
 models/roller_spikes.mdl
 models/roller_vehicledriver.mdl
 [supported] models/seagull.mdl
@@ -523,8 +523,8 @@ models/fan/ent_fan/ent_fan.mdl
 
 models/fan/w_fan/w_fan.mdl
 
-models/food/burger.mdl
-models/food/hotdog.mdl
+[supported] models/food/burger.mdl
+[supported] models/food/hotdog.mdl
 
 
 
@@ -1409,7 +1409,7 @@ models/items/ammocrate_buckshot.mdl
 models/items/ammocrate_grenade.mdl
 models/items/ammocrate_pistol.mdl
 models/items/ammocrate_rockets.mdl
-models/items/ammocrate_smg1.mdl
+[supported] models/items/ammocrate_smg1.mdl
 models/items/ammocrate_smg2.mdl
 models/items/ar2_grenade.mdl
 models/items/battery.mdl
@@ -1425,7 +1425,7 @@ models/items/crossbowrounds.mdl
 models/items/cs_gift.mdl
 models/items/flare.mdl
 models/items/grenadeammo.mdl
-models/items/healthkit.mdl
+[supported] models/items/healthkit.mdl
 models/items/hevsuit.mdl
 models/items/item_beacon_crate.mdl
 models/items/item_item_crate.mdl
@@ -1940,8 +1940,8 @@ models/nateswheel/nateswheelwide.mdl
 models/noesis/donut.mdl
 
 [supported] models/nova/airboat_seat.mdl
-models/nova/chair_office01.mdl
-models/nova/chair_office02.mdl
+[supported] models/nova/chair_office01.mdl
+[supported] models/nova/chair_office02.mdl
 models/nova/chair_plastic01.mdl
 [supported] models/nova/chair_wood01.mdl
 models/nova/jalopy_seat.mdl
@@ -2077,15 +2077,15 @@ models/player/group01/female_03.mdl
 models/player/group01/female_04.mdl
 models/player/group01/female_05.mdl
 models/player/group01/female_06.mdl
-models/player/group01/male_01.mdl
-models/player/group01/male_02.mdl
-models/player/group01/male_03.mdl
-models/player/group01/male_04.mdl
-models/player/group01/male_05.mdl
-models/player/group01/male_06.mdl
-models/player/group01/male_07.mdl
-models/player/group01/male_08.mdl
-models/player/group01/male_09.mdl
+[supported] models/player/group01/male_01.mdl
+[supported] models/player/group01/male_02.mdl
+[supported] models/player/group01/male_03.mdl
+[supported] models/player/group01/male_04.mdl
+[supported] models/player/group01/male_05.mdl
+[supported] models/player/group01/male_06.mdl
+[supported] models/player/group01/male_07.mdl
+[supported] models/player/group01/male_08.mdl
+[supported] models/player/group01/male_09.mdl
 
 models/player/group02/male_02.mdl
 models/player/group02/male_04.mdl
@@ -2267,7 +2267,7 @@ models/props/cs_assault/floodlight02.mdl
 models/props/cs_assault/forklift.mdl
 models/props/cs_assault/handtruck.mdl
 models/props/cs_assault/ladder_tall.mdl
-models/props/cs_assault/ladderaluminium128.mdl
+[supported] models/props/cs_assault/ladderaluminium128.mdl
 models/props/cs_assault/light_shop2.mdl
 models/props/cs_assault/light_shop2_big.mdl
 models/props/cs_assault/meter.mdl
@@ -2350,10 +2350,10 @@ models/props/cs_italy/it_lantern1.mdl
 models/props/cs_italy/it_lantern2.mdl
 models/props/cs_italy/it_logs.mdl
 models/props/cs_italy/it_mkt_container1.mdl
-models/props/cs_italy/it_mkt_container1a.mdl
+[supported] models/props/cs_italy/it_mkt_container1a.mdl
 models/props/cs_italy/it_mkt_container2.mdl
 models/props/cs_italy/it_mkt_container3.mdl
-models/props/cs_italy/it_mkt_container3a.mdl
+[supported] models/props/cs_italy/it_mkt_container3a.mdl
 models/props/cs_italy/it_mkt_shelf1.mdl
 models/props/cs_italy/it_mkt_table1.mdl
 models/props/cs_italy/it_mkt_table2.mdl
@@ -2390,11 +2390,11 @@ models/props/cs_militia/bathroomwallhole01_wood_broken_02.mdl
 models/props/cs_militia/bathroomwallhole01_wood_broken_03.mdl
 models/props/cs_militia/bathroomwallhole01_wood_broken_04.mdl
 models/props/cs_militia/bedroombeams.mdl
-models/props/cs_militia/bottle01.mdl
+[supported] models/props/cs_militia/bottle01.mdl
 models/props/cs_militia/bottle01_breaka.mdl
 models/props/cs_militia/bottle01_breakb.mdl
 models/props/cs_militia/bottle02.mdl
-models/props/cs_militia/bottle03.mdl
+[supported] models/props/cs_militia/bottle03.mdl
 models/props/cs_militia/boulder01.mdl
 models/props/cs_militia/boulderring01.mdl
 models/props/cs_militia/boxes_frontroom.mdl
@@ -2404,9 +2404,9 @@ models/props/cs_militia/bridgelight.mdl
 models/props/cs_militia/bunkbed.mdl
 models/props/cs_militia/bunkbed2.mdl
 models/props/cs_militia/car_militia.mdl
-models/props/cs_militia/caseofbeer01.mdl
-models/props/cs_militia/circularsaw01.mdl
-models/props/cs_militia/couch.mdl
+[supported] models/props/cs_militia/caseofbeer01.mdl
+[supported] models/props/cs_militia/circularsaw01.mdl
+[supported] models/props/cs_militia/couch.mdl
 models/props/cs_militia/coveredbridge01_bottom.mdl
 models/props/cs_militia/coveredbridge01_left.mdl
 models/props/cs_militia/coveredbridge01_right.mdl
@@ -2433,7 +2433,7 @@ models/props/cs_militia/footlocker01_open.mdl
 models/props/cs_militia/furnace01.mdl
 models/props/cs_militia/furnace01pipes.mdl
 models/props/cs_militia/furnace01pipes02.mdl
-models/props/cs_militia/furniture_shelf01a.mdl
+[supported] models/props/cs_militia/furniture_shelf01a.mdl
 models/props/cs_militia/garage_framework1.mdl
 models/props/cs_militia/garage_framework2.mdl
 models/props/cs_militia/garage_framework3.mdl
@@ -2457,7 +2457,7 @@ models/props/cs_militia/lightfixture01.mdl
 models/props/cs_militia/lightfixture01_base.mdl
 models/props/cs_militia/logpile2.mdl
 models/props/cs_militia/mailbox01.mdl
-models/props/cs_militia/microwave01.mdl
+[supported] models/props/cs_militia/microwave01.mdl
 models/props/cs_militia/middleroombeams.mdl
 models/props/cs_militia/militiarock01.mdl
 models/props/cs_militia/militiarock02.mdl
@@ -2473,9 +2473,9 @@ models/props/cs_militia/militiawindow02_breakable_frame.mdl
 models/props/cs_militia/mountedfish01.mdl
 models/props/cs_militia/newspaperstack01.mdl
 models/props/cs_militia/oldphone01.mdl
-models/props/cs_militia/paintbucket01.mdl
+[supported] models/props/cs_militia/paintbucket01.mdl
 models/props/cs_militia/refrigerator01.mdl
-models/props/cs_militia/reload_bullet_tray.mdl
+[supported] models/props/cs_militia/reload_bullet_tray.mdl
 models/props/cs_militia/reload_scale.mdl
 models/props/cs_militia/reloadingpress01.mdl
 models/props/cs_militia/river01.mdl
@@ -2497,7 +2497,7 @@ models/props/cs_militia/roofholeboards_p5.mdl
 models/props/cs_militia/roofholeboards_p6.mdl
 models/props/cs_militia/roofholeboards_p7.mdl
 models/props/cs_militia/ropeladder01.mdl
-models/props/cs_militia/sawhorse.mdl
+[supported] models/props/cs_militia/sawhorse.mdl
 models/props/cs_militia/shed_overhang.mdl
 models/props/cs_militia/shedbeams.mdl
 models/props/cs_militia/shedboards01.mdl
@@ -2563,8 +2563,8 @@ models/props/cs_militia/wndw01_breakable_frame.mdl
 models/props/cs_militia/wndw02.mdl
 models/props/cs_militia/wndw02beams.mdl
 models/props/cs_militia/wndw02inside.mdl
-models/props/cs_militia/wood_bench.mdl
-models/props/cs_militia/wood_table.mdl
+[supported] models/props/cs_militia/wood_bench.mdl
+[supported] models/props/cs_militia/wood_table.mdl
 
 models/props/cs_office/address.mdl
 models/props/cs_office/awning_long.mdl
@@ -2579,11 +2579,11 @@ models/props/cs_office/bookshelf3.mdl
 models/props/cs_office/clouds.mdl
 [supported] models/props/cs_office/coffee_mug.mdl
 models/props/cs_office/coffee_mug2.mdl
-models/props/cs_office/coffee_mug3.mdl
+[supported] models/props/cs_office/coffee_mug3.mdl
 models/props/cs_office/coffee_mug_p1.mdl
 models/props/cs_office/coffee_mug_p2.mdl
 models/props/cs_office/coffee_mug_p3.mdl
-models/props/cs_office/computer.mdl
+[supported] models/props/cs_office/computer.mdl
 models/props/cs_office/computer_case.mdl
 [supported] models/props/cs_office/computer_caseb.mdl
 models/props/cs_office/computer_caseb_gib1.mdl
@@ -2610,21 +2610,21 @@ models/props/cs_office/computer_caseb_p8.mdl
 models/props/cs_office/computer_caseb_p8a.mdl
 models/props/cs_office/computer_caseb_p9.mdl
 models/props/cs_office/computer_caseb_p9a.mdl
-models/props/cs_office/computer_keyboard.mdl
+[supported] models/props/cs_office/computer_keyboard.mdl
 models/props/cs_office/computer_keyboard_p1.mdl
 models/props/cs_office/computer_keyboard_p1a.mdl
 models/props/cs_office/computer_keyboard_p1b.mdl
 models/props/cs_office/computer_keyboard_p1c.mdl
 models/props/cs_office/computer_keyboard_p1d.mdl
 models/props/cs_office/computer_keyboard_p1e.mdl
-models/props/cs_office/computer_keyboard_p2.mdl
+[supported] models/props/cs_office/computer_keyboard_p2.mdl
 models/props/cs_office/computer_keyboard_p2a.mdl
 models/props/cs_office/computer_keyboard_p2b.mdl
 models/props/cs_office/computer_keyboard_p2c.mdl
 models/props/cs_office/computer_keyboard_p2d.mdl
 models/props/cs_office/computer_keyboard_p2e.mdl
 [supported] models/props/cs_office/computer_monitor.mdl
-models/props/cs_office/computer_monitor_p1.mdl
+[supported] models/props/cs_office/computer_monitor_p1.mdl
 models/props/cs_office/computer_monitor_p1a.mdl
 models/props/cs_office/computer_monitor_p2.mdl
 models/props/cs_office/computer_monitor_p2a.mdl
@@ -2649,11 +2649,11 @@ models/props/cs_office/file_box_p2a.mdl
 models/props/cs_office/file_box_p2b.mdl
 models/props/cs_office/file_box_p2c.mdl
 models/props/cs_office/file_box_p2d.mdl
-models/props/cs_office/file_cabinet1.mdl
+[supported] models/props/cs_office/file_cabinet1.mdl
 [supported] models/props/cs_office/file_cabinet1_group.mdl
-models/props/cs_office/file_cabinet2.mdl
-models/props/cs_office/file_cabinet3.mdl
-models/props/cs_office/fire_extinguisher.mdl
+[supported] models/props/cs_office/file_cabinet2.mdl
+[supported] models/props/cs_office/file_cabinet3.mdl
+[supported] models/props/cs_office/fire_extinguisher.mdl
 models/props/cs_office/ladder1.mdl
 models/props/cs_office/light_ceiling.mdl
 models/props/cs_office/light_inset.mdl
@@ -2663,29 +2663,29 @@ models/props/cs_office/light_shop.mdl
 models/props/cs_office/light_shop_on.mdl
 [supported] models/props/cs_office/microwave.mdl
 models/props/cs_office/offcertificatea.mdl
-models/props/cs_office/offcorkboarda.mdl
+[supported] models/props/cs_office/offcorkboarda.mdl
 models/props/cs_office/offinspa.mdl
 models/props/cs_office/offinspb.mdl
 models/props/cs_office/offinspc.mdl
 models/props/cs_office/offinspd.mdl
 models/props/cs_office/offinspf.mdl
 models/props/cs_office/offinspg.mdl
-models/props/cs_office/offpaintinga.mdl
-models/props/cs_office/offpaintingb.mdl
+[supported] models/props/cs_office/offpaintinga.mdl
+[supported] models/props/cs_office/offpaintingb.mdl
 models/props/cs_office/offpaintingc.mdl
-models/props/cs_office/offpaintingd.mdl
-models/props/cs_office/offpaintinge.mdl
-models/props/cs_office/offpaintingf.mdl
-models/props/cs_office/offpaintingg.mdl
+[supported] models/props/cs_office/offpaintingd.mdl
+[supported] models/props/cs_office/offpaintinge.mdl
+[supported] models/props/cs_office/offpaintingf.mdl
+[supported] models/props/cs_office/offpaintingg.mdl
 models/props/cs_office/offpaintingh.mdl
-models/props/cs_office/offpaintingi.mdl
-models/props/cs_office/offpaintingj.mdl
-models/props/cs_office/offpaintingk.mdl
-models/props/cs_office/offpaintingl.mdl
+[supported] models/props/cs_office/offpaintingi.mdl
+[supported] models/props/cs_office/offpaintingj.mdl
+[supported] models/props/cs_office/offpaintingk.mdl
+[supported] models/props/cs_office/offpaintingl.mdl
 models/props/cs_office/offpaintingm.mdl
 models/props/cs_office/offpaintingn.mdl
 models/props/cs_office/offpaintingo.mdl
-models/props/cs_office/paper_towels.mdl
+[supported] models/props/cs_office/paper_towels.mdl
 models/props/cs_office/paperbox_pile_01.mdl
 [supported] models/props/cs_office/phone.mdl
 models/props/cs_office/phone_big.mdl
@@ -2746,7 +2746,7 @@ models/props/cs_office/snowman_arm.mdl
 models/props/cs_office/snowman_body.mdl
 models/props/cs_office/snowman_eye1.mdl
 models/props/cs_office/snowman_eye2.mdl
-models/props/cs_office/snowman_face.mdl
+[supported] models/props/cs_office/snowman_face.mdl
 models/props/cs_office/snowman_hat.mdl
 models/props/cs_office/snowman_head.mdl
 models/props/cs_office/snowman_mouth1.mdl
@@ -2776,7 +2776,7 @@ models/props/cs_office/tv_plasma_p1.mdl
 models/props/cs_office/tv_plasma_p2.mdl
 models/props/cs_office/tv_plasma_p3.mdl
 models/props/cs_office/tv_plasma_p4.mdl
-models/props/cs_office/vending_machine.mdl
+[supported] models/props/cs_office/vending_machine.mdl
 [supported] models/props/cs_office/water_bottle.mdl
 models/props/cs_office/water_bottle_big.mdl
 
@@ -2806,7 +2806,7 @@ models/props/de_chateau/ch_wnd_bottom_16.mdl
 models/props/de_chateau/ch_wnd_bottom_fake.mdl
 models/props/de_chateau/ch_wnd_ct1_28.mdl
 models/props/de_chateau/ch_wnd_top_16.mdl
-models/props/de_chateau/light_chandelier02.mdl
+[supported] models/props/de_chateau/light_chandelier02.mdl
 
 models/props/de_dust/door01a.mdl
 models/props/de_dust/du_antenna_a.mdl
@@ -2874,7 +2874,7 @@ models/props/de_inferno/archroofb.mdl
 models/props/de_inferno/archroofb1.mdl
 models/props/de_inferno/archroofb2.mdl
 models/props/de_inferno/archwaysupport.mdl
-models/props/de_inferno/bed.mdl
+[supported] models/props/de_inferno/bed.mdl
 models/props/de_inferno/bell_large.mdl
 models/props/de_inferno/bell_largeb.mdl
 models/props/de_inferno/bell_small.mdl
@@ -2912,7 +2912,7 @@ models/props/de_inferno/cart_wheel.mdl
 models/props/de_inferno/ceiling_fan.mdl
 models/props/de_inferno/ceiling_fan_blade.mdl
 models/props/de_inferno/ceiling_light.mdl
-models/props/de_inferno/chairantique.mdl
+[supported] models/props/de_inferno/chairantique.mdl
 models/props/de_inferno/chairantique_damage_01.mdl
 models/props/de_inferno/chairantique_damage_02.mdl
 models/props/de_inferno/chairantique_damage_03.mdl
@@ -2927,26 +2927,26 @@ models/props/de_inferno/churchprop05.mdl
 models/props/de_inferno/churchroof.mdl
 [supported] models/props/de_inferno/cinderblock.mdl
 models/props/de_inferno/clayoven.mdl
-models/props/de_inferno/claypot01.mdl
+[supported] models/props/de_inferno/claypot01.mdl
 models/props/de_inferno/claypot01_damage_01.mdl
 models/props/de_inferno/claypot01_damage_02.mdl
 models/props/de_inferno/claypot01_damage_03.mdl
 models/props/de_inferno/claypot01_damage_04.mdl
-models/props/de_inferno/claypot02.mdl
+[supported] models/props/de_inferno/claypot02.mdl
 models/props/de_inferno/claypot02_damage_01.mdl
 models/props/de_inferno/claypot02_damage_02.mdl
 models/props/de_inferno/claypot02_damage_03.mdl
 models/props/de_inferno/claypot02_damage_04.mdl
-models/props/de_inferno/claypot03.mdl
+[supported] models/props/de_inferno/claypot03.mdl
 models/props/de_inferno/claypot03_damage_01.mdl
 models/props/de_inferno/claypot03_damage_02.mdl
 models/props/de_inferno/claypot03_damage_03.mdl
 models/props/de_inferno/claypot03_damage_04.mdl
 models/props/de_inferno/claypot03_damage_05.mdl
 models/props/de_inferno/claypot03_damage_06.mdl
-models/props/de_inferno/clock01.mdl
+[supported] models/props/de_inferno/clock01.mdl
 models/props/de_inferno/confessional.mdl
-models/props/de_inferno/crate_fruit_break.mdl
+[supported] models/props/de_inferno/crate_fruit_break.mdl
 models/props/de_inferno/crate_fruit_break_gib1.mdl
 models/props/de_inferno/crate_fruit_break_gib2.mdl
 models/props/de_inferno/crate_fruit_break_gib3.mdl
@@ -2959,7 +2959,7 @@ models/props/de_inferno/crate_fruit_break_p6.mdl
 models/props/de_inferno/crate_fruit_break_p7.mdl
 models/props/de_inferno/crate_fruit_break_p8.mdl
 models/props/de_inferno/crate_fruit_break_p9.mdl
-models/props/de_inferno/crates_fruit1.mdl
+[supported] models/props/de_inferno/crates_fruit1.mdl
 models/props/de_inferno/crates_fruit1_p1.mdl
 models/props/de_inferno/crates_fruit1_p2.mdl
 models/props/de_inferno/crates_fruit1_p3.mdl
@@ -2990,7 +2990,7 @@ models/props/de_inferno/fencewooden01.mdl
 models/props/de_inferno/fencewooden02.mdl
 models/props/de_inferno/fencewooden03.mdl
 models/props/de_inferno/fireplace.mdl
-models/props/de_inferno/flower_barrel.mdl
+[supported] models/props/de_inferno/flower_barrel.mdl
 models/props/de_inferno/flower_barrel_p1.mdl
 models/props/de_inferno/flower_barrel_p10.mdl
 models/props/de_inferno/flower_barrel_p11.mdl
@@ -3015,11 +3015,11 @@ models/props/de_inferno/fountain_bowl_p7.mdl
 models/props/de_inferno/fountain_bowl_p8.mdl
 models/props/de_inferno/fountain_bowl_p9.mdl
 models/props/de_inferno/fountain_plants.mdl
-models/props/de_inferno/furniture_couch01a.mdl
-models/props/de_inferno/furniture_couch02a.mdl
+[supported] models/props/de_inferno/furniture_couch01a.mdl
+[supported] models/props/de_inferno/furniture_couch02a.mdl
 models/props/de_inferno/furniturecouch001a.mdl
 models/props/de_inferno/furniturecupboard001a.mdl
-models/props/de_inferno/furnituredrawer001a.mdl
+[supported] models/props/de_inferno/furnituredrawer001a.mdl
 models/props/de_inferno/goldfish.mdl
 models/props/de_inferno/handrailstairs01.mdl
 models/props/de_inferno/handrailstairs02.mdl
@@ -3043,9 +3043,9 @@ models/props/de_inferno/light_fixture.mdl
 models/props/de_inferno/light_streetlight.mdl
 models/props/de_inferno/logpile.mdl
 models/props/de_inferno/monument.mdl
-models/props/de_inferno/picture1.mdl
-models/props/de_inferno/picture2.mdl
-models/props/de_inferno/picture3.mdl
+[supported] models/props/de_inferno/picture1.mdl
+[supported] models/props/de_inferno/picture2.mdl
+[supported] models/props/de_inferno/picture3.mdl
 models/props/de_inferno/pillarc.mdl
 models/props/de_inferno/pillarsa.mdl
 models/props/de_inferno/planterplantsunlit.mdl
@@ -3057,9 +3057,9 @@ models/props/de_inferno/plasterinfwndwg.mdl
 models/props/de_inferno/plasterinfwndwg_inside.mdl
 models/props/de_inferno/plasterinfwndwh.mdl
 models/props/de_inferno/plasterinfwndwi.mdl
-models/props/de_inferno/pot_big.mdl
+[supported] models/props/de_inferno/pot_big.mdl
 [supported] models/props/de_inferno/potted_plant1.mdl
-models/props/de_inferno/potted_plant1_p1.mdl
+[supported] models/props/de_inferno/potted_plant1_p1.mdl
 [supported] models/props/de_inferno/potted_plant2.mdl
 models/props/de_inferno/potted_plant2_p1.mdl
 [supported] models/props/de_inferno/potted_plant3.mdl
@@ -3114,7 +3114,7 @@ models/props/de_inferno/splinter_damage_02.mdl
 models/props/de_inferno/stoneinfwndwa.mdl
 models/props/de_inferno/stonewndwb.mdl
 models/props/de_inferno/succulant.mdl
-models/props/de_inferno/tableantique.mdl
+[supported] models/props/de_inferno/tableantique.mdl
 models/props/de_inferno/tablecoffee.mdl
 models/props/de_inferno/tablecoffee_damage_a01.mdl
 models/props/de_inferno/tablecoffee_damage_a02.mdl
@@ -3125,12 +3125,12 @@ models/props/de_inferno/tablecoffee_damage_b04.mdl
 models/props/de_inferno/tree_group.mdl
 models/props/de_inferno/tree_large.mdl
 models/props/de_inferno/tree_small.mdl
-models/props/de_inferno/tv_monitor01.mdl
+[supported] models/props/de_inferno/tv_monitor01.mdl
 models/props/de_inferno/vine_wall1.mdl
 models/props/de_inferno/vine_wall2.mdl
 models/props/de_inferno/wagon.mdl
 models/props/de_inferno/wall_lamp.mdl
-models/props/de_inferno/wall_lamp2.mdl
+[supported] models/props/de_inferno/wall_lamp2.mdl
 models/props/de_inferno/wall_lamp3.mdl
 models/props/de_inferno/wall_lamp_ring.mdl
 models/props/de_inferno/windowbreakable.mdl
@@ -3159,7 +3159,7 @@ models/props/de_inferno/windowbreakable_damage_09.mdl
 models/props/de_inferno/windowbreakable_damage_10.mdl
 models/props/de_inferno/windowbreakable_damage_11.mdl
 models/props/de_inferno/windowbreakable_frame.mdl
-models/props/de_inferno/wine_barrel.mdl
+[supported] models/props/de_inferno/wine_barrel.mdl
 models/props/de_inferno/wine_barrel_p1.mdl
 models/props/de_inferno/wine_barrel_p10.mdl
 models/props/de_inferno/wine_barrel_p11.mdl
@@ -3192,7 +3192,7 @@ models/props/de_nuke/coolingtower.mdl
 models/props/de_nuke/craneb.mdl
 models/props/de_nuke/crate_extralarge.mdl
 models/props/de_nuke/crate_extrasmall.mdl
-models/props/de_nuke/crate_large.mdl
+[supported] models/props/de_nuke/crate_large.mdl
 models/props/de_nuke/crate_small.mdl
 models/props/de_nuke/electricalbox01.mdl
 models/props/de_nuke/electricalbox02.mdl
@@ -3326,12 +3326,12 @@ models/props/de_port/tankoil02.mdl
 
 models/props/de_prodigy/ammo_can_01.mdl
 models/props/de_prodigy/ammo_can_02.mdl
-models/props/de_prodigy/ammo_can_03.mdl
+[supported] models/props/de_prodigy/ammo_can_03.mdl
 models/props/de_prodigy/concretebags.mdl
 models/props/de_prodigy/concretebags2.mdl
 models/props/de_prodigy/concretebags3.mdl
 models/props/de_prodigy/concretebags4.mdl
-models/props/de_prodigy/desk_console1.mdl
+[supported] models/props/de_prodigy/desk_console1.mdl
 models/props/de_prodigy/desk_console1a.mdl
 models/props/de_prodigy/desk_console1b.mdl
 models/props/de_prodigy/desk_console2.mdl
@@ -3349,9 +3349,9 @@ models/props/de_prodigy/prodcratesa.mdl
 models/props/de_prodigy/prodcratesb.mdl
 models/props/de_prodigy/prodgrassa.mdl
 models/props/de_prodigy/prodtracks.mdl
-models/props/de_prodigy/pushcart.mdl
+[supported] models/props/de_prodigy/pushcart.mdl
 models/props/de_prodigy/spool.mdl
-models/props/de_prodigy/spoolwire.mdl
+[supported] models/props/de_prodigy/spoolwire.mdl
 [supported] models/props/de_prodigy/tire1.mdl
 models/props/de_prodigy/tire2.mdl
 models/props/de_prodigy/tirestack.mdl
@@ -3382,7 +3382,7 @@ models/props/de_tides/gate.mdl
 models/props/de_tides/gate_large.mdl
 models/props/de_tides/gate_low.mdl
 models/props/de_tides/lights_studio.mdl
-models/props/de_tides/menu_stand.mdl
+[supported] models/props/de_tides/menu_stand.mdl
 models/props/de_tides/menu_stand_p01.mdl
 models/props/de_tides/menu_stand_p02.mdl
 models/props/de_tides/menu_stand_p03.mdl
@@ -3390,8 +3390,8 @@ models/props/de_tides/menu_stand_p04.mdl
 models/props/de_tides/menu_stand_p05.mdl
 models/props/de_tides/menu_stand_p06.mdl
 models/props/de_tides/menu_stand_p07.mdl
-models/props/de_tides/patio_chair.mdl
-models/props/de_tides/patio_chair2.mdl
+[supported] models/props/de_tides/patio_chair.mdl
+[supported] models/props/de_tides/patio_chair2.mdl
 models/props/de_tides/patio_table.mdl
 models/props/de_tides/patio_table2.mdl
 models/props/de_tides/planter.mdl
@@ -3426,7 +3426,7 @@ models/props/de_tides/vending_cart_base.mdl
 models/props/de_tides/vending_cart_top.mdl
 models/props/de_tides/vending_cart_wheell.mdl
 models/props/de_tides/vending_cart_wheelr.mdl
-models/props/de_tides/vending_hat.mdl
+[supported] models/props/de_tides/vending_hat.mdl
 models/props/de_tides/vending_tshirt.mdl
 [supported] models/props/de_tides/vending_turtle.mdl
 models/props/de_tides/woodframe_archway.mdl
@@ -3460,7 +3460,7 @@ models/props/de_tides/woodframe_miscc.mdl
 models/props/de_train/acunit1.mdl
 models/props/de_train/acunit2.mdl
 models/props/de_train/ammo_can_01.mdl
-models/props/de_train/barrel.mdl
+[supported] models/props/de_train/barrel.mdl
 models/props/de_train/biohazardtank.mdl
 models/props/de_train/biohazardtank_dm_01.mdl
 models/props/de_train/biohazardtank_dm_02.mdl
@@ -3669,8 +3669,8 @@ models/props_buildings/watertower_002a.mdl
 
 models/props_c17/awning001a.mdl
 models/props_c17/awning002a.mdl
-models/props_c17/bench01a.mdl
-models/props_c17/briefcase001a.mdl
+[supported] models/props_c17/bench01a.mdl
+[supported] models/props_c17/briefcase001a.mdl
 models/props_c17/briefcase001a_big.mdl
 models/props_c17/canister01a.mdl
 models/props_c17/canister02a.mdl
@@ -3699,17 +3699,17 @@ models/props_c17/canisterchunk02j.mdl
 models/props_c17/canisterchunk02k.mdl
 models/props_c17/canisterchunk02l.mdl
 models/props_c17/canisterchunk02m.mdl
-models/props_c17/cashregister01a.mdl
+[supported] models/props_c17/cashregister01a.mdl
 [supported] models/props_c17/chair02a.mdl
 models/props_c17/chair_kleiner03a.mdl
 [supported] models/props_c17/chair_office01a.mdl
-models/props_c17/chair_stool01a.mdl
+[supported] models/props_c17/chair_stool01a.mdl
 models/props_c17/clock01.mdl
 models/props_c17/column02a.mdl
 [supported] models/props_c17/computer01_keyboard.mdl
-models/props_c17/concrete_barrier001a.mdl
-models/props_c17/consolebox01a.mdl
-models/props_c17/consolebox03a.mdl
+[supported] models/props_c17/concrete_barrier001a.mdl
+[supported] models/props_c17/consolebox01a.mdl
+[supported] models/props_c17/consolebox03a.mdl
 models/props_c17/consolebox05a.mdl
 models/props_c17/display_cooler01a.mdl
 [supported] models/props_c17/doll01.mdl
@@ -3727,18 +3727,18 @@ models/props_c17/fence03a.mdl
 models/props_c17/fence04a.mdl
 models/props_c17/fountain_01.mdl
 models/props_c17/frame002a.mdl
-models/props_c17/furniturearmchair001a.mdl
+[supported] models/props_c17/furniturearmchair001a.mdl
 models/props_c17/furniturebathtub001a.mdl
-models/props_c17/furniturebed001a.mdl
+[supported] models/props_c17/furniturebed001a.mdl
 models/props_c17/furnitureboiler001a.mdl
 models/props_c17/furniturechair001a.mdl
 models/props_c17/furniturechair001a_chunk01.mdl
 models/props_c17/furniturechair001a_chunk02.mdl
 models/props_c17/furniturechair001a_chunk03.mdl
-models/props_c17/furniturecouch001a.mdl
-models/props_c17/furniturecouch002a.mdl
+[supported] models/props_c17/furniturecouch001a.mdl
+[supported] models/props_c17/furniturecouch002a.mdl
 models/props_c17/furniturecupboard001a.mdl
-models/props_c17/furnituredrawer001a.mdl
+[supported] models/props_c17/furnituredrawer001a.mdl
 models/props_c17/furnituredrawer001a_chunk01.mdl
 models/props_c17/furnituredrawer001a_chunk02.mdl
 models/props_c17/furnituredrawer001a_chunk03.mdl
@@ -3748,23 +3748,23 @@ models/props_c17/furnituredrawer001a_chunk06.mdl
 models/props_c17/furnituredrawer001a_shard01.mdl
 [supported] models/props_c17/furnituredrawer002a.mdl
 models/props_c17/furnituredrawer002a_big.mdl
-models/props_c17/furnituredrawer003a.mdl
-models/props_c17/furnituredresser001a.mdl
+[supported] models/props_c17/furnituredrawer003a.mdl
+[supported] models/props_c17/furnituredresser001a.mdl
 models/props_c17/furniturefireplace001a.mdl
 models/props_c17/furniturefridge001a.mdl
 [supported] models/props_c17/furnituremattress001a.mdl
 models/props_c17/furniturepipecluster001a.mdl
 models/props_c17/furnitureradiator001a.mdl
-models/props_c17/furnitureshelf001a.mdl
+[supported] models/props_c17/furnitureshelf001a.mdl
 models/props_c17/furnitureshelf001b.mdl
 models/props_c17/furnitureshelf002a.mdl
 models/props_c17/furnituresink001a.mdl
 models/props_c17/furniturestove001a.mdl
 [supported] models/props_c17/furnituretable001a.mdl
 [supported] models/props_c17/furnituretable002a.mdl
-models/props_c17/furnituretable003a.mdl
+[supported] models/props_c17/furnituretable003a.mdl
 models/props_c17/furnituretoilet001a.mdl
-models/props_c17/furniturewashingmachine001a.mdl
+[supported] models/props_c17/furniturewashingmachine001a.mdl
 models/props_c17/gasmeter001a.mdl
 models/props_c17/gasmeter002a.mdl
 models/props_c17/gasmeter003a.mdl
@@ -3832,7 +3832,7 @@ models/props_c17/light_industrialbell01_on.mdl
 models/props_c17/light_industrialbell02_on.mdl
 models/props_c17/light_lightbare01_on.mdl
 models/props_c17/light_magnifyinglamp02.mdl
-models/props_c17/lockers001a.mdl
+[supported] models/props_c17/lockers001a.mdl
 models/props_c17/metalladder001.mdl
 models/props_c17/metalladder002.mdl
 models/props_c17/metalladder002b.mdl
@@ -3854,7 +3854,7 @@ models/props_c17/oildrumchunk01e.mdl
 models/props_c17/overhaingcluster_001a.mdl
 models/props_c17/overpass_001a.mdl
 models/props_c17/overpass_001b.mdl
-models/props_c17/paper01.mdl
+[supported] models/props_c17/paper01.mdl
 models/props_c17/pillarcluster_001a.mdl
 models/props_c17/pillarcluster_001b.mdl
 models/props_c17/pillarcluster_001c.mdl
@@ -3863,7 +3863,7 @@ models/props_c17/pillarcluster_001f.mdl
 models/props_c17/pipe_cap003.mdl
 models/props_c17/pipe_cap005.mdl
 models/props_c17/pipe_cap005c.mdl
-models/props_c17/playground_carousel01.mdl
+[supported] models/props_c17/playground_carousel01.mdl
 models/props_c17/playground_jungle_gym01a.mdl
 models/props_c17/playground_jungle_gym01b.mdl
 models/props_c17/playground_swingset01.mdl
@@ -3890,7 +3890,7 @@ models/props_c17/pulleyhook01.mdl
 models/props_c17/pulleywheels_large01.mdl
 models/props_c17/pulleywheels_small01.mdl
 models/props_c17/pushbroom.mdl
-models/props_c17/shelfunit01a.mdl
+[supported] models/props_c17/shelfunit01a.mdl
 models/props_c17/signpole001.mdl
 models/props_c17/slidinggate001.mdl
 models/props_c17/statue_horse.mdl
@@ -3910,11 +3910,11 @@ models/props_c17/substation_transformer01b.mdl
 models/props_c17/substation_transformer01c.mdl
 models/props_c17/substation_transformer01d.mdl
 models/props_c17/substation_transformer01e.mdl
-models/props_c17/suitcase001a.mdl
+[supported] models/props_c17/suitcase001a.mdl
 [supported] models/props_c17/suitcase_passenger_physics.mdl
 models/props_c17/support01.mdl
-models/props_c17/tools_pliers01a.mdl
-models/props_c17/tools_wrench01a.mdl
+[supported] models/props_c17/tools_pliers01a.mdl
+[supported] models/props_c17/tools_wrench01a.mdl
 models/props_c17/traffic_light001a.mdl
 models/props_c17/trap_crush01a.mdl
 models/props_c17/trappropeller_blade.mdl
@@ -3929,7 +3929,7 @@ models/props_c17/truss02g.mdl
 models/props_c17/truss02h.mdl
 models/props_c17/truss03a.mdl
 models/props_c17/truss03b.mdl
-models/props_c17/tv_monitor01.mdl
+[supported] models/props_c17/tv_monitor01.mdl
 models/props_c17/tv_monitor01_screen.mdl
 models/props_c17/undergroundelevator.mdl
 models/props_c17/utilityconducter001.mdl
@@ -3948,7 +3948,7 @@ models/props_c17/utilitypole03a.mdl
 models/props_c17/utilitypolemount01a.mdl
 [supported] models/props_c17/woodbarrel001.mdl
 
-models/props_canal/boat001a.mdl
+[supported] models/props_canal/boat001a.mdl
 models/props_canal/boat001a_chunk01.mdl
 models/props_canal/boat001a_chunk010.mdl
 models/props_canal/boat001a_chunk02.mdl
@@ -4049,11 +4049,11 @@ models/props_combine/breenbust_chunk04.mdl
 models/props_combine/breenbust_chunk05.mdl
 models/props_combine/breenbust_chunk06.mdl
 models/props_combine/breenbust_chunk07.mdl
-models/props_combine/breenchair.mdl
-models/props_combine/breenclock.mdl
+[supported] models/props_combine/breenchair.mdl
+[supported] models/props_combine/breenclock.mdl
 models/props_combine/breenconsole.mdl
 models/props_combine/breendesk.mdl
-models/props_combine/breenglobe.mdl
+[supported] models/props_combine/breenglobe.mdl
 models/props_combine/breenlight.mdl
 models/props_combine/breenpod.mdl
 models/props_combine/breenpod_inner.mdl
@@ -4833,7 +4833,7 @@ models/props_interiors/furniture_cabinetdrawer01a.mdl
 models/props_interiors/furniture_cabinetdrawer02a.mdl
 [supported] models/props_interiors/furniture_chair01a.mdl
 [supported] models/props_interiors/furniture_chair03a.mdl
-models/props_interiors/furniture_couch01a.mdl
+[supported] models/props_interiors/furniture_couch01a.mdl
 models/props_interiors/furniture_couch02a.mdl
 models/props_interiors/furniture_desk01a.mdl
 [supported] models/props_interiors/furniture_lamp01a.mdl
@@ -4848,7 +4848,7 @@ models/props_interiors/handrailcluster03a.mdl
 models/props_interiors/lamp_table01.mdl
 models/props_interiors/lamp_table01_gib1.mdl
 models/props_interiors/lamp_table01_gib2.mdl
-models/props_interiors/lamp_table02.mdl
+[supported] models/props_interiors/lamp_table02.mdl
 models/props_interiors/lamp_table02_gib1.mdl
 models/props_interiors/lamp_table02_gib2.mdl
 models/props_interiors/lightbulb01a.mdl
@@ -4857,7 +4857,7 @@ models/props_interiors/lightbulb03a.mdl
 models/props_interiors/lights_florescent01a.mdl
 models/props_interiors/lightsconce01.mdl
 models/props_interiors/pot01a.mdl
-models/props_interiors/pot02a.mdl
+[supported] models/props_interiors/pot02a.mdl
 models/props_interiors/radiator01a.mdl
 models/props_interiors/refrigerator01a.mdl
 models/props_interiors/refrigerator03.mdl
@@ -4879,7 +4879,7 @@ models/props_interiors/table_kitchen.mdl
 models/props_interiors/toiletpaperdispenser_commercial.mdl
 models/props_interiors/tv.mdl
 models/props_interiors/tv_cabinet.mdl
-models/props_interiors/vendingmachinesoda01a.mdl
+[supported] models/props_interiors/vendingmachinesoda01a.mdl
 models/props_interiors/vendingmachinesoda01a_door.mdl
 models/props_interiors/washer.mdl
 models/props_interiors/water_cooler_big.mdl
@@ -4890,14 +4890,14 @@ models/props_junk/cardboard_box001a_gib01.mdl
 [supported] models/props_junk/cardboard_box001b.mdl
 [supported] models/props_junk/cardboard_box002a.mdl
 models/props_junk/cardboard_box002a_gib01.mdl
-models/props_junk/cardboard_box002b.mdl
+[supported] models/props_junk/cardboard_box002b.mdl
 [supported] models/props_junk/cardboard_box003a.mdl
 models/props_junk/cardboard_box003a_gib01.mdl
 [supported] models/props_junk/cardboard_box003b.mdl
 models/props_junk/cardboard_box003b_gib01.mdl
 [supported] models/props_junk/cardboard_box004a.mdl
 models/props_junk/cardboard_box004a_gib01.mdl
-models/props_junk/cinderblock01a.mdl
+[supported] models/props_junk/cinderblock01a.mdl
 models/props_junk/cinderblock01a_big.mdl
 models/props_junk/flare.mdl
 models/props_junk/food_pile01.mdl
@@ -4911,7 +4911,7 @@ models/props_junk/garbage256_composite001a.mdl
 models/props_junk/garbage256_composite001b.mdl
 models/props_junk/garbage256_composite002a.mdl
 models/props_junk/garbage256_composite002b.mdl
-models/props_junk/garbage_bag001a.mdl
+[supported] models/props_junk/garbage_bag001a.mdl
 models/props_junk/garbage_bag001a_big.mdl
 models/props_junk/garbage_carboard001a.mdl
 models/props_junk/garbage_carboard002a.mdl
@@ -4925,7 +4925,7 @@ models/props_junk/garbage_glassbottle001a_chunk01.mdl
 models/props_junk/garbage_glassbottle001a_chunk02.mdl
 models/props_junk/garbage_glassbottle001a_chunk03.mdl
 models/props_junk/garbage_glassbottle001a_chunk04.mdl
-models/props_junk/garbage_glassbottle002a.mdl
+[supported] models/props_junk/garbage_glassbottle002a.mdl
 models/props_junk/garbage_glassbottle002a_chunk01.mdl
 models/props_junk/garbage_glassbottle002a_chunk02.mdl
 [supported] models/props_junk/garbage_glassbottle003a.mdl
@@ -4933,16 +4933,16 @@ models/props_junk/garbage_glassbottle003a_big.mdl
 models/props_junk/garbage_glassbottle003a_chunk01.mdl
 models/props_junk/garbage_glassbottle003a_chunk02.mdl
 models/props_junk/garbage_glassbottle003a_chunk03.mdl
-models/props_junk/garbage_metalcan001a.mdl
+[supported] models/props_junk/garbage_metalcan001a.mdl
 models/props_junk/garbage_metalcan001a_big.mdl
-models/props_junk/garbage_metalcan002a.mdl
+[supported] models/props_junk/garbage_metalcan002a.mdl
 [supported] models/props_junk/garbage_milkcarton001a.mdl
 [supported] models/props_junk/garbage_milkcarton002a.mdl
 models/props_junk/garbage_newspaper001a.mdl
 models/props_junk/garbage_newspaper001a_big.mdl
 models/props_junk/garbage_plasticbottle001a.mdl
 models/props_junk/garbage_plasticbottle001a_big.mdl
-models/props_junk/garbage_plasticbottle002a.mdl
+[supported] models/props_junk/garbage_plasticbottle002a.mdl
 models/props_junk/garbage_plasticbottle002a_big.mdl
 models/props_junk/garbage_plasticbottle003a.mdl
 [supported] models/props_junk/garbage_takeoutcarton001a.mdl
@@ -4969,7 +4969,7 @@ models/props_junk/metal_paintcan001a_big.mdl
 models/props_junk/metal_paintcan001b.mdl
 [supported] models/props_junk/metalbucket01a.mdl
 [supported] models/props_junk/metalbucket02a.mdl
-models/props_junk/metalgascan.mdl
+[supported] models/props_junk/metalgascan.mdl
 models/props_junk/plasticbucket001a.mdl
 models/props_junk/plasticbucket001a_big.mdl
 [supported] models/props_junk/plasticcrate01a.mdl
@@ -4978,26 +4978,26 @@ models/props_junk/plasticcrate01a_big.mdl
 models/props_junk/popcan01a_big.mdl
 [supported] models/props_junk/propane_tank001a.mdl
 models/props_junk/propane_tank001a_big.mdl
-models/props_junk/propanecanister001a.mdl
-models/props_junk/pushcart01a.mdl
-models/props_junk/ravenholmsign.mdl
+[supported] models/props_junk/propanecanister001a.mdl
+[supported] models/props_junk/pushcart01a.mdl
+[supported] models/props_junk/ravenholmsign.mdl
 [supported] models/props_junk/rock001a.mdl
 models/props_junk/sawblade001a.mdl
-models/props_junk/shoe001a.mdl
-models/props_junk/shovel01a.mdl
+[supported] models/props_junk/shoe001a.mdl
+[supported] models/props_junk/shovel01a.mdl
 models/props_junk/terracotta01.mdl
 models/props_junk/terracotta_chunk01a.mdl
 models/props_junk/terracotta_chunk01b.mdl
 models/props_junk/terracotta_chunk01f.mdl
 [supported] models/props_junk/trafficcone001a.mdl
 models/props_junk/trafficcone001a_big.mdl
-models/props_junk/trashbin01a.mdl
+[supported] models/props_junk/trashbin01a.mdl
 models/props_junk/trashcluster01a.mdl
 models/props_junk/trashcluster01a_corner.mdl
-models/props_junk/trashdumpster01a.mdl
+[supported] models/props_junk/trashdumpster01a.mdl
 models/props_junk/trashdumpster02.mdl
 models/props_junk/trashdumpster02b.mdl
-models/props_junk/vent001.mdl
+[supported] models/props_junk/vent001.mdl
 models/props_junk/vent001_chunk1.mdl
 models/props_junk/vent001_chunk2.mdl
 models/props_junk/vent001_chunk3.mdl
@@ -5027,7 +5027,7 @@ models/props_junk/wood_crate001a_chunk05.mdl
 models/props_junk/wood_crate001a_chunk06.mdl
 models/props_junk/wood_crate001a_chunk07.mdl
 models/props_junk/wood_crate001a_chunk09.mdl
-models/props_junk/wood_crate001a_damaged.mdl
+[supported] models/props_junk/wood_crate001a_damaged.mdl
 [supported] models/props_junk/wood_crate001a_damagedmax.mdl
 [supported] models/props_junk/wood_crate002a.mdl
 models/props_junk/wood_crate002a_big.mdl
@@ -5055,14 +5055,14 @@ models/props_lab/blastdoor001a.mdl
 models/props_lab/blastdoor001b.mdl
 models/props_lab/blastdoor001c.mdl
 models/props_lab/blastwindow.mdl
-models/props_lab/box01a.mdl
+[supported] models/props_lab/box01a.mdl
 models/props_lab/box01b.mdl
 [supported] models/props_lab/cactus.mdl
 models/props_lab/cactus_big.mdl
 models/props_lab/chess.mdl
-models/props_lab/citizenradio.mdl
+[supported] models/props_lab/citizenradio.mdl
 models/props_lab/cleaver.mdl
-models/props_lab/clipboard.mdl
+[supported] models/props_lab/clipboard.mdl
 models/props_lab/corkboard001.mdl
 models/props_lab/corkboard002.mdl
 models/props_lab/cornerunit.mdl
@@ -5073,12 +5073,12 @@ models/props_lab/crystalholder_bars.mdl
 models/props_lab/crystalholder_claw.mdl
 models/props_lab/crystalholder_crystal.mdl
 [supported] models/props_lab/desklamp01.mdl
-models/props_lab/dogobject_wood_crate001a_damagedmax.mdl
+[supported] models/props_lab/dogobject_wood_crate001a_damagedmax.mdl
 models/props_lab/elevatordoor.mdl
 models/props_lab/eyescanner.mdl
-models/props_lab/filecabinet02.mdl
+[supported] models/props_lab/filecabinet02.mdl
 models/props_lab/frame001a.mdl
-models/props_lab/frame002a.mdl
+[supported] models/props_lab/frame002a.mdl
 models/props_lab/freightelevator.mdl
 models/props_lab/freightelevatorbutton.mdl
 models/props_lab/generator.mdl
@@ -5087,17 +5087,17 @@ models/props_lab/generatorhose.mdl
 models/props_lab/generatortube.mdl
 models/props_lab/handrail01_long_stairwell01.mdl
 models/props_lab/harddrive01.mdl
-models/props_lab/harddrive02.mdl
+[supported] models/props_lab/harddrive02.mdl
 models/props_lab/headcrabprep.mdl
 models/props_lab/hev_case.mdl
 models/props_lab/hev_machine.mdl
 models/props_lab/hevplate.mdl
 models/props_lab/hl1teleport.mdl
-models/props_lab/huladoll.mdl
+[supported] models/props_lab/huladoll.mdl
 models/props_lab/huladoll_big.mdl
 models/props_lab/incubatorplug.mdl
 models/props_lab/jar01a.mdl
-models/props_lab/jar01b.mdl
+[supported] models/props_lab/jar01b.mdl
 models/props_lab/kennel.mdl
 models/props_lab/kennel_physics.mdl
 models/props_lab/keypad.mdl
@@ -5116,7 +5116,7 @@ models/props_lab/miniteleport.mdl
 models/props_lab/miniteleportarc.mdl
 models/props_lab/mobileprojector.mdl
 models/props_lab/mobileprojector_beam.mdl
-models/props_lab/monitor01a.mdl
+[supported] models/props_lab/monitor01a.mdl
 models/props_lab/monitor01b.mdl
 [supported] models/props_lab/monitor02.mdl
 models/props_lab/partsbin01.mdl
@@ -6176,7 +6176,7 @@ models/props_wasteland/bridge_side02.mdl
 models/props_wasteland/bridge_side03-other.mdl
 models/props_wasteland/bridge_side03.mdl
 models/props_wasteland/buoy01.mdl
-models/props_wasteland/cafeteria_bench001a.mdl
+[supported] models/props_wasteland/cafeteria_bench001a.mdl
 models/props_wasteland/cafeteria_bench001a_chunk01.mdl
 models/props_wasteland/cafeteria_bench001a_chunk02.mdl
 models/props_wasteland/cafeteria_bench001a_chunk03.mdl
@@ -6198,14 +6198,14 @@ models/props_wasteland/chimneypipe01a.mdl
 models/props_wasteland/chimneypipe01b.mdl
 models/props_wasteland/chimneypipe02a.mdl
 models/props_wasteland/chimneypipe02b.mdl
-models/props_wasteland/controlroom_chair001a.mdl
+[supported] models/props_wasteland/controlroom_chair001a.mdl
 models/props_wasteland/controlroom_desk001a.mdl
 [supported] models/props_wasteland/controlroom_desk001b.mdl
 models/props_wasteland/controlroom_filecabinet001a.mdl
 [supported] models/props_wasteland/controlroom_filecabinet002a.mdl
 models/props_wasteland/controlroom_monitor001a.mdl
 models/props_wasteland/controlroom_monitor001b.mdl
-models/props_wasteland/controlroom_storagecloset001a.mdl
+[supported] models/props_wasteland/controlroom_storagecloset001a.mdl
 models/props_wasteland/controlroom_storagecloset001b.mdl
 models/props_wasteland/coolingtank01.mdl
 models/props_wasteland/coolingtank02.mdl
@@ -6264,16 +6264,16 @@ models/props_wasteland/interior_fence004c.mdl
 models/props_wasteland/kitchen_counter001a.mdl
 models/props_wasteland/kitchen_counter001b.mdl
 models/props_wasteland/kitchen_counter001c.mdl
-models/props_wasteland/kitchen_counter001d.mdl
+[supported] models/props_wasteland/kitchen_counter001d.mdl
 models/props_wasteland/kitchen_fridge001a.mdl
-models/props_wasteland/kitchen_shelf001a.mdl
-models/props_wasteland/kitchen_shelf002a.mdl
+[supported] models/props_wasteland/kitchen_shelf001a.mdl
+[supported] models/props_wasteland/kitchen_shelf002a.mdl
 models/props_wasteland/kitchen_stove001a.mdl
 models/props_wasteland/kitchen_stove002a.mdl
 models/props_wasteland/laundry_basket001.mdl
 models/props_wasteland/laundry_basket002.mdl
-models/props_wasteland/laundry_cart001.mdl
-models/props_wasteland/laundry_cart002.mdl
+[supported] models/props_wasteland/laundry_cart001.mdl
+[supported] models/props_wasteland/laundry_cart002.mdl
 models/props_wasteland/laundry_dryer001.mdl
 models/props_wasteland/laundry_dryer002.mdl
 models/props_wasteland/laundry_washer001a.mdl
@@ -6888,7 +6888,7 @@ models/weapons/w_blazer.mdl
 models/weapons/w_bugbait.mdl
 models/weapons/w_bullet.mdl
 models/weapons/w_c4.mdl
-models/weapons/w_c4_planted.mdl
+[supported] models/weapons/w_c4_planted.mdl
 models/weapons/w_catgun.mdl
 models/weapons/w_catgun_ragdoll.mdl
 models/weapons/w_chainsaw.mdl
@@ -6897,9 +6897,9 @@ models/weapons/w_chickeneggnade_thrown.mdl
 models/weapons/w_combine_sniper.mdl
 models/weapons/w_crossbow.mdl
 models/weapons/w_crossbow_hls.mdl
-models/weapons/w_crowbar.mdl
+[supported] models/weapons/w_crowbar.mdl
 models/weapons/w_crowbar_hls.mdl
-models/weapons/w_defuser.mdl
+[supported] models/weapons/w_defuser.mdl
 models/weapons/w_double_barrel_shotgun.mdl
 models/weapons/w_egon_hls.mdl
 models/weapons/w_eq_defuser.mdl
@@ -6935,7 +6935,7 @@ models/weapons/w_missile.mdl
 models/weapons/w_missile_closed.mdl
 models/weapons/w_missile_launch.mdl
 models/weapons/w_npcnade.mdl
-models/weapons/w_package.mdl
+[supported] models/weapons/w_package.mdl
 models/weapons/w_physics.mdl
 models/weapons/w_pist_deagle.mdl
 models/weapons/w_pist_elite.mdl

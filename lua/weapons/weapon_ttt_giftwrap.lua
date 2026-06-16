@@ -165,12 +165,16 @@ if SERVER then
             "prop_physics_override",
             "prop_sphere",
             "ads", -- blocked later (affixed)
+            "npc_alyx",
             "sent_ball",
             "npc_barnacle",
+            "npc_breen",
             "ent_ttt_ttt2_camera", -- blocked later (affixed)
             "cannon_ent",
+            "npc_citizen",
             "ttt_conmine",
             "christmas_present",
+            "npc_cscanner",
             "ttt_cse_proj",
             "ttt_chomik",
             "sent_controllable_manhack",
@@ -184,6 +188,7 @@ if SERVER then
             "ttt_beacon", -- blocked later if affixed
             "ttt_bungernade_proj",
             "ttt_decoy", -- blocked later if affixed
+            "npc_eli",
             "ttt_thrownflashbang",
             "ent_fortnitestructure",
             "ent_ttt_fan",
@@ -202,12 +207,14 @@ if SERVER then
             "icegrenade_proj",
             "ttt_seekgull_bird",
             "ttt_knife_proj",
+            "npc_kleiner",
             "item_lethal_company_landmine",
             "matryoshka", -- blocked later (affixed) (breaching charge)
             --"npc_metropolice", -- wraps SuperCop, should be PaP only
             "ttt_minecraft_arrow",
             "sent_molotov_timed",
             "sent_molotov",
+            "monster_generic",
             "moonball",
             "ent_moongrenade",
             "ttt_paper_plane_proj",
@@ -216,6 +223,7 @@ if SERVER then
             "ttt_radio",
             "ttt_ragnana_peel",
             "sent_rcxd",
+            "npc_rollermine",
             "shield_deployer",
             "ttt_slam_satchel",
             "ttt_shard_of_greed",
@@ -889,7 +897,7 @@ if SERVER then
             end
 
         else -- random gift
-            if not (cachedData and cachedData:IsSpawnable(giftee)) then  -- cache random gift data
+            if not (cachedData and cachedData:IsSpawnable(giftee, giftObj)) then  -- cache random gift data
                 local newLabel, newData = GetRandomGiftData(giftee)
                 newData:ApplyOnAutoWrapAdjustments(giftObj)
                 giftObj:SetCachedDataLabel(newLabel)

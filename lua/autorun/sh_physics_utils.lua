@@ -199,7 +199,7 @@ if SERVER then
                 class = "ammo boxes"
             end
             classCounts[class] = (classCounts[class] or 0) + 1
-            local model = ent:GetModel()
+            local model = ent:GetModel() or ""
 
             if giftData and giftData.autoGen then
                 print("-> Missing data:", ent, dbg.PosStr(ent:GetPos()), model)

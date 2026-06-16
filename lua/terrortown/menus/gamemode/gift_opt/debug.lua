@@ -44,7 +44,7 @@ function CLGAMEMODESUBMENU:Populate(parent)
     -- prepare gift choices (check spawnable)
     local giftChoices = {}
     for label, giftData in pairs(GetGiftCatalog()) do
-        if giftData:IsSpawnable(LocalPlayer()) then
+        if giftData:IsSpawnable(LocalPlayer(), gwRef, true) then
             table.insert(giftChoices, {
                 title = giftData.name,
                 value = label

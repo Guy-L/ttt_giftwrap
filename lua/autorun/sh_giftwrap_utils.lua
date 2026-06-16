@@ -281,6 +281,7 @@ function GW_Utils.IsMapClass(ent)
 
     return string.StartsWith(class, "func_breakable")
         or string.StartsWith(class, "func_door")
+        or string.StartsWith(class, "func_wall")
         or string.StartsWith(class, "prop_door")
         or string.StartsWith(class, "trigger")
         or class == "func_button"
@@ -290,11 +291,11 @@ function GW_Utils.IsMapClass(ent)
         or class == "func_movelinear"
         or class == "func_monitor"
         or class == "func_reflective_glass"
+        or class == "func_rot_button"
         or class == "func_rotating"
         or class == "func_tanktrain"
         or class == "func_tracktrain"
         or class == "func_water_analog"
-        or class == "func_wall"
         or class == "entity_blocker"
         or class == "fish"
         or class == "phys_bone_follower"
@@ -303,6 +304,7 @@ function GW_Utils.IsMapClass(ent)
         or class == "momentary_rot_button"
         or class == "class C_BaseToggle" -- the hell even
         or class == "prop_dynamic"
+        or class == "prop_dynamic_ornament"
         or GW_Utils.IsMapClass(ent:GetMoveParent())
 end
 
