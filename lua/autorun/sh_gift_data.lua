@@ -1294,10 +1294,15 @@ table.Merge(giftDataCatalog, { -- PhysProps
     painting_motivational = GiftData.New {
         name     = "Motivational Poster", desc        = "a motivational poster",
         category = GiftCategory.PhysProp, identifiers = {
+            "models/props/cs_office/offinspa.mdl",
+            "models/props/cs_office/offinspb.mdl",
+            "models/props/cs_office/offinspc.mdl",
             "models/props/cs_office/offinspd.mdl",
             "models/props/cs_office/offinspf.mdl",
+            "models/props/cs_office/offinspg.mdl",
         },
-        can_be_random_gift = false,
+        can_be_random_gift = true,
+        factor_rarity = 3, factor_quality = -3,
         attrib_sound = GiftSound.Creaky, attrib_size = GiftSize.Huge,
         attrib_smell = GiftSmell.Paper,  attrib_feel = GiftFeel.Flat,
     },

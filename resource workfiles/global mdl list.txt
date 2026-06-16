@@ -2664,12 +2664,12 @@ models/props/cs_office/light_shop_on.mdl
 [supported] models/props/cs_office/microwave.mdl
 models/props/cs_office/offcertificatea.mdl
 [supported] models/props/cs_office/offcorkboarda.mdl
-models/props/cs_office/offinspa.mdl
-models/props/cs_office/offinspb.mdl
-models/props/cs_office/offinspc.mdl
-models/props/cs_office/offinspd.mdl
-models/props/cs_office/offinspf.mdl
-models/props/cs_office/offinspg.mdl
+[supported] models/props/cs_office/offinspa.mdl
+[supported] models/props/cs_office/offinspb.mdl
+[supported] models/props/cs_office/offinspc.mdl
+[supported] models/props/cs_office/offinspd.mdl
+[supported] models/props/cs_office/offinspf.mdl
+[supported] models/props/cs_office/offinspg.mdl
 [supported] models/props/cs_office/offpaintinga.mdl
 [supported] models/props/cs_office/offpaintingb.mdl
 models/props/cs_office/offpaintingc.mdl
